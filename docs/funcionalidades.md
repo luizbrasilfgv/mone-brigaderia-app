@@ -26,7 +26,17 @@ Preços, sabores, quantidades e textos que aparecem no mockup são exemplos. Só
 
 ### Painel da dona
 
-Protegido por senha (`/entrar`). Tudo o que ela salva vai para o banco e aparece na vitrine na hora.
+Entrada com a conta do Google (`/entrar`). Só entra quem estiver em **Acessos**. Tudo o que é salvo vai para o banco e aparece na vitrine na hora.
+
+- **Como usar:** guia em passos que abre sozinho no primeiro acesso e depois pelo botão "Como usar". Mostra só o que o papel da pessoa permite.
+- **Acessos** (só Administração): adicionar pessoas pelo e-mail do Google, escolher o papel e tirar o acesso. O painel nunca fica sem administrador.
+
+| Papel | Pode fazer |
+| --- | --- |
+| Administração | Tudo, inclusive liberar e tirar acessos |
+| Equipe | Doces, fotos, campanhas, destaque e quantidades do dia |
+| Estoque | Só as quantidades do dia |
+
 
 - **O que tem hoje:** quantidade de cada doce no dia, com − e +. Escolha do destaque da vitrine. Totais de doces na vitrine, esgotados e unidades.
 - **Ficha do doce:** fotos, nome, preço, descrição, sabores, glúten e lactose (sim ou não), composição, conservação, selo, campanhas, sob encomenda com prazo de preparo, quantidade de hoje e se o doce está na vitrine. Mostra uma prévia de como o doce aparece na vitrine.

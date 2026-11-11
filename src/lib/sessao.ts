@@ -1,15 +1,12 @@
-// Sessão do painel num cookie assinado (HMAC-SHA256). Usa Web Crypto, que funciona
-// tanto no proxy.ts quanto nas ações do servidor.
+// Sessão do painel num cookie assinado (HMAC-SHA256) com o id da pessoa.
+// Usa Web Crypto, que funciona tanto no proxy.ts quanto no servidor.
 
 export const COOKIE_SESSAO = "mone_sessao";
 const DURACAO_DIAS = 30;
 const codificador = new TextEncoder();
 
-// A chave junta o segredo e a senha do painel: trocar a senha derruba as sessões abertas.
 export function chaveDaSessao(): string | null {
-  const segredo = process.env.SESSAO_SEGREDO;
-  const senha = process.env.PAINEL_SENHA;
-  return segredo && senha ? `${segredo}:${senha}` : null;
+  return process.env.SESSAO_SEGREDO || null;
 }
 
 async function importarChave(chave: string) {
@@ -27,19 +24,22 @@ function deHex(hex: string): Uint8Array<ArrayBuffer> | null {
   return bytes;
 }
 
-export async function criarToken(chave: string): Promise<{ token: string; expira: Date }> {
+export async function criarToken(usuarioId: number, chave: string): Promise<{ token: string; expira: Date }> {
   const expira = Date.now() + DURACAO_DIAS * 24 * 60 * 60 * 1000;
-  const dados = `painel.${expira}`;
+  const dados = `${usuarioId}.${expira}`;
   const assinatura = await crypto.subtle.sign("HMAC", await importarChave(chave), codificador.encode(dados));
   return { token: `${dados}.${paraHex(assinatura)}`, expira: new Date(expira) };
 }
 
-export async function tokenValido(token: string | undefined, chave: string | null): Promise<boolean> {
-  if (!token || !chave) return false;
-  const [prefixo, expiraTexto, assinaturaHex, ...resto] = token.split(".");
-  if (prefixo !== "painel" || resto.length > 0) return false;
+// Devolve o id da pessoa se o token for válido e não tiver expirado.
+export async function lerToken(token: string | undefined, chave: string | null): Promise<number | null> {
+  if (!token || !chave) return null;
+  const [idTexto, expiraTexto, assinaturaHex, ...resto] = token.split(".");
+  if (resto.length > 0) return null;
+  const id = Number(idTexto);
   const expira = Number(expiraTexto);
   const assinatura = deHex(assinaturaHex ?? "");
-  if (!Number.isFinite(expira) || expira < Date.now() || !assinatura) return false;
-  return crypto.subtle.verify("HMAC", await importarChave(chave), assinatura, codificador.encode(`painel.${expira}`));
+  if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(expira) || expira < Date.now() || !assinatura) return null;
+  const ok = await crypto.subtle.verify("HMAC", await importarChave(chave), assinatura, codificador.encode(`${id}.${expira}`));
+  return ok ? id : null;
 }

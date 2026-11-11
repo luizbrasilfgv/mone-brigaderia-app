@@ -45,7 +45,7 @@ jobs:
           mkdir -p publicar/.next publicar/tmp
           cp -r .next/standalone/. publicar/
           cp -r .next/static publicar/.next/static
-          cp -r public publicar/public
+          mkdir -p publicar/public && cp -r public/. publicar/public/
           cp deploy/app.js publicar/app.js
           # Mudar este arquivo faz a hospedagem (Passenger) reiniciar o app.
           date -u +%Y-%m-%dT%H:%M:%SZ > publicar/tmp/restart.txt
@@ -58,8 +58,12 @@ jobs:
           MYSQL_USER: ${{ secrets.MYSQL_USER }}
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
-          PAINEL_SENHA: ${{ secrets.PAINEL_SENHA }}
           SESSAO_SEGREDO: ${{ secrets.SESSAO_SEGREDO }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          # Quem sempre entra como administrador (e libera os outros em Acessos).
+          ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS || 'luizbrasil.rj@gmail.com' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://monebrigaderia.com.br' }}
           UPLOAD_DIR: ${{ vars.UPLOAD_DIR }}
         run: |
           umask 077
@@ -68,8 +72,11 @@ jobs:
             echo "MYSQL_USER=$MYSQL_USER"
             echo "MYSQL_PASSWORD=$MYSQL_PASSWORD"
             echo "MYSQL_DATABASE=$MYSQL_DATABASE"
-            echo "PAINEL_SENHA=$PAINEL_SENHA"
             echo "SESSAO_SEGREDO=$SESSAO_SEGREDO"
+            echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+            echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
+            echo "ADMIN_EMAILS=$ADMIN_EMAILS"
+            echo "SITE_URL=$SITE_URL"
             # Fora da pasta do app, para as fotos não sumirem a cada publicação.
             echo "UPLOAD_DIR=${UPLOAD_DIR:-/home/$FTP_USUARIO/mone-fotos}"
           } > publicar/.env

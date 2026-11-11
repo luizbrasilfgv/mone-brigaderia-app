@@ -27,16 +27,18 @@ function config(): mysql.PoolOptions {
   };
 }
 
-// Num banco vazio, cria as tabelas e carrega os doces de exemplo.
+// Ao iniciar: cria as tabelas que faltam (schema.sql só usa CREATE TABLE IF NOT
+// EXISTS) e, se o banco estiver vazio, carrega os doces de exemplo.
 async function prepararBanco(): Promise<void> {
   const conexao = await mysql.createConnection({ ...config(), multipleStatements: true });
   try {
-    const [tabelas] = await conexao.query("SHOW TABLES LIKE 'doces'");
-    if ((tabelas as unknown[]).length > 0) return;
     const pasta = path.join(process.cwd(), "banco");
     await conexao.query(await readFile(path.join(pasta, "schema.sql"), "utf8"));
-    await conexao.query(await readFile(path.join(pasta, "dados-exemplo.sql"), "utf8"));
-    console.log("[banco] tabelas criadas e dados de exemplo carregados");
+    const [linhas] = await conexao.query("SELECT COUNT(*) AS total FROM categorias");
+    if ((linhas as { total: number }[])[0].total === 0) {
+      await conexao.query(await readFile(path.join(pasta, "dados-exemplo.sql"), "utf8"));
+      console.log("[banco] dados de exemplo carregados");
+    }
   } finally {
     await conexao.end();
   }

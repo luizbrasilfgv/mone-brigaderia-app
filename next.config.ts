@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/**": ["./banco/*.sql"],
   },
+  // Ler a pasta banco/ a partir de process.cwd() faz o rastreador puxar o projeto
+  // inteiro; o servidor não precisa do código-fonte, da documentação nem do mockup.
+  outputFileTracingExcludes: {
+    "/**": ["./src/**", "./docs/**", "./mockup/**", "./scripts/**", "./public/**", "./deploy/**"],
+  },
   // As fotos já chegam reduzidas pelo painel. Sem otimização, o app não depende
   // do sharp no servidor, que costuma falhar em hospedagem compartilhada.
   images: {

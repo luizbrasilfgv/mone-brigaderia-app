@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FormularioDoce } from "@/components/painel/FormularioDoce";
 import { bancoConfigurado } from "@/lib/banco";
+import { exigirAcesso } from "@/lib/painel";
 import { listarCampanhas, listarCategorias, obterDoce } from "@/lib/dados";
 
 export const metadata: Metadata = { title: "Editar doce" };
@@ -18,6 +19,7 @@ export default function PaginaEditarDoce({ params }: PageProps<"/painel/doces/[i
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   await connection();
+  await exigirAcesso("equipe");
   const { id } = await params;
   const [doce, categorias, campanhas] = await Promise.all([obterDoce(id), listarCategorias(), listarCampanhas()]);
   if (!doce) notFound();

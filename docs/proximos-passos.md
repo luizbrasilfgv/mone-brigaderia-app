@@ -4,13 +4,14 @@
 
 - Todas as telas do mockup em código.
 - Banco MySQL: o app cria as tabelas e carrega os exemplos sozinho num banco vazio (`banco/`).
-- Painel com senha (`PAINEL_SENHA`), sessão de 30 dias que cai se a senha mudar.
+- Login com Google; só entra quem está em Acessos. Papéis: Administração, Equipe e Estoque.
+- Guia "Como usar" no primeiro acesso.
 - Painel grava de verdade: quantidades do dia, destaque, fichas dos doces (com foto reduzida no celular antes de enviar), doces fora da vitrine, campanhas e pausa de campanha.
 - Publicação automática pelo GitHub a cada push no `main` (docs/publicar.md).
 
 ## Para colocar no ar
 
-1. Criar o app Node.js no cPanel e cadastrar os Secrets no GitHub: [docs/publicar.md](publicar.md).
+1. Criar o app Node.js no cPanel, o login com Google no Google Cloud e cadastrar os Secrets no GitHub: [docs/publicar.md](publicar.md).
 2. Confirmar o DDD do WhatsApp da loja e cadastrar a variável `WHATSAPP_NUMERO`.
 3. Ativar o HTTPS (AutoSSL no cPanel).
 

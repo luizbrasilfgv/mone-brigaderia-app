@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FormularioCampanha } from "@/components/painel/FormularioCampanha";
 import { bancoConfigurado } from "@/lib/banco";
+import { exigirAcesso } from "@/lib/painel";
 import { listarTodosDoces, obterCampanha } from "@/lib/dados";
 
 export const metadata: Metadata = { title: "Editar campanha" };
@@ -18,6 +19,7 @@ export default function PaginaEditarCampanha({ params }: PageProps<"/painel/camp
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   await connection();
+  await exigirAcesso("equipe");
   const { id } = await params;
   const [campanha, doces] = await Promise.all([obterCampanha(id), listarTodosDoces()]);
   if (!campanha) notFound();

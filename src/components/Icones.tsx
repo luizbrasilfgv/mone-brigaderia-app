@@ -115,3 +115,28 @@ export const IconeLoja = (p: Props) => (
     <path d="M9.5 20v-5h5v5" />
   </Base>
 );
+
+export const IconePessoas = (p: Props) => (
+  <Base {...p}>
+    <circle cx="9" cy="8" r="3.5" />
+    <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+    <path d="M16 4.5a3.5 3.5 0 0 1 0 7" />
+    <path d="M18 14.5a6.5 6.5 0 0 1 3.5 5.5" />
+  </Base>
+);
+
+export const IconeAjuda = (p: Props) => (
+  <Base {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6" />
+    <path d="M12 17h.01" />
+  </Base>
+);
+
+export const IconeLixo = (p: Props) => (
+  <Base {...p}>
+    <path d="M4 7h16" />
+    <path d="M9 7V4h6v3" />
+    <path d="M6 7l1 13h10l1-13" />
+  </Base>
+);

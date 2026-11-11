@@ -1,5 +1,5 @@
 -- Tabelas do banco (MySQL 5.7+ ou MariaDB 10.3+), a partir de docs/modelo-de-dados.md.
--- O app cria estas tabelas sozinho na primeira vez que conecta num banco vazio.
+-- O app roda este arquivo toda vez que inicia (só cria o que ainda não existe).
 -- Para criar na mão: phpMyAdmin › Importar este arquivo.
 
 CREATE TABLE IF NOT EXISTS categorias (
@@ -81,4 +81,19 @@ CREATE TABLE IF NOT EXISTS campanha_doces (
   PRIMARY KEY (campanha_id, doce_id),
   CONSTRAINT fk_cd_campanha FOREIGN KEY (campanha_id) REFERENCES campanhas (id) ON DELETE CASCADE,
   CONSTRAINT fk_cd_doce FOREIGN KEY (doce_id) REFERENCES doces (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Quem pode entrar no painel (login com Google). papel: admin (tudo, inclusive
+-- acessos), equipe (doces, campanhas e quantidades) ou estoque (só quantidades).
+CREATE TABLE IF NOT EXISTS usuarios (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(190) NOT NULL,
+  nome VARCHAR(120) NOT NULL DEFAULT '',
+  foto VARCHAR(500) NULL,
+  papel ENUM('admin', 'equipe', 'estoque') NOT NULL DEFAULT 'equipe',
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  tutorial_visto TINYINT(1) NOT NULL DEFAULT 0,
+  criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ultimo_acesso TIMESTAMP NULL,
+  UNIQUE KEY usuarios_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

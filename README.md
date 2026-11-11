@@ -1,10 +1,10 @@
 # Mone Brigaderia: app vitrine
 
-App vitrine da Mone Brigaderia. A cliente vê os doces do dia, abre a ficha de cada um (descrição, glúten, lactose, composição) e faz a encomenda pelo WhatsApp. A dona controla tudo num painel com senha: o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda e campanhas como Natal e Páscoa.
+App vitrine da Mone Brigaderia. A cliente vê os doces do dia, abre a ficha de cada um (descrição, glúten, lactose, composição) e faz a encomenda pelo WhatsApp. A dona controla tudo num painel com login do Google: o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda, campanhas como Natal e Páscoa, e quem mais pode entrar no painel.
 
 ## Onde estamos
 
-O app está pronto para ir ao ar em **monebrigaderia.com.br**: grava no MySQL, o painel tem senha e o GitHub publica sozinho a cada push no `main`. Para a primeira publicação, siga [docs/publicar.md](docs/publicar.md).
+O app está pronto para ir ao ar em **monebrigaderia.com.br**: grava no MySQL, o painel entra com Google (cada pessoa com o seu papel) e o GitHub publica sozinho a cada push no `main`. Para a primeira publicação, siga [docs/publicar.md](docs/publicar.md).
 
 - **O que o app faz e as regras:** [docs/funcionalidades.md](docs/funcionalidades.md)
 - **O que vem depois:** [docs/proximos-passos.md](docs/proximos-passos.md)
@@ -22,18 +22,19 @@ npm run dev
 
 Abra http://localhost:3000.
 
-- **Sem MySQL** (deixe `MYSQL_DATABASE` vazio): o app usa os dados de exemplo e o painel abre sem senha, em modo demonstração.
-- **Com MySQL**: crie um banco vazio, preencha `MYSQL_*`, `PAINEL_SENHA` e `SESSAO_SEGREDO` no `.env.local`. Na primeira visita, o app cria as tabelas e carrega os doces de exemplo.
+- **Sem MySQL** (deixe `MYSQL_DATABASE` vazio): o app usa os dados de exemplo e o painel abre sem login, em modo demonstração.
+- **Com MySQL**: crie um banco vazio, preencha `MYSQL_*`, `SESSAO_SEGREDO`, `GOOGLE_CLIENT_*` e `ADMIN_EMAILS` no `.env.local`. Na primeira visita, o app cria as tabelas e carrega os doces de exemplo.
 
 | Endereço | Tela |
 | --- | --- |
 | `/` | Vitrine |
 | `/doce/palha-italiana` | Ficha do doce |
 | `/doce/caixa-presente-4` | Ficha de doce sob encomenda, com escolha de data |
-| `/entrar` | Entrada do painel |
+| `/entrar` | Entrada do painel (Entrar com Google) |
 | `/painel` | O que tem hoje e quantidades |
 | `/painel/doces/novo` | Cadastro de doce |
 | `/painel/campanhas` | Campanhas |
+| `/painel/acessos` | Quem pode entrar no painel e o que cada pessoa pode fazer |
 | `/balcao` | Tela para TV ou tablet na loja |
 
 Outros comandos: `npm run build` (versão de produção), `npm run lint` (verifica o código), `npm run banco:exemplo` (gera `banco/dados-exemplo.sql` a partir de `src/lib/dados-exemplo.ts`).
@@ -45,6 +46,8 @@ Outros comandos: `npm run build` (versão de produção), `npm run lint` (verifi
 | `src/app/` | Páginas (uma pasta por endereço) |
 | `src/app/painel/acoes.ts` | Ações que gravam no banco (Server Actions). Cada uma confere a sessão |
 | `src/proxy.ts` | Manda quem não entrou para `/entrar` |
+| `src/app/auth/google/` | Login com Google (OAuth com PKCE) |
+| `src/lib/auth.ts` e `src/lib/papeis.ts` | Quem está logado e o que cada papel (Administração, Equipe, Estoque) pode fazer |
 | `src/components/` | Partes das telas: vitrine, ficha, painel, balcão |
 | `src/lib/dados.ts` | Leitura dos dados (MySQL ou exemplos), com cache |
 | `src/lib/banco.ts` | Conexão com o MySQL; cria as tabelas num banco vazio |

@@ -5,7 +5,7 @@ import path from "node:path";
 import { updateTag } from "next/cache";
 import type { PoolConnection, RowDataPacket } from "mysql2/promise";
 import { HOJE_SQL, banco, bancoConfigurado } from "@/lib/banco";
-import { sessaoValida } from "@/lib/auth";
+import { pode, usuarioAtual, type Papel, type Usuario } from "@/lib/auth";
 import { TAG_CAMPANHAS, TAG_CARDAPIO } from "@/lib/dados";
 import { TAMANHO_MAXIMO_FOTO, TIPOS_DE_FOTO, pastaDeFotos } from "@/lib/fotos";
 import { TIPOS_CAMPANHA } from "@/lib/campanhas-modelo";
@@ -32,10 +32,17 @@ const ONDE: OndeAparece[] = ["ano_todo", "so_campanhas"];
 
 class Invalido extends Error {}
 
-async function autorizar(): Promise<Resultado | null> {
-  if (!bancoConfigurado()) return DEMO;
-  if (!(await sessaoValida())) return { ok: false, mensagem: "Sua sessão acabou. Entre de novo no painel." };
-  return null;
+type Autorizacao = { usuario: Usuario; bloqueio?: undefined } | { usuario?: undefined; bloqueio: Resultado };
+
+// Confere no banco quem está pedindo e se o papel dessa pessoa permite a ação.
+async function autorizar(minimo: Papel): Promise<Autorizacao> {
+  if (!bancoConfigurado()) return { bloqueio: DEMO };
+  const usuario = await usuarioAtual();
+  if (!usuario) return { bloqueio: { ok: false, mensagem: "Sua sessão acabou. Entre de novo no painel." } };
+  if (!pode(usuario, minimo)) {
+    return { bloqueio: { ok: false, mensagem: "Seu acesso não permite fazer isso. Fale com a administradora." } };
+  }
+  return { usuario };
 }
 
 async function emTransacao<T>(trabalho: (c: PoolConnection) => Promise<T>): Promise<T> {
@@ -87,7 +94,7 @@ async function idLivre(c: PoolConnection, tabela: "doces" | "campanhas", base: s
 
 // Quantidades do dia e doce em destaque.
 export async function salvarEstoque(quantidades: Record<string, number>, destaqueId: string | null): Promise<Resultado> {
-  const bloqueio = await autorizar();
+  const { usuario, bloqueio } = await autorizar("estoque");
   if (bloqueio) return bloqueio;
   try {
     await emTransacao(async (c) => {
@@ -101,7 +108,8 @@ export async function salvarEstoque(quantidades: Record<string, number>, destaqu
           [id, q],
         );
       }
-      if (destaqueId && existentes.has(destaqueId)) {
+      // Escolher o destaque da vitrine é para equipe e administradora.
+      if (destaqueId && existentes.has(destaqueId) && pode(usuario, "equipe")) {
         await c.query("UPDATE doces SET destaque = (id = ?)", [destaqueId]);
       }
     });
@@ -114,7 +122,7 @@ export async function salvarEstoque(quantidades: Record<string, number>, destaqu
 
 // Cria ou atualiza a ficha de um doce. Recebe FormData por causa da foto.
 export async function salvarDoce(dados: FormData): Promise<Resultado> {
-  const bloqueio = await autorizar();
+  const { bloqueio } = await autorizar("equipe");
   if (bloqueio) return bloqueio;
   try {
     const idAtual = textoOpcional(dados.get("id"), 80);
@@ -228,7 +236,7 @@ export interface DadosCampanha {
 }
 
 export async function salvarCampanha(dados: DadosCampanha): Promise<Resultado> {
-  const bloqueio = await autorizar();
+  const { bloqueio } = await autorizar("equipe");
   if (bloqueio) return bloqueio;
   try {
     if (!TIPOS_CAMPANHA.includes(dados.tipo)) throw new Invalido("Escolha a data da campanha.");
@@ -276,7 +284,7 @@ export async function salvarCampanha(dados: DadosCampanha): Promise<Resultado> {
 }
 
 export async function pausarCampanha(id: string, pausada: boolean): Promise<Resultado> {
-  const bloqueio = await autorizar();
+  const { bloqueio } = await autorizar("equipe");
   if (bloqueio) return bloqueio;
   try {
     const db = await banco();
@@ -286,4 +294,78 @@ export async function pausarCampanha(id: string, pausada: boolean): Promise<Resu
   } catch (erro) {
     return falha(erro);
   }
+}
+
+const PAPEIS: Papel[] = ["admin", "equipe", "estoque"];
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+async function outrasAdministradoras(c: PoolConnection, excetoId: number): Promise<number> {
+  const [linhas] = await c.query<RowDataPacket[]>(
+    "SELECT COUNT(*) AS total FROM usuarios WHERE papel = 'admin' AND ativo = 1 AND id <> ?",
+    [excetoId],
+  );
+  return Number(linhas[0].total);
+}
+
+// Dá acesso ao painel para um e-mail do Google.
+export async function adicionarAcesso(email: string, papel: Papel): Promise<Resultado> {
+  const { bloqueio } = await autorizar("admin");
+  if (bloqueio) return bloqueio;
+  try {
+    const limpo = String(email ?? "").trim().toLowerCase();
+    if (!EMAIL.test(limpo) || limpo.length > 190) throw new Invalido("Confira o e-mail.");
+    if (!PAPEIS.includes(papel)) throw new Invalido("Escolha o que a pessoa pode fazer.");
+    const db = await banco();
+    const [existe] = await db.query<RowDataPacket[]>("SELECT ativo FROM usuarios WHERE email = ?", [limpo]);
+    if (existe[0]?.ativo) throw new Invalido("Esse e-mail já tem acesso.");
+    await db.query(
+      "INSERT INTO usuarios (email, papel) VALUES (?, ?) ON DUPLICATE KEY UPDATE papel = VALUES(papel), ativo = 1",
+      [limpo, papel],
+    );
+    return { ok: true, mensagem: `Pronto! Peça para a pessoa entrar no painel com o Google usando ${limpo}.` };
+  } catch (erro) {
+    return falha(erro);
+  }
+}
+
+export async function mudarPapel(id: number, papel: Papel): Promise<Resultado> {
+  const { bloqueio } = await autorizar("admin");
+  if (bloqueio) return bloqueio;
+  try {
+    if (!PAPEIS.includes(papel)) throw new Invalido("Escolha o que a pessoa pode fazer.");
+    await emTransacao(async (c) => {
+      if (papel !== "admin" && (await outrasAdministradoras(c, id)) === 0) {
+        throw new Invalido("O painel precisa de pelo menos uma administradora.");
+      }
+      await c.query("UPDATE usuarios SET papel = ? WHERE id = ?", [papel, id]);
+    });
+    return { ok: true, mensagem: "Acesso atualizado." };
+  } catch (erro) {
+    return falha(erro);
+  }
+}
+
+export async function removerAcesso(id: number): Promise<Resultado> {
+  const { bloqueio } = await autorizar("admin");
+  if (bloqueio) return bloqueio;
+  try {
+    await emTransacao(async (c) => {
+      if ((await outrasAdministradoras(c, id)) === 0) {
+        const [alvo] = await c.query<RowDataPacket[]>("SELECT papel FROM usuarios WHERE id = ?", [id]);
+        if (alvo[0]?.papel === "admin") throw new Invalido("O painel precisa de pelo menos uma administradora.");
+      }
+      await c.query("DELETE FROM usuarios WHERE id = ?", [id]);
+    });
+    return { ok: true, mensagem: "Acesso removido. A pessoa não entra mais no painel." };
+  } catch (erro) {
+    return falha(erro);
+  }
+}
+
+// Não abre mais o tutorial sozinho para essa pessoa.
+export async function marcarTutorialVisto(): Promise<void> {
+  if (!bancoConfigurado()) return;
+  const usuario = await usuarioAtual();
+  if (!usuario) return;
+  await (await banco()).query("UPDATE usuarios SET tutorial_visto = 1 WHERE id = ?", [usuario.id]);
 }

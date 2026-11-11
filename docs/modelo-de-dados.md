@@ -98,6 +98,20 @@ Liga doces e campanhas (um doce pode estar em várias campanhas).
 | campanha_id | texto |
 | doce_id | texto |
 
+### usuarios
+
+Quem pode entrar no painel (login com Google).
+
+| Coluna | Tipo | Observação |
+| --- | --- | --- |
+| id | inteiro (automático) | |
+| email | texto, único | o mesmo da conta Google |
+| nome, foto | texto | vêm do Google no primeiro login |
+| papel | enum | admin, equipe, estoque |
+| ativo | booleano | |
+| tutorial_visto | booleano | o guia "Como usar" não abre mais sozinho |
+| ultimo_acesso | data e hora | |
+
 ## Consultas principais
 
 - **Vitrine de hoje:** doces ativos com `onde_aparece = ano_todo`, mais os doces `so_campanhas` que estão em alguma campanha no ar. Junta o `estoque_dia` de hoje.
