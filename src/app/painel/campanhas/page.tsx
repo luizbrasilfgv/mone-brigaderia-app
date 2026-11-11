@@ -1,10 +1,22 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
+import { Suspense } from "react";
 import { ListaCampanhas } from "@/components/painel/ListaCampanhas";
-import { listarCampanhas, listarDoces } from "@/lib/dados";
+import { bancoConfigurado } from "@/lib/banco";
+import { listarCampanhas, listarTodosDoces } from "@/lib/dados";
 
 export const metadata: Metadata = { title: "Campanhas" };
 
-export default async function PaginaCampanhas() {
-  const [campanhas, doces] = await Promise.all([listarCampanhas(), listarDoces()]);
-  return <ListaCampanhas campanhas={campanhas} doces={doces} />;
+export default function PaginaCampanhas() {
+  return (
+    <Suspense>
+      <Conteudo />
+    </Suspense>
+  );
+}
+
+async function Conteudo() {
+  await connection();
+  const [campanhas, doces] = await Promise.all([listarCampanhas(), listarTodosDoces()]);
+  return <ListaCampanhas campanhas={campanhas} doces={doces} demo={!bancoConfigurado()} />;
 }

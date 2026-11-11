@@ -42,3 +42,6 @@ next-env.d.ts
 
 # exemplo de variáveis de ambiente (sem segredos)
 !.env.example
+
+# fotos enviadas pelo painel quando roda localmente
+/uploads

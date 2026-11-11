@@ -26,8 +26,10 @@ Preços, sabores, quantidades e textos que aparecem no mockup são exemplos. Só
 
 ### Painel da dona
 
+Protegido por senha (`/entrar`). Tudo o que ela salva vai para o banco e aparece na vitrine na hora.
+
 - **O que tem hoje:** quantidade de cada doce no dia, com − e +. Escolha do destaque da vitrine. Totais de doces na vitrine, esgotados e unidades.
-- **Ficha do doce:** fotos, nome, preço, descrição, sabores, glúten e lactose (sim ou não), composição, conservação, selo, campanhas, sob encomenda com prazo de preparo, e quantidade de hoje. Mostra uma prévia de como o doce aparece na vitrine.
+- **Ficha do doce:** fotos, nome, preço, descrição, sabores, glúten e lactose (sim ou não), composição, conservação, selo, campanhas, sob encomenda com prazo de preparo, quantidade de hoje e se o doce está na vitrine. Mostra uma prévia de como o doce aparece na vitrine.
 - **Campanhas:** lista das campanhas no ar, próximas e encerradas. Criar e editar campanha:
   - datas prontas: Natal, Páscoa, Dia das Mães, Dia dos Namorados, Dia do Chocolate, Dia dos Pais, ou outra data qualquer;
   - nome, início, fim, último dia para encomendar, frase do banner, cor do banner;

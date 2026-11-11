@@ -1,12 +1,8 @@
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FichaDoce } from "@/components/ficha/FichaDoce";
-import { listarDoces, obterDoce } from "@/lib/dados";
-
-export async function generateStaticParams() {
-  const doces = await listarDoces();
-  return doces.map((d) => ({ id: d.id }));
-}
+import { obterDoce } from "@/lib/dados";
 
 export default function PaginaDoce({ params }: PageProps<"/doce/[id]">) {
   return (
@@ -17,8 +13,9 @@ export default function PaginaDoce({ params }: PageProps<"/doce/[id]">) {
 }
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
+  await connection();
   const { id } = await params;
   const doce = await obterDoce(id);
-  if (!doce) notFound();
+  if (!doce || !doce.ativo) notFound();
   return <FichaDoce doce={doce} />;
 }

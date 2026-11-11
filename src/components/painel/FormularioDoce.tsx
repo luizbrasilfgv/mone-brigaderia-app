@@ -1,14 +1,16 @@
 "use client";
 
 import Image from "next/image";
-import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition, type FormEvent } from "react";
 import type { Campanha, Categoria, Doce, OndeAparece, Selo } from "@/lib/tipos";
 import { useHoje } from "@/lib/hooks";
 import { estoqueDoDoce, formatarData, formatarPreco, situacaoCampanha, type SituacaoCampanha } from "@/lib/regras";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
 import { COR_ESTOQUE, COR_SELO, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
-import { AVISO_DEMO, CabecalhoPainel, Chave, Contador, useAviso } from "./comum";
+import { salvarDoce } from "@/app/painel/acoes";
+import { CabecalhoPainel, Chave, Contador, FaixaDemo, useAviso } from "./comum";
 
 const SELOS: { valor: Selo; nome: string }[] = [
   { valor: "nenhum", nome: "Nenhum" },
@@ -31,6 +33,22 @@ function centavos(texto: string): number {
 
 function juntar(nomes: string[]): string {
   return nomes.length <= 1 ? (nomes[0] ?? "") : `${nomes.slice(0, -1).join(", ")} e ${nomes.at(-1)}`;
+}
+
+// Reduz a foto no celular antes de enviar (lado maior com até 1600 px, em JPEG).
+async function reduzirFoto(arquivo: File): Promise<Blob> {
+  try {
+    const imagem = await createImageBitmap(arquivo);
+    const escala = Math.min(1, 1600 / Math.max(imagem.width, imagem.height));
+    const tela = document.createElement("canvas");
+    tela.width = Math.round(imagem.width * escala);
+    tela.height = Math.round(imagem.height * escala);
+    tela.getContext("2d")!.drawImage(imagem, 0, 0, tela.width, tela.height);
+    const blob = await new Promise<Blob | null>((ok) => tela.toBlob(ok, "image/jpeg", 0.85));
+    return blob ?? arquivo;
+  } catch {
+    return arquivo;
+  }
 }
 
 function SimNao({ valor, aoMudar, rotulo: nome }: { valor: boolean; aoMudar: (v: boolean) => void; rotulo: string }) {
@@ -58,13 +76,17 @@ export function FormularioDoce({
   doce,
   categorias,
   campanhas,
+  demo,
 }: {
   doce: Doce | null;
   categorias: Categoria[];
   campanhas: Campanha[];
+  demo: boolean;
 }) {
   const hoje = useHoje();
+  const router = useRouter();
   const [aviso, mostrarAviso] = useAviso();
+  const [salvando, iniciar] = useTransition();
   const [nome, setNome] = useState(doce?.nome ?? "");
   const [categoriaId, setCategoriaId] = useState(doce?.categoriaId ?? categorias[0]?.id ?? "");
   const [preco, setPreco] = useState(doce ? (doce.precoCentavos / 100).toFixed(2).replace(".", ",") : "");
@@ -82,7 +104,9 @@ export function FormularioDoce({
   const [sobEncomenda, setSobEncomenda] = useState(doce?.sobEncomenda ?? false);
   const [prazo, setPrazo] = useState(doce?.prazoDias ?? 2);
   const [quantidade, setQuantidade] = useState(doce?.quantidadeHoje ?? 0);
-  const [fotoNova, setFotoNova] = useState<string | null>(null);
+  const [fotoNova, setFotoNova] = useState<{ url: string; blob: Blob } | null>(null);
+  const [ativo, setAtivo] = useState(doce?.ativo ?? true);
+  const [preparandoFoto, setPreparandoFoto] = useState(false);
 
   const campanhasAtivas = campanhas.filter((c) => !hoje || situacaoCampanha(c, hoje) !== "encerrada");
   const nomesEscolhidos = campanhas.filter((c) => campanhaIds.includes(c.id)).map((c) => c.nome);
@@ -113,7 +137,7 @@ export function FormularioDoce({
     prazoDias: sobEncomenda ? prazo : null,
     ondeAparece: onde,
     destaque: doce?.destaque ?? false,
-    ativo: true,
+    ativo,
     quantidadeHoje: quantidade,
     sabores: sabores.map((s, i) => ({ id: String(i), nome: s })),
     fotos: fotoNova ? [] : (doce?.fotos ?? []),
@@ -131,12 +155,37 @@ export function FormularioDoce({
 
   function salvar(e: FormEvent) {
     e.preventDefault();
-    mostrarAviso(AVISO_DEMO);
+    const dados = new FormData();
+    dados.set("id", doce?.id ?? "");
+    dados.set("nome", nome);
+    dados.set("categoriaId", categoriaId);
+    dados.set("precoCentavos", String(centavos(preco)));
+    dados.set("unidade", unidade);
+    dados.set("descricao", descricao);
+    dados.set("sabores", JSON.stringify(sabores));
+    dados.set("contemGluten", contemGluten ? "1" : "0");
+    dados.set("contemLactose", contemLactose ? "1" : "0");
+    dados.set("composicao", composicao);
+    dados.set("conservacao", conservacao);
+    dados.set("selo", selo);
+    dados.set("ondeAparece", onde);
+    dados.set("campanhaIds", JSON.stringify(campanhaIds));
+    dados.set("sobEncomenda", sobEncomenda ? "1" : "0");
+    dados.set("prazoDias", String(prazo));
+    dados.set("quantidade", String(quantidade));
+    dados.set("ativo", ativo ? "1" : "0");
+    if (fotoNova) dados.set("foto", fotoNova.blob, "foto.jpg");
+    iniciar(async () => {
+      const resultado = await salvarDoce(dados);
+      mostrarAviso(resultado.mensagem, resultado.ok);
+      if (resultado.ok && resultado.id && !doce) router.replace(`/painel/doces/${resultado.id}`);
+    });
   }
 
   return (
     <form onSubmit={salvar} className="pb-28">
       {aviso}
+      <FaixaDemo demo={demo} />
       <CabecalhoPainel
         titulo={doce ? "Editar doce" : "Novo doce"}
         subtitulo="O que você escrever aqui aparece na vitrine"
@@ -149,7 +198,7 @@ export function FormularioDoce({
           <div className="flex gap-2.5">
             <div className="fundo-vitrine relative size-[104px] overflow-hidden rounded-[18px] border-2 border-dourado">
               {fotoNova ? (
-                <Image src={fotoNova} alt="Foto nova" fill unoptimized className="object-cover" />
+                <Image src={fotoNova.url} alt="Foto nova" fill unoptimized className="object-cover" />
               ) : (
                 <ImagemDoce doce={rascunho} tamanhos="104px" />
               )}
@@ -164,9 +213,14 @@ export function FormularioDoce({
                 type="file"
                 accept="image/*"
                 className="sr-only"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const arquivo = e.target.files?.[0];
-                  if (arquivo) setFotoNova(URL.createObjectURL(arquivo));
+                  if (!arquivo) return;
+                  setPreparandoFoto(true);
+                  const blob = await reduzirFoto(arquivo);
+                  if (fotoNova) URL.revokeObjectURL(fotoNova.url);
+                  setFotoNova({ url: URL.createObjectURL(blob), blob });
+                  setPreparandoFoto(false);
                 }}
               />
             </label>
@@ -414,12 +468,22 @@ export function FormularioDoce({
           </div>
         )}
 
+        <div className={cx(cartao, "flex items-center justify-between gap-3 py-3 pr-2 pl-4")}>
+          <div className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-[15px] font-semibold">Na vitrine</span>
+            <span className={cx("text-xs", ativo ? "text-menta" : "text-creme-400")}>
+              {ativo ? "Aparece para as clientes" : "Escondido: só aparece aqui no painel"}
+            </span>
+          </div>
+          <Chave ligada={ativo} aoMudar={() => setAtivo(!ativo)} rotulo="Doce na vitrine" />
+        </div>
+
         <div className="flex flex-col gap-2.5">
           <span className={rotulo}>Como aparece na vitrine</span>
           <div className={cx(cartao, "flex gap-3 rounded-[22px] p-2.5")}>
             <div className="fundo-vitrine relative size-24 shrink-0 overflow-hidden rounded-2xl">
               {fotoNova ? (
-                <Image src={fotoNova} alt="" fill unoptimized className="object-cover" />
+                <Image src={fotoNova.url} alt="" fill unoptimized className="object-cover" />
               ) : (
                 <ImagemDoce doce={rascunho} tamanhos="96px" />
               )}
@@ -454,8 +518,8 @@ export function FormularioDoce({
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-24 max-w-md items-center border-t border-dourado/14 bg-cacau-950/90 px-5 pt-3.5 pb-6 backdrop-blur-lg">
-        <button type="submit" className={botaoPrimario}>
-          Salvar ficha
+        <button type="submit" disabled={salvando || preparandoFoto} className={cx(botaoPrimario, "disabled:opacity-60")}>
+          {preparandoFoto ? "Preparando a foto…" : salvando ? "Salvando…" : "Salvar ficha"}
         </button>
       </div>
     </form>

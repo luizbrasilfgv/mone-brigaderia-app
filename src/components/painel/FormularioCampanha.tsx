@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useTransition, type FormEvent } from "react";
 import type { Campanha, Doce, TipoCampanha } from "@/lib/tipos";
 import { useHoje } from "@/lib/hooks";
 import { CORES_BANNER, TIPOS_CAMPANHA, sugestaoDeCampanha } from "@/lib/campanhas-modelo";
@@ -9,12 +10,14 @@ import { NOMES_CAMPANHA, formatarData } from "@/lib/regras";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
 import { botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
-import { CabecalhoPainel, useAviso } from "./comum";
+import { salvarCampanha } from "@/app/painel/acoes";
+import { CabecalhoPainel, FaixaDemo, useAviso } from "./comum";
 
 interface Props {
   campanha: Campanha | null;
   tipoInicial: TipoCampanha;
   doces: Doce[];
+  demo: boolean;
 }
 
 // As datas sugeridas dependem de hoje, que só se conhece no navegador.
@@ -26,8 +29,10 @@ export function FormularioCampanha(props: Props) {
   return <Formulario {...props} hoje={hoje} />;
 }
 
-function Formulario({ campanha, tipoInicial, doces, hoje }: Props & { hoje: string }) {
+function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje: string }) {
+  const router = useRouter();
   const [aviso, mostrarAviso] = useAviso();
+  const [salvando, iniciar] = useTransition();
   const sugestaoInicial = campanha ? null : sugestaoDeCampanha(tipoInicial, hoje);
   const [tipo, setTipo] = useState<TipoCampanha>(campanha?.tipo ?? tipoInicial);
   const [nome, setNome] = useState(campanha?.nome ?? sugestaoInicial?.nome ?? "");
@@ -53,11 +58,21 @@ function Formulario({ campanha, tipoInicial, doces, hoje }: Props & { hoje: stri
 
   function salvar(e: FormEvent) {
     e.preventDefault();
-    mostrarAviso(
-      inicio
-        ? `Modo demonstração: a campanha entraria no ar em ${formatarData(inicio)}, mas ainda não é salva no banco.`
-        : "Modo demonstração: a campanha ainda não é salva no banco.",
-    );
+    iniciar(async () => {
+      const resultado = await salvarCampanha({
+        id: campanha?.id ?? null,
+        tipo,
+        nome,
+        inicio,
+        fim,
+        limiteEncomenda: limite || null,
+        fraseBanner: frase,
+        cor,
+        docesIds,
+      });
+      mostrarAviso(resultado.mensagem, resultado.ok);
+      if (resultado.ok && resultado.id && !campanha) router.replace(`/painel/campanhas/${resultado.id}`);
+    });
   }
 
   const nomeDoTipo = tipo === "outra" ? "Campanha" : `Campanha de ${NOMES_CAMPANHA[tipo]}`;
@@ -66,6 +81,7 @@ function Formulario({ campanha, tipoInicial, doces, hoje }: Props & { hoje: stri
   return (
     <form onSubmit={salvar} className="pb-28">
       {aviso}
+      <FaixaDemo demo={demo} />
       <CabecalhoPainel
         titulo={campanha ? "Editar campanha" : "Nova campanha"}
         subtitulo="Só aparece na vitrine dentro do período"
@@ -257,8 +273,8 @@ function Formulario({ campanha, tipoInicial, doces, hoje }: Props & { hoje: stri
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-24 max-w-md items-center border-t border-dourado/14 bg-cacau-950/90 px-5 pt-3.5 pb-6 backdrop-blur-lg">
-        <button type="submit" className={botaoPrimario}>
-          Salvar campanha
+        <button type="submit" disabled={salvando} className={cx(botaoPrimario, "disabled:opacity-60")}>
+          {salvando ? "Salvando…" : "Salvar campanha"}
         </button>
       </div>
     </form>

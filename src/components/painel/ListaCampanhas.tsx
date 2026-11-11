@@ -8,7 +8,8 @@ import { MODELOS, proximoEvento } from "@/lib/campanhas-modelo";
 import { formatarData, formatarDiaMes, situacaoCampanha, type SituacaoCampanha } from "@/lib/regras";
 import { IconeMais } from "../Icones";
 import { cx, rotulo } from "../ui";
-import { AVISO_DEMO, CabecalhoPainel, Chave, useAviso } from "./comum";
+import { pausarCampanha } from "@/app/painel/acoes";
+import { CabecalhoPainel, Chave, FaixaDemo, useAviso } from "./comum";
 
 const ETIQUETA: Partial<Record<SituacaoCampanha, { texto: string; classe: string }>> = {
   agendada: { texto: "Agendada", classe: "border-menta/40 text-menta" },
@@ -42,7 +43,7 @@ function LinhaCampanha({ campanha, situacao, apagada }: { campanha: Campanha; si
   );
 }
 
-export function ListaCampanhas({ campanhas, doces }: { campanhas: Campanha[]; doces: Doce[] }) {
+export function ListaCampanhas({ campanhas, doces, demo }: { campanhas: Campanha[]; doces: Doce[]; demo: boolean }) {
   const hoje = useHoje();
   const [aviso, mostrarAviso] = useAviso();
   const [pausadas, setPausadas] = useState<Record<string, boolean>>({});
@@ -58,6 +59,7 @@ export function ListaCampanhas({ campanhas, doces }: { campanhas: Campanha[]; do
   return (
     <div className="pb-8">
       {aviso}
+      <FaixaDemo demo={demo} />
       <CabecalhoPainel titulo="Campanhas" subtitulo="Datas especiais que aparecem na vitrine" voltar="/painel" />
 
       <div className="flex flex-col gap-[22px] px-5 pt-3.5">
@@ -87,9 +89,11 @@ export function ListaCampanhas({ campanhas, doces }: { campanhas: Campanha[]; do
                     <Chave
                       ligada={noAr}
                       rotulo={`Campanha ${c.nome} no ar`}
-                      aoMudar={() => {
+                      aoMudar={async () => {
                         setPausadas((p) => ({ ...p, [c.id]: noAr }));
-                        mostrarAviso(AVISO_DEMO);
+                        const resultado = await pausarCampanha(c.id, noAr);
+                        mostrarAviso(resultado.mensagem, resultado.ok);
+                        if (!resultado.ok) setPausadas((p) => ({ ...p, [c.id]: !noAr }));
                       }}
                     />
                   </div>

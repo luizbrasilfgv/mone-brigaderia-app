@@ -1,0 +1,90 @@
+# Verifica o código e publica o app no servidor a cada push no main.
+# Configuração (uma vez só): docs/publicar.md
+
+name: Publicar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: publicar-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    env:
+      # Só publica no push do main e se os acessos do servidor estiverem cadastrados.
+      PUBLICAR: ${{ github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && secrets.FTP_SENHA != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verificar o código
+        run: npm run lint
+
+      - name: Compilar
+        run: npm run build
+        env:
+          # Vai dentro do app (aparece no navegador), por isso entra na hora de compilar.
+          NEXT_PUBLIC_WHATSAPP_NUMERO: ${{ vars.WHATSAPP_NUMERO }}
+
+      - name: Montar a pasta para o servidor
+        run: |
+          mkdir -p publicar/.next publicar/tmp
+          cp -r .next/standalone/. publicar/
+          cp -r .next/static publicar/.next/static
+          cp -r public publicar/public
+          cp deploy/app.js publicar/app.js
+          # Mudar este arquivo faz a hospedagem (Passenger) reiniciar o app.
+          date -u +%Y-%m-%dT%H:%M:%SZ > publicar/tmp/restart.txt
+
+      - name: Escrever as configurações do servidor
+        if: env.PUBLICAR == 'true'
+        env:
+          FTP_USUARIO: ${{ secrets.FTP_USUARIO }}
+          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
+          PAINEL_SENHA: ${{ secrets.PAINEL_SENHA }}
+          SESSAO_SEGREDO: ${{ secrets.SESSAO_SEGREDO }}
+          UPLOAD_DIR: ${{ vars.UPLOAD_DIR }}
+        run: |
+          umask 077
+          {
+            echo "MYSQL_HOST=${MYSQL_HOST:-localhost}"
+            echo "MYSQL_USER=$MYSQL_USER"
+            echo "MYSQL_PASSWORD=$MYSQL_PASSWORD"
+            echo "MYSQL_DATABASE=$MYSQL_DATABASE"
+            echo "PAINEL_SENHA=$PAINEL_SENHA"
+            echo "SESSAO_SEGREDO=$SESSAO_SEGREDO"
+            # Fora da pasta do app, para as fotos não sumirem a cada publicação.
+            echo "UPLOAD_DIR=${UPLOAD_DIR:-/home/$FTP_USUARIO/mone-fotos}"
+          } > publicar/.env
+
+      - name: Enviar para o servidor (FTPS)
+        if: env.PUBLICAR == 'true'
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVIDOR }}
+          username: ${{ secrets.FTP_USUARIO }}
+          password: ${{ secrets.FTP_SENHA }}
+          protocol: ftps
+          # O certificado do FTP da hospedagem costuma ser do nome do servidor, não do domínio.
+          security: loose
+          local-dir: ./publicar/
+          server-dir: ${{ vars.PASTA_DO_APP || 'mone-app' }}/
+          # O padrão da action pula node_modules, mas o servidor do Next.js precisa dela.
+          exclude: |
+            **/.git*
+            **/.git*/**

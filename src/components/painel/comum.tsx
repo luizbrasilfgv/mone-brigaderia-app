@@ -2,31 +2,46 @@
 
 import Link from "next/link";
 import { useRef, useState, type ReactNode } from "react";
-import { IconeCheck, IconeMais, IconeMenos, IconeVoltar } from "../Icones";
+import { IconeAlerta, IconeCheck, IconeMais, IconeMenos, IconeVoltar } from "../Icones";
 import { botaoRedondo, cx } from "../ui";
 
 // Aviso que aparece no topo por alguns segundos.
-export function useAviso(): [ReactNode, (texto: string) => void] {
-  const [texto, setTexto] = useState<string | null>(null);
+export function useAviso(): [ReactNode, (texto: string, deuCerto?: boolean) => void] {
+  const [aviso, setAviso] = useState<{ texto: string; deuCerto: boolean } | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const mostrar = (novo: string) => {
-    setTexto(novo);
+  const mostrar = (texto: string, deuCerto = true) => {
+    setAviso({ texto, deuCerto });
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setTexto(null), 3000);
+    timer.current = setTimeout(() => setAviso(null), deuCerto ? 3500 : 6000);
   };
-  const elemento = texto ? (
+  const elemento = aviso ? (
     <div
-      role="status"
-      className="fixed inset-x-5 top-[18px] z-50 mx-auto flex max-w-[calc(28rem-2.5rem)] animate-entra items-center gap-2.5 rounded-[18px] bg-pessego px-4 py-3.5 text-sm font-bold text-cacau-900 shadow-2xl"
+      role={aviso.deuCerto ? "status" : "alert"}
+      className={cx(
+        "fixed inset-x-5 top-[18px] z-50 mx-auto flex max-w-[calc(28rem-2.5rem)] animate-entra items-center gap-2.5 rounded-[18px] px-4 py-3.5 text-sm font-bold shadow-2xl",
+        aviso.deuCerto ? "bg-pessego text-cacau-900" : "bg-rosa text-cacau-950",
+      )}
     >
-      <IconeCheck tamanho={20} className="shrink-0 text-[#2F7A3E]" />
-      {texto}
+      {aviso.deuCerto ? (
+        <IconeCheck tamanho={20} className="shrink-0 text-[#2F7A3E]" />
+      ) : (
+        <IconeAlerta tamanho={20} className="shrink-0" />
+      )}
+      {aviso.texto}
     </div>
   ) : null;
   return [elemento, mostrar];
 }
 
-export const AVISO_DEMO = "Modo demonstração: a alteração aparece aqui, mas ainda não é salva no banco.";
+// Faixa no topo do painel quando o banco não está configurado.
+export function FaixaDemo({ demo }: { demo: boolean }) {
+  if (!demo) return null;
+  return (
+    <p className="bg-pessego px-5 py-2 text-center text-xs font-semibold text-cacau-900">
+      Painel em modo demonstração: as alterações não ficam salvas.
+    </p>
+  );
+}
 
 export function CabecalhoPainel({
   titulo,

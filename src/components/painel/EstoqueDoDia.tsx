@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import type { Campanha, Doce } from "@/lib/tipos";
 import { LOJA } from "@/lib/loja";
 import { useHoje } from "@/lib/hooks";
@@ -10,26 +10,31 @@ import { campanhasNoAr, estoqueDoDoce, formatarDiaMes, formatarPreco } from "@/l
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeCalendario, IconeEstrela, IconeMais, IconeRelogio, IconeSeta } from "../Icones";
 import { COR_ESTOQUE, botaoPrimario, cartao, cx } from "../ui";
-import { AVISO_DEMO, Contador, useAviso } from "./comum";
+import { salvarEstoque } from "@/app/painel/acoes";
+import { sair } from "@/app/entrar/acoes";
+import { Contador, FaixaDemo, useAviso } from "./comum";
 
-export function EstoqueDoDia({ doces, campanhas }: { doces: Doce[]; campanhas: Campanha[] }) {
+export function EstoqueDoDia({ doces, campanhas, demo }: { doces: Doce[]; campanhas: Campanha[]; demo: boolean }) {
   const hoje = useHoje();
   const [aviso, mostrarAviso] = useAviso();
+  const [salvando, iniciar] = useTransition();
   const [quantidades, setQuantidades] = useState<Record<string, number>>(() =>
     Object.fromEntries(doces.map((d) => [d.id, d.quantidadeHoje])),
   );
   const [destaqueId, setDestaqueId] = useState(doces.find((d) => d.destaque)?.id);
 
   const comQuantidade = doces.map((d) => ({ ...d, quantidadeHoje: quantidades[d.id] ?? 0 }));
-  const naVitrine = comQuantidade.filter((d) => estoqueDoDoce(d).disponivel).length;
-  const esgotados = comQuantidade.length - naVitrine;
-  const unidades = comQuantidade.filter((d) => !d.sobEncomenda).reduce((t, d) => t + d.quantidadeHoje, 0);
+  const ativos = comQuantidade.filter((d) => d.ativo);
+  const naVitrine = ativos.filter((d) => estoqueDoDoce(d).disponivel).length;
+  const esgotados = ativos.length - naVitrine;
+  const unidades = ativos.filter((d) => !d.sobEncomenda).reduce((t, d) => t + d.quantidadeHoje, 0);
   const destaque = doces.find((d) => d.id === destaqueId);
   const campanha = hoje ? campanhasNoAr(campanhas, hoje)[0] : undefined;
 
   return (
     <div className="pb-8">
       {aviso}
+      <FaixaDemo demo={demo} />
       <header className="flex items-center gap-3 px-5 pt-[18px] pb-1.5">
         <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={44} height={44} className="rounded-full" />
         <div className="flex min-w-0 grow flex-col gap-0.5">
@@ -42,6 +47,13 @@ export function EstoqueDoDia({ doces, campanhas }: { doces: Doce[]; campanhas: C
         >
           Ver vitrine
         </Link>
+        {!demo && (
+          <form action={sair}>
+            <button type="submit" className="h-11 px-1 text-[13px] font-semibold text-creme-400">
+              Sair
+            </button>
+          </form>
+        )}
       </header>
 
       <div className="flex flex-col gap-4 px-5 pt-3.5">
@@ -103,7 +115,10 @@ export function EstoqueDoDia({ doces, campanhas }: { doces: Doce[]; campanhas: C
             const estoque = estoqueDoDoce(doce);
             const ehDestaque = doce.id === destaqueId;
             return (
-              <li key={doce.id} className="flex flex-col gap-1 rounded-[18px] border border-dourado/10 bg-cacau-900 p-2 pb-1.5">
+              <li
+                key={doce.id}
+                className={cx("flex flex-col gap-1 rounded-[18px] border border-dourado/10 bg-cacau-900 p-2 pb-1.5", !doce.ativo && "opacity-60")}
+              >
                 <div className="flex items-center gap-1">
                   <Link href={`/painel/doces/${doce.id}`} className="flex min-w-0 grow items-center gap-2.5">
                     <div className="fundo-vitrine size-14 shrink-0 overflow-hidden rounded-xl">
@@ -111,8 +126,9 @@ export function EstoqueDoDia({ doces, campanhas }: { doces: Doce[]; campanhas: C
                     </div>
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <span className="text-sm leading-tight font-semibold">{doce.nome}</span>
-                      <span className={cx("text-xs", COR_ESTOQUE[estoque.tom])}>
-                        {formatarPreco(doce.precoCentavos)} · {doce.sobEncomenda ? "Sob encomenda" : estoque.texto}
+                      <span className={cx("text-xs", doce.ativo ? COR_ESTOQUE[estoque.tom] : "text-creme-400")}>
+                        {formatarPreco(doce.precoCentavos)} ·{" "}
+                        {!doce.ativo ? "Fora da vitrine" : doce.sobEncomenda ? "Sob encomenda" : estoque.texto}
                       </span>
                     </div>
                   </Link>
@@ -151,8 +167,18 @@ export function EstoqueDoDia({ doces, campanhas }: { doces: Doce[]; campanhas: C
           })}
         </ul>
 
-        <button type="button" onClick={() => mostrarAviso(AVISO_DEMO)} className={botaoPrimario}>
-          Salvar o dia
+        <button
+          type="button"
+          disabled={salvando}
+          onClick={() =>
+            iniciar(async () => {
+              const resultado = await salvarEstoque(quantidades, destaqueId ?? null);
+              mostrarAviso(resultado.mensagem, resultado.ok);
+            })
+          }
+          className={cx(botaoPrimario, "disabled:opacity-60")}
+        >
+          {salvando ? "Salvando…" : "Salvar o dia"}
         </button>
       </div>
     </div>

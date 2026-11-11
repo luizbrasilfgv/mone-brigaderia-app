@@ -1,15 +1,12 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FormularioCampanha } from "@/components/painel/FormularioCampanha";
-import { listarCampanhas, listarDoces, obterCampanha } from "@/lib/dados";
+import { bancoConfigurado } from "@/lib/banco";
+import { listarTodosDoces, obterCampanha } from "@/lib/dados";
 
 export const metadata: Metadata = { title: "Editar campanha" };
-
-export async function generateStaticParams() {
-  const campanhas = await listarCampanhas();
-  return campanhas.map((c) => ({ id: c.id }));
-}
 
 export default function PaginaEditarCampanha({ params }: PageProps<"/painel/campanhas/[id]">) {
   return (
@@ -20,8 +17,17 @@ export default function PaginaEditarCampanha({ params }: PageProps<"/painel/camp
 }
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
+  await connection();
   const { id } = await params;
-  const [campanha, doces] = await Promise.all([obterCampanha(id), listarDoces()]);
+  const [campanha, doces] = await Promise.all([obterCampanha(id), listarTodosDoces()]);
   if (!campanha) notFound();
-  return <FormularioCampanha campanha={campanha} tipoInicial={campanha.tipo} doces={doces} />;
+  return (
+    <FormularioCampanha
+      key={campanha.id}
+      campanha={campanha}
+      tipoInicial={campanha.tipo}
+      doces={doces}
+      demo={!bancoConfigurado()}
+    />
+  );
 }

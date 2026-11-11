@@ -1,6 +1,6 @@
 # Modelo de dados (proposta)
 
-Ponto de partida para o banco, tirado das telas do mockup. A versão pronta para rodar está em [`supabase/schema.sql`](../supabase/schema.sql). Valores em dinheiro ficam em centavos para evitar erro de arredondamento. Doces, categorias e campanhas usam um id em texto (ex.: `palha-italiana`), que também aparece no endereço da página.
+Ponto de partida para o banco, tirado das telas do mockup. A versão pronta para rodar no MySQL está em [`banco/schema.sql`](../banco/schema.sql); o app cria as tabelas sozinho num banco vazio. Valores em dinheiro ficam em centavos para evitar erro de arredondamento. Doces, categorias e campanhas usam um id em texto (ex.: `palha-italiana`), que também aparece no endereço da página.
 
 ```mermaid
 erDiagram
@@ -42,13 +42,15 @@ erDiagram
 | onde_aparece | enum | ano_todo, so_campanhas |
 | destaque | booleano | só um doce em destaque por vez |
 | ativo | booleano | esconder sem apagar |
+| ordem | inteiro | ordem na vitrine |
+| ilustracao | texto, opcional | desenho provisório (ex.: `pote:morango`) enquanto não há foto |
 | criado_em, atualizado_em | data e hora | |
 
 ### sabores
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
-| id | uuid | |
+| id | inteiro (automático) | |
 | doce_id | texto | |
 | nome | texto | Tradicional, Ninho... |
 | preco_centavos | inteiro, opcional | vazio = mesmo preço do doce |
@@ -58,14 +60,14 @@ erDiagram
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
-| id | uuid | |
+| id | inteiro (automático) | |
 | doce_id | texto | |
-| caminho | texto | arquivo no storage |
+| caminho | texto | arquivo em `UPLOAD_DIR` (servido em `/fotos/<nome>`) |
 | ordem | inteiro | a de menor ordem é a principal |
 
 ### estoque_dia
 
-Uma linha por doce e por dia guarda o histórico do que foi produzido.
+Uma linha por doce e por dia guarda o histórico do que foi produzido. Vale a linha mais recente: se a dona não atualizar num dia, continua valendo a quantidade do último dia salvo.
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
