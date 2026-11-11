@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Painel da loja</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=Manrope:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#E6C48E}a:hover{color:#F3DCC8}
+button{font-family:inherit}
+.rolagem{scrollbar-width:none}
+.rolagem::-webkit-scrollbar{display:none}
+.toque{transition:transform .15s}
+.toque:active{transform:scale(.94)}
+@media (prefers-reduced-motion: reduce){.toque{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #1C0D08; color: #F7ECDD; font-family: 'Manrope', system-ui, sans-serif;">
+<div class="rolagem" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow-y: auto;">
+
+<header style="display: flex; align-items: center; gap: 12px; padding: 18px 20px 6px;">
+<img src="/_blob/d32516666993b22f80ceebff9673701f" alt="Logo da Mone Brigaderia" style="width: 44px; height: 44px; border-radius: 50%; display: block; flex-shrink: 0;">
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+<span style="font-size: 12px; color: #B09780;">Mone Brigaderia</span>
+<h1 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: #F7ECDD;">Painel da loja</h1>
+</div>
+<a href="Main.dc.html" class="toque" style="height: 44px; padding: 0 14px; box-sizing: border-box; border-radius: 999px; display: flex; align-items: center; border: 1px solid rgba(232,204,154,0.3); color: #E6C48E; font-size: 13px; font-weight: 700; text-decoration: none;">Ver vitrine</a>
+</header>
+
+<div style="display: flex; flex-direction: column; gap: 16px; padding: 14px 20px 28px;">
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 20px; background: #2A140D; border: 1px solid rgba(232,204,154,0.12);">
+<span style="font-size: 12px; color: #B09780;">Doces na vitrine</span>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 34px; font-weight: 600; color: #9ED6A0;">{{nDisp}}</span>
+<span style="font-size: 12px; color: #B09780;">{{nEsgTxt}}</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 20px; background: #2A140D; border: 1px solid rgba(232,204,154,0.12);">
+<span style="font-size: 12px; color: #B09780;">Unidades hoje</span>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 34px; font-weight: 600; color: #F7ECDD;">{{total}}</span>
+<span style="font-size: 12px; color: #B09780;">somando todos os doces</span>
+</div>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 20px; background: #3A1D13; border: 1px solid rgba(232,204,154,0.2);">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="#E6C48E" stroke="#E6C48E" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+<span style="font-size: 12px; color: #B09780;">Destaque da vitrine</span>
+<span style="font-size: 15px; font-weight: 700; color: #F7ECDD;">{{destaqueNome}}</span>
+</div>
+</div>
+
+<a href="AdminCampanhas.dc.html" class="toque" style="display: flex; align-items: center; gap: 12px; padding: 14px 12px 14px 16px; border-radius: 20px; background: #7A1F1F; border: 1px solid rgba(232,204,154,0.25); color: #FFF4E6; text-decoration: none;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F0CF98" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+<span style="font-size: 12px; color: #F6DCCB;">Campanhas</span>
+<span style="font-size: 15px; font-weight: 700;">Natal Mone · ativa até 24/12</span>
+</div>
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 5 7 7-7 7"></path></svg>
+</a>
+
+<a href="AdminEditar.dc.html" class="toque" style="height: 52px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #E6C48E; color: #2A140D; font-size: 15px; font-weight: 700; text-decoration: none;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+Cadastrar novo doce
+</a>
+
+<div style="display: flex; flex-direction: column; gap: 4px; margin-top: 6px;">
+<h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: #F7ECDD;">O que tem hoje</h2>
+<p style="margin: 0; font-size: 13px; line-height: 1.45; color: #B09780;">Informe quantas unidades tem de cada doce. Chegou a zero, ele aparece como esgotado. Doce sob encomenda não tem quantidade. Toque no doce para editar a ficha.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<sc-for list="{{lista}}" as="d" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 8px 6px; border-radius: 18px; background: #2A140D; border: 1px solid rgba(232,204,154,0.1);">
+<div style="display: flex; align-items: center; gap: 4px;">
+<a href="AdminEditar.dc.html" aria-label="Editar ficha: {{d.nome}}" style="flex-grow: 1; min-width: 0; display: flex; align-items: center; gap: 10px; color: #F7ECDD; text-decoration: none;">
+<div style="width: 56px; height: 56px; flex-shrink: 0; border-radius: 12px; overflow: hidden; background: radial-gradient(120% 90% at 50% 15%, #F8F5F2 0%, #E0D9D2 78%);">
+<dc-import name="Doce" kind="{{d.kind}}" sabor="{{d.sabor}}" hint-size="56px,56px"></dc-import>
+</div>
+<div style="flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 14px; font-weight: 600; line-height: 1.25;">{{d.nome}}</span>
+<span style="font-size: 12px; color: {{d.estadoCor}};">{{d.preco}} · {{d.estado}}</span>
+</div>
+</a>
+<button type="button" class="toque" aria-label="{{d.estrelaLabel}}" aria-pressed="{{d.estrelaPressed}}" onClick="{{d.destacar}}" style="width: 44px; height: 44px; flex-shrink: 0; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="{{d.estrelaFill}}" stroke="{{d.estrelaCor}}" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3z"></path></svg>
+</button>
+</div>
+<sc-if value="{{d.encomenda}}" hint-placeholder-val="{{false}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding-left: 66px;">
+<span style="font-size: 12px; color: #B09780;">Feito só quando pedem</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; background: rgba(243,220,200,0.12); border: 1px solid rgba(243,220,200,0.35); color: #F3DCC8; font-size: 12px; font-weight: 700;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>{{d.encomendaTxt}}</span>
+</div>
+</sc-if>
+<sc-if value="{{d.comum}}" hint-placeholder-val="{{true}}">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-left: 66px;">
+<span style="font-size: 12px; color: #B09780;">Quantidade hoje</span>
+<div role="group" aria-label="{{d.grupoLabel}}" style="display: flex; align-items: center; height: 44px; border-radius: 999px; border: 1px solid rgba(232,204,154,0.22);">
+<button type="button" class="toque" aria-label="{{d.menosLabel}}" onClick="{{d.menos}}" style="width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #F7ECDD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+</button>
+<span aria-live="polite" style="min-width: 30px; text-align: center; font-size: 16px; font-weight: 700; color: {{d.qtdCor}};">{{d.qtd}}</span>
+<button type="button" class="toque" aria-label="{{d.maisLabel}}" onClick="{{d.mais}}" style="width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #F7ECDD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const qtds = s.qtds || { 'palha': 12, 'brig-trad': 30, 'pote-morango': 6, 'brig-ninho': 3, 'pote-prestigio': 8, 'caixa': 5, 'pote-maracuja': 0 };
+    const dest = s.dest || 'palha';
+    const doces = [
+      { id: 'palha', nome: 'Palha italiana', kind: 'palha', sabor: 'morango', preco: 'R$ 9,00' },
+      { id: 'brig-trad', nome: 'Brigadeiro tradicional', kind: 'brigadeiro', sabor: 'chocolate', preco: 'R$ 3,50' },
+      { id: 'pote-morango', nome: 'Bolo de pote Ninho com morango', kind: 'pote', sabor: 'morango', preco: 'R$ 16,00' },
+      { id: 'brig-ninho', nome: 'Brigadeiro de Ninho', kind: 'brigadeiro', sabor: 'ninho', preco: 'R$ 3,50' },
+      { id: 'pote-prestigio', nome: 'Bolo de pote Prestígio', kind: 'pote', sabor: 'prestigio', preco: 'R$ 15,00' },
+      { id: 'caixa', nome: 'Caixa presente com 4 brigadeiros', kind: 'caixa', sabor: 'sortido', preco: 'R$ 16,00', encomenda: true, prazo: '2 dias' },
+      { id: 'pote-maracuja', nome: 'Bolo de pote Maracujá', kind: 'pote', sabor: 'maracuja', preco: 'R$ 15,00' }
+    ];
+    const lista = doces.map((d) => {
+      const q = qtds[d.id] || 0;
+      const estrela = dest === d.id;
+      return {
+        ...d,
+        qtd: String(q),
+        qtdCor: q > 0 ? '#F7ECDD' : '#B09780',
+        estado: d.encomenda ? 'Sob encomenda' : q > 3 ? 'Na vitrine' : q > 0 ? 'Só restam ' + q : 'Esgotado',
+        estadoCor: d.encomenda ? '#F3DCC8' : q > 3 ? '#9ED6A0' : q > 0 ? '#F2A7A0' : '#B09780',
+        encomenda: !!d.encomenda,
+        comum: !d.encomenda,
+        encomendaTxt: 'Pronto em ' + (d.prazo || ''),
+        grupoLabel: 'Quantidade hoje: ' + d.nome,
+        menosLabel: 'Diminuir quantidade: ' + d.nome,
+        maisLabel: 'Aumentar quantidade: ' + d.nome,
+        menos: () => this.setState({ qtds: { ...qtds, [d.id]: Math.max(0, q - 1) } }),
+        mais: () => this.setState({ qtds: { ...qtds, [d.id]: Math.min(999, q + 1) } }),
+        estrelaFill: estrela ? '#E6C48E' : 'none',
+        estrelaCor: estrela ? '#E6C48E' : '#B09780',
+        estrelaPressed: estrela ? 'true' : 'false',
+        estrelaLabel: 'Colocar em destaque: ' + d.nome,
+        destacar: () => this.setState({ dest: d.id })
+      };
+    });
+    const nDisp = doces.filter((d) => d.encomenda || (qtds[d.id] || 0) > 0).length;
+    const nEsg = doces.length - nDisp;
+    const total = doces.reduce((t, d) => t + (qtds[d.id] || 0), 0);
+    return {
+      lista,
+      nDisp: String(nDisp),
+      nEsgTxt: nEsg === 0 ? 'nenhum esgotado' : nEsg === 1 ? '1 esgotado' : nEsg + ' esgotados',
+      total: String(total),
+      destaqueNome: (doces.find((d) => d.id === dest) || doces[0]).nome
+    };
+  }
+}
+</script>
+</body>
+</html>

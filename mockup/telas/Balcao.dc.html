@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Modo balcão</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=Manrope:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#E6C48E}a:hover{color:#F3DCC8}
+button{font-family:inherit}
+.entra{animation:entra .7s cubic-bezier(.2,.8,.2,1)}
+@keyframes entra{from{opacity:0;transform:scale(.94) translateY(12px)}to{opacity:1;transform:none}}
+.pulsa{animation:pulsa 1.8s ease-out infinite}
+@keyframes pulsa{0%{box-shadow:0 0 0 0 rgba(158,214,160,0.55)}100%{box-shadow:0 0 0 8px rgba(158,214,160,0)}}
+.barra{transition:width .3s cubic-bezier(.2,.8,.2,1),background-color .3s}
+@media (prefers-reduced-motion: reduce){.entra,.pulsa{animation:none}.barra{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 720px; overflow: hidden; background: #1C0D08; color: #F7ECDD; font-family: 'Manrope', system-ui, sans-serif;">
+<div aria-hidden="true" style="position: absolute; left: -120px; top: -20px; width: 840px; height: 760px; border-radius: 50%; background: radial-gradient(closest-side, rgba(230,196,142,0.20), rgba(230,196,142,0));"></div>
+
+<sc-if value="{{par}}" hint-placeholder-val="{{true}}">
+<div class="entra" style="position: absolute; left: 96px; top: 100px; width: 500px; height: 500px; border-radius: 44px; overflow: hidden; border: 4px solid #F3DCC8; background: radial-gradient(120% 90% at 50% 15%, #F8F5F2 0%, #E0D9D2 78%); box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
+<dc-import name="Doce" kind="{{d.kind}}" sabor="{{d.sabor}}" hint-size="500px,500px"></dc-import>
+</div>
+</sc-if>
+<sc-if value="{{impar}}" hint-placeholder-val="{{false}}">
+<div class="entra" style="position: absolute; left: 96px; top: 100px; width: 500px; height: 500px; border-radius: 44px; overflow: hidden; border: 4px solid #F3DCC8; background: radial-gradient(120% 90% at 50% 15%, #F8F5F2 0%, #E0D9D2 78%); box-shadow: 0 40px 80px rgba(0,0,0,0.5);">
+<dc-import name="Doce" kind="{{d.kind}}" sabor="{{d.sabor}}" hint-size="500px,500px"></dc-import>
+</div>
+</sc-if>
+
+<div style="position: absolute; left: 680px; top: 88px; width: 520px; display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; align-items: center; gap: 14px;">
+<img src="/_blob/d32516666993b22f80ceebff9673701f" alt="Logo da Mone Brigaderia" style="width: 56px; height: 56px; border-radius: 50%; display: block;">
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #E6C48E;">Mone Brigaderia</span>
+</div>
+<span style="display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #9ED6A0;"><span class="pulsa" style="width: 8px; height: 8px; border-radius: 50%; background: #9ED6A0;"></span>Na vitrine agora</span>
+<h1 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 58px; font-weight: 600; line-height: 1.02; color: #F7ECDD;">{{d.nome}}</h1>
+<p style="margin: 0; max-width: 480px; font-size: 22px; line-height: 1.45; color: #D9C3A8;">{{d.desc}}</p>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 52px; font-weight: 600; color: #E6C48E;">{{d.preco}}</span>
+</div>
+
+<div style="position: absolute; left: 680px; bottom: 52px; width: 536px; height: 120px; box-sizing: border-box; padding: 16px; border-radius: 26px; display: flex; align-items: center; gap: 20px; background: rgba(247,236,221,0.06); border: 1px solid rgba(232,204,154,0.18); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);">
+<div role="img" aria-label="QR Code do cardápio (exemplo)" style="position: relative; width: 88px; height: 88px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: repeating-conic-gradient(#1C0D08 0 25%, #F7ECDD 0 50%) 0 0 / 11px 11px; box-shadow: 0 0 0 6px #F7ECDD;">
+<span style="position: absolute; left: 0; top: 0; width: 26px; height: 26px; box-sizing: border-box; border: 6px solid #1C0D08; background: #F7ECDD; box-shadow: 0 0 0 3px #F7ECDD;"></span>
+<span style="position: absolute; right: 0; top: 0; width: 26px; height: 26px; box-sizing: border-box; border: 6px solid #1C0D08; background: #F7ECDD; box-shadow: 0 0 0 3px #F7ECDD;"></span>
+<span style="position: absolute; left: 0; bottom: 0; width: 26px; height: 26px; box-sizing: border-box; border: 6px solid #1C0D08; background: #F7ECDD; box-shadow: 0 0 0 3px #F7ECDD;"></span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #F7ECDD;">Peça pelo celular</span>
+<span style="font-size: 15px; line-height: 1.4; color: #D9C3A8;">Aponte a câmera, escolha seus doces e mande o pedido no WhatsApp 98063-1673.</span>
+</div>
+</div>
+
+<div role="group" aria-label="Escolher doce" style="position: absolute; left: 92px; bottom: 44px; display: flex; align-items: center;">
+<sc-for list="{{pontos}}" as="p" hint-placeholder-count="6">
+<button type="button" aria-label="{{p.label}}" aria-pressed="{{p.pressed}}" onClick="{{p.pick}}" style="height: 44px; padding: 0 4px; border: 0; background: transparent; display: flex; align-items: center; cursor: pointer;">
+<span class="barra" style="display: block; width: {{p.largura}}; height: 6px; border-radius: 3px; background: {{p.cor}};"></span>
+</button>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"segundos":{"editor":"int","default":5,"min":2,"max":15,"unit":"s"},"$preview":{"width":1280,"height":720}}'>
+class Component extends DCLogic {
+  componentDidMount() {
+    const seg = Math.max(2, Number(this.props.segundos ?? 5));
+    this.timer = setInterval(() => {
+      const s = this.state || {};
+      this.setState({ i: ((s.i || 0) + 1) % 6 });
+    }, seg * 1000);
+  }
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+  renderVals() {
+    const s = this.state || {};
+    const doces = [
+      { nome: 'Palha italiana', kind: 'palha', sabor: 'morango', preco: 'R$ 9,00', desc: 'Brigadeiro com biscoito, finalizado no açúcar de confeiteiro.' },
+      { nome: 'Bolo de pote Ninho com morango', kind: 'pote', sabor: 'morango', preco: 'R$ 16,00', desc: 'Massa de baunilha, creme de leite Ninho e morangos.' },
+      { nome: 'Brigadeiro tradicional', kind: 'brigadeiro', sabor: 'chocolate', preco: 'R$ 3,50', desc: 'Enrolado à mão e coberto de granulado.' },
+      { nome: 'Bolo de pote Prestígio', kind: 'pote', sabor: 'prestigio', preco: 'R$ 15,00', desc: 'Massa de chocolate com creme de coco e ganache.' },
+      { nome: 'Brigadeiro de Ninho', kind: 'brigadeiro', sabor: 'ninho', preco: 'R$ 3,50', desc: 'Brigadeiro branco de leite Ninho, coberto de leite em pó.' },
+      { nome: 'Caixa presente com 4 brigadeiros', kind: 'caixa', sabor: 'sortido', preco: 'R$ 16,00', desc: 'Quatro brigadeiros sortidos numa caixa para presentear.' }
+    ];
+    const i = (s.i || 0) % doces.length;
+    return {
+      d: doces[i],
+      par: i % 2 === 0,
+      impar: i % 2 === 1,
+      pontos: doces.map((x, k) => ({
+        label: 'Mostrar ' + x.nome,
+        pressed: k === i ? 'true' : 'false',
+        largura: k === i ? '40px' : '14px',
+        cor: k === i ? '#E6C48E' : 'rgba(247,236,221,0.3)',
+        pick: () => this.setState({ i: k })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

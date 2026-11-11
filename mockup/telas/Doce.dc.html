@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Imagem do doce</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 100%; aspect-ratio: 1 / 1; overflow: hidden; color: #2A140D;">
+<sc-if value="{{isFoto}}" hint-placeholder-val="{{false}}">
+<img src="/_blob/c47d19a8f0358169b1680502acb5cb4e" alt="Palha italiana da Mone Brigaderia na embalagem individual" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; display: block;">
+</sc-if>
+<sc-if value="{{isDesenho}}" hint-placeholder-val="{{true}}">
+<div aria-hidden="true" style="position: absolute; left: 14%; bottom: 7%; width: 72%; height: 10%; border-radius: 50%; background: radial-gradient(closest-side, rgba(60,30,18,0.38), rgba(60,30,18,0));"></div>
+</sc-if>
+<sc-if value="{{isPote}}" hint-placeholder-val="{{true}}">
+<div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
+<div style="position: absolute; left: 21%; top: 13%; width: 58%; height: 11%; border-radius: 18% / 40%; background: linear-gradient(180deg, #EBCB96 0%, #C59B5F 55%, #9C7340 100%); box-shadow: 0 3px 0 rgba(0,0,0,0.18);"></div>
+<div style="position: absolute; left: 24%; top: 23%; width: 52%; height: 67%; border-radius: 12% / 8%; overflow: hidden; background: rgba(255,255,255,0.35); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.85), 0 0 0 1px rgba(70,40,25,0.18), inset -8px 0 14px rgba(0,0,0,0.12);">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 86%; display: flex; flex-direction: column-reverse;">
+<sc-for list="{{camadas}}" as="c" hint-placeholder-count="5">
+<div style="flex-shrink: 0; height: {{c.h}}; background: {{c.bg}};"></div>
+</sc-for>
+</div>
+<div style="position: absolute; left: 9%; top: 6%; width: 9%; height: 82%; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,0.75), rgba(255,255,255,0.08));"></div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{isBrigadeiro}}" hint-placeholder-val="{{false}}">
+<div aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%;">
+<sc-for list="{{bolas}}" as="b" hint-placeholder-count="3">
+<div style="position: absolute; left: {{b.l}}; top: {{b.t}}; width: 34%; height: 40%;">
+<div style="position: absolute; left: 8%; top: 0; width: 84%; aspect-ratio: 1 / 1; border-radius: 50%; background: {{b.bg}}; box-shadow: {{b.sh}};"></div>
+<div style="position: absolute; left: 0; bottom: 0; width: 100%; height: 40%; clip-path: polygon(0 0, 100% 0, 86% 100%, 14% 100%); background: repeating-linear-gradient(90deg, #C9A46A 0 7%, #A57D49 7% 14%);"></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{isCaixa}}" hint-placeholder-val="{{false}}">
+<div aria-hidden="true" style="position: absolute; left: 17%; top: 15%; width: 66%; height: 66%; box-sizing: border-box; padding: 9%; border-radius: 8%; background: {{caixaBg}}; box-shadow: 0 10px 20px rgba(40,18,10,0.35), inset 0 0 0 3px #C9A46A; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8%;">
+<sc-if value="{{laco}}" hint-placeholder-val="{{false}}">
+<span style="position: absolute; left: 47.5%; top: 0; width: 5%; height: 100%; background: #D9B26F;"></span>
+<span style="position: absolute; top: 47.5%; left: 0; height: 5%; width: 100%; background: #D9B26F;"></span>
+</sc-if>
+<sc-for list="{{caixa}}" as="b" hint-placeholder-count="4">
+<div style="position: relative; aspect-ratio: 1 / 1; border-radius: 50%; background: repeating-conic-gradient(#C9A46A 0 9deg, #A57D49 9deg 18deg);">
+<div style="position: absolute; left: 13%; top: 13%; right: 13%; bottom: 13%; border-radius: 50%; background: {{b.bg}}; box-shadow: {{b.sh}};"></div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"kind":{"editor":"enum","options":["palha","pote","brigadeiro","caixa"],"default":"pote"},"sabor":{"editor":"enum","options":["morango","prestigio","maracuja","chocolate","ninho","sortido","natal"],"default":"morango"},"$preview":{"width":240,"height":240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const kind = this.props.kind ?? 'pote';
+    const sabor = this.props.sabor ?? 'morango';
+    const bolo = (cor, miolo) => 'radial-gradient(circle, ' + miolo + ' 0 14%, rgba(0,0,0,0) 18%) 0 0 / 14% 34%, ' + cor;
+    const fruta = (cor, ponto) => 'radial-gradient(circle, ' + ponto + ' 0 16%, rgba(0,0,0,0) 20%) 0 0 / 20% 70%, ' + cor;
+    const baunilha = bolo('#E8C68E', 'rgba(160,100,45,0.35)');
+    const cacau = bolo('#5B2E1C', 'rgba(20,8,4,0.4)');
+    const potes = {
+      morango: [
+        { h: '22%', bg: baunilha },
+        { h: '17%', bg: '#FFF6EA' },
+        { h: '11%', bg: fruta('#D3413A', '#F5A89F') },
+        { h: '20%', bg: baunilha },
+        { h: '19%', bg: '#FFF6EA' },
+        { h: '11%', bg: fruta('#D3413A', '#F5A89F') }
+      ],
+      prestigio: [
+        { h: '22%', bg: cacau },
+        { h: '18%', bg: fruta('#F8F1E7', '#FFFFFF') },
+        { h: '20%', bg: cacau },
+        { h: '18%', bg: fruta('#F8F1E7', '#FFFFFF') },
+        { h: '12%', bg: '#3A190F' },
+        { h: '10%', bg: fruta('#FBF7F0', '#E9DCC8') }
+      ],
+      maracuja: [
+        { h: '22%', bg: baunilha },
+        { h: '18%', bg: '#F5D06A' },
+        { h: '20%', bg: baunilha },
+        { h: '18%', bg: '#F5D06A' },
+        { h: '22%', bg: fruta('#E3A82F', '#3A2410') }
+      ],
+      natal: [
+        { h: '22%', bg: baunilha },
+        { h: '16%', bg: '#C98B4A' },
+        { h: '20%', bg: baunilha },
+        { h: '18%', bg: '#FFF6EA' },
+        { h: '12%', bg: '#C98B4A' },
+        { h: '12%', bg: fruta('#8A5A33', '#C9A27A') }
+      ]
+    };
+    const choc = {
+      bg: 'radial-gradient(circle at 32% 28%, rgba(255,255,255,0.28), rgba(255,255,255,0) 38%), radial-gradient(circle, #1A0904 0 22%, rgba(0,0,0,0) 28%) 0 0 / 11% 11%, radial-gradient(circle, #2E150B 0 20%, rgba(0,0,0,0) 26%) 5% 6% / 13% 13%, #4A2416',
+      sh: 'inset -5px -7px 12px rgba(0,0,0,0.45)'
+    };
+    const ninho = {
+      bg: 'radial-gradient(circle at 32% 28%, rgba(255,255,255,0.6), rgba(255,255,255,0) 40%), radial-gradient(circle, #FFFFFF 0 24%, rgba(255,255,255,0) 30%) 0 0 / 12% 12%, #E8D6BD',
+      sh: 'inset -5px -7px 12px rgba(140,95,50,0.35)'
+    };
+    const posicoes = [{ l: '33%', t: '14%' }, { l: '13%', t: '40%' }, { l: '53%', t: '40%' }];
+    const trio = sabor === 'ninho' ? [ninho, ninho, ninho] : sabor === 'chocolate' ? [choc, choc, choc] : [ninho, choc, choc];
+    return {
+      isFoto: kind === 'palha',
+      isDesenho: kind !== 'palha',
+      isPote: kind === 'pote',
+      isBrigadeiro: kind === 'brigadeiro',
+      isCaixa: kind === 'caixa',
+      camadas: potes[sabor] || potes.morango,
+      bolas: posicoes.map((p, i) => ({ l: p.l, t: p.t, bg: trio[i].bg, sh: trio[i].sh })),
+      caixa: [choc, ninho, ninho, choc].map((b) => ({ bg: b.bg, sh: b.sh })),
+      caixaBg: sabor === 'natal' ? '#8E2424' : '#3B1A12',
+      laco: sabor === 'natal'
+    };
+  }
+}
+</script>
+</body>
+</html>

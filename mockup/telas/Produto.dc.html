@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Palha italiana</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=Manrope:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#E6C48E}a:hover{color:#F3DCC8}
+button{font-family:inherit}
+.rolagem{scrollbar-width:none}
+.rolagem::-webkit-scrollbar{display:none}
+.pulsa{animation:pulsa 1.8s ease-out infinite}
+@keyframes pulsa{0%{box-shadow:0 0 0 0 rgba(158,214,160,0.55)}100%{box-shadow:0 0 0 7px rgba(158,214,160,0)}}
+.zoom{animation:zoom 9s ease-in-out infinite alternate}
+@keyframes zoom{from{transform:scale(1)}to{transform:scale(1.06)}}
+.chip{transition:background-color .2s,color .2s,border-color .2s}
+.toque{transition:transform .15s}
+.toque:active{transform:scale(.96)}
+.sobe{animation:sobe .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes sobe{from{transform:translateY(100%)}to{transform:none}}
+@media (prefers-reduced-motion: reduce){.pulsa,.zoom,.sobe{animation:none}.toque,.chip{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #1C0D08; color: #F7ECDD; font-family: 'Manrope', system-ui, sans-serif;">
+<div class="rolagem" style="position: absolute; left: 0; top: 0; right: 0; bottom: 96px; overflow-y: auto;">
+
+<div style="position: relative; height: 400px; overflow: hidden; background: #E5E1DD;">
+<img class="zoom" src="/_blob/c47d19a8f0358169b1680502acb5cb4e" alt="Palha italiana da Mone Brigaderia na embalagem individual, polvilhada com açúcar de confeiteiro" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+<div aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 44px; display: flex; justify-content: center; gap: 6px;">
+<span style="width: 22px; height: 6px; border-radius: 3px; background: #2A140D;"></span>
+<span style="width: 6px; height: 6px; border-radius: 3px; background: rgba(42,20,13,0.35);"></span>
+<span style="width: 6px; height: 6px; border-radius: 3px; background: rgba(42,20,13,0.35);"></span>
+</div>
+</div>
+
+<div style="position: relative; margin-top: -28px; border-radius: 30px 30px 0 0; background: #1C0D08; padding: 24px 20px 28px; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<span style="padding: 5px 10px; border-radius: 999px; background: #E6C48E; color: #2A140D; font-size: 11px; font-weight: 700;">Mais vendido</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: rgba(158,214,160,0.12); color: #9ED6A0; font-size: 11px; font-weight: 700;"><span class="pulsa" style="width: 6px; height: 6px; border-radius: 50%; background: #9ED6A0;"></span>Feito hoje</span>
+<span style="padding: 5px 10px; border-radius: 999px; border: 1px solid rgba(232,204,154,0.35); color: #E6C48E; font-size: 11px; font-weight: 700;">{{estoqueTxt}}</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<h1 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 34px; font-weight: 600; line-height: 1.05; color: #F7ECDD;">Palha italiana</h1>
+<p style="margin: 0; font-size: 15px; line-height: 1.55; color: #D9C3A8;">Brigadeiro cremoso com pedaços de biscoito, cortado em quadrado e finalizado no açúcar de confeiteiro. Embalado um a um.</p>
+</div>
+
+<div style="display: flex; align-items: baseline; gap: 8px;">
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 30px; font-weight: 600; color: #E6C48E;">{{precoUnit}}</span>
+<span style="font-size: 13px; color: #B09780;">por unidade</span>
+</div>
+
+<div role="group" aria-label="Sabor" style="display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Sabor</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<sc-for list="{{sabores}}" as="x" hint-placeholder-count="3">
+<button type="button" class="chip toque" aria-pressed="{{x.pressed}}" onClick="{{x.pick}}" style="height: 44px; padding: 0 16px; border-radius: 14px; border: 1px solid {{x.borda}}; background: {{x.bg}}; color: {{x.cor}}; font-size: 14px; font-weight: 600; cursor: pointer;">{{x.nome}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 18px; background: #2A140D; border: 1px solid rgba(232,204,154,0.12);">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E6C48E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z"></path><path d="M3 8l9 5 9-5"></path><path d="M12 13v8"></path></svg>
+<span style="font-size: 13px; font-weight: 600; line-height: 1.3;">Embalado um a um</span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 14px; border-radius: 18px; background: #2A140D; border: 1px solid rgba(232,204,154,0.12);">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#E6C48E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>
+<span style="font-size: 13px; font-weight: 600; line-height: 1.3;">Feito no dia</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<h2 style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Alergênicos</h2>
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(242,167,160,0.45); color: #F2A7A0; font-size: 13px; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 16.5v.5"></path></svg>Contém glúten</span>
+<span style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(242,167,160,0.45); color: #F2A7A0; font-size: 13px; font-weight: 600;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 16.5v.5"></path></svg>Contém lactose</span>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<h2 style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Composição</h2>
+<p style="margin: 0; font-size: 14px; line-height: 1.55; color: #D9C3A8;">Leite condensado, chocolate, manteiga, biscoito de maisena e açúcar de confeiteiro.</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<h2 style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Conservação</h2>
+<p style="margin: 0; font-size: 14px; line-height: 1.55; color: #D9C3A8;">Em temperatura ambiente, longe do calor. Consumir em até 5 dias.</p>
+</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 16px; right: 16px; top: 16px; display: flex; justify-content: space-between;">
+<a href="Main.dc.html" class="toque" aria-label="Voltar para a vitrine" style="width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #2A140D; text-decoration: none;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<button type="button" class="toque" aria-label="{{favLabel}}" aria-pressed="{{favPressed}}" onClick="{{favToggle}}" style="width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.75); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); cursor: pointer;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="{{favFill}}" stroke="{{favCor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>
+</button>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 96px; box-sizing: border-box; padding: 14px 20px 26px; display: flex; gap: 12px; align-items: center; background: rgba(28,13,8,0.88); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-top: 1px solid rgba(232,204,154,0.14);">
+<div style="display: flex; align-items: center; height: 52px; border-radius: 999px; border: 1px solid rgba(232,204,154,0.22);">
+<button type="button" class="toque" aria-label="Diminuir quantidade" onClick="{{menos}}" style="width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #F7ECDD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"></path></svg>
+</button>
+<span aria-live="polite" style="min-width: 22px; text-align: center; font-size: 16px; font-weight: 700;">{{qtd}}</span>
+<button type="button" class="toque" aria-label="Aumentar quantidade" onClick="{{mais}}" style="width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #F7ECDD; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</button>
+</div>
+<button type="button" class="toque" onClick="{{abrirZap}}" style="flex-grow: 1; height: 52px; border: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #25D366; color: #052E16; font-size: 15px; font-weight: 700; cursor: pointer;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19l-4 1z"></path></svg>
+Pedir no WhatsApp
+</button>
+</div>
+
+<sc-if value="{{zap}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(10,5,3,0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: flex-end;">
+<div class="sobe" role="dialog" aria-label="Encomendar pelo WhatsApp" style="width: 100%; box-sizing: border-box; padding: 26px 22px 28px; border-radius: 32px 32px 0 0; background: #2A140D; border-top: 1px solid rgba(232,204,154,0.2); display: flex; flex-direction: column; gap: 14px;">
+<h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #F7ECDD;">Encomendar pelo WhatsApp</h2>
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #D9C3A8;">A conversa abre com o pedido já escrito. É só tocar em enviar.</p>
+<div style="align-self: flex-end; max-width: 300px; padding: 12px 14px; border-radius: 18px 18px 4px 18px; background: #F3DCC8; color: #2A140D; font-size: 14px; line-height: 1.5; white-space: pre-line;">{{msg}}</div>
+<button type="button" class="toque" onClick="{{fecharZap}}" style="height: 54px; border: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #25D366; color: #052E16; font-size: 16px; font-weight: 700; cursor: pointer;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19l-4 1z"></path></svg>
+Abrir WhatsApp
+</button>
+<button type="button" onClick="{{fecharZap}}" style="height: 44px; border: 0; background: transparent; color: #D9C3A8; font-size: 14px; font-weight: 600; cursor: pointer;">Agora não</button>
+<span style="text-align: center; font-size: 12px; color: #B09780;">WhatsApp 98063-1673</span>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const brl = (v) => 'R$ ' + v.toFixed(2).replace('.', ',');
+    const sabores = [
+      { id: 'trad', nome: 'Tradicional', preco: 9 },
+      { id: 'ninho', nome: 'Ninho', preco: 10 },
+      { id: 'nutella', nome: 'Ninho com Nutella', preco: 11 }
+    ];
+    const sab = s.sab || 'trad';
+    const qtd = s.qtd || 1;
+    const atual = sabores.find((x) => x.id === sab) || sabores[0];
+    const fav = !!s.fav;
+    return {
+      sabores: sabores.map((x) => {
+        const ativo = x.id === sab;
+        return {
+          ...x,
+          pressed: ativo ? 'true' : 'false',
+          bg: ativo ? 'rgba(230,196,142,0.14)' : 'rgba(247,236,221,0.03)',
+          cor: ativo ? '#E6C48E' : '#D9C3A8',
+          borda: ativo ? '#E6C48E' : 'rgba(232,204,154,0.18)',
+          pick: () => this.setState({ sab: x.id })
+        };
+      }),
+      precoUnit: brl(atual.preco),
+      qtd: String(qtd),
+      total: brl(atual.preco * qtd),
+      menos: () => this.setState({ qtd: Math.max(1, qtd - 1) }),
+      mais: () => this.setState({ qtd: Math.min(12, qtd + 1) }),
+      estoqueTxt: '12 disponíveis hoje',
+      favFill: fav ? '#8B2E1E' : 'none',
+      favCor: fav ? '#8B2E1E' : '#2A140D',
+      favPressed: fav ? 'true' : 'false',
+      favLabel: fav ? 'Remover dos favoritos' : 'Favoritar',
+      favToggle: () => this.setState({ fav: !fav }),
+      msg: 'Olá, Mone Brigaderia! Quero encomendar:\n• ' + qtd + 'x Palha italiana, sabor ' + atual.nome + '\nValor: ' + brl(atual.preco * qtd),
+      zap: !!s.zap,
+      abrirZap: () => this.setState({ zap: true }),
+      fecharZap: () => this.setState({ zap: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

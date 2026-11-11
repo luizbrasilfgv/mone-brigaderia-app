@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Vitrine Mone Brigaderia</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=Manrope:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#E6C48E}a:hover{color:#F3DCC8}
+button{font-family:inherit}
+.rolagem{scrollbar-width:none}
+.rolagem::-webkit-scrollbar{display:none}
+.flutua{animation:flutua 5s ease-in-out infinite}
+@keyframes flutua{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-8px) rotate(-1deg)}}
+.pulsa{animation:pulsa 1.8s ease-out infinite}
+@keyframes pulsa{0%{box-shadow:0 0 0 0 rgba(158,214,160,0.55)}100%{box-shadow:0 0 0 7px rgba(158,214,160,0)}}
+.card .arte{transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.card:hover .arte{transform:translateY(-3px)}
+.chip{transition:background-color .2s,color .2s,border-color .2s}
+.toque{transition:transform .15s}
+.toque:active{transform:scale(.96)}
+.sobe{animation:sobe .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes sobe{from{transform:translateY(100%)}to{transform:none}}
+@media (prefers-reduced-motion: reduce){.flutua,.pulsa,.sobe{animation:none}.card .arte,.toque,.chip{transition:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #1C0D08; color: #F7ECDD; font-family: 'Manrope', system-ui, sans-serif;">
+<div class="rolagem" style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow-y: auto; padding-bottom: 112px; box-sizing: border-box;">
+
+<header style="display: flex; align-items: center; gap: 12px; padding: 18px 20px 10px;">
+<img src="/_blob/d32516666993b22f80ceebff9673701f" alt="Logo da Mone Brigaderia" style="width: 46px; height: 46px; border-radius: 50%; display: block; flex-shrink: 0;">
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+<span style="font-size: 12px; color: #B09780;">Vitrine de hoje</span>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: #F7ECDD;">Mone Brigaderia</span>
+</div>
+<button type="button" class="toque" aria-label="Buscar doces" style="width: 44px; height: 44px; padding: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(247,236,221,0.06); border: 1px solid rgba(232,204,154,0.16); color: #F7ECDD; cursor: pointer;">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+</button>
+</header>
+
+<section aria-label="Campanha de Natal" style="position: relative; margin: 8px 20px 0; height: 150px; border-radius: 28px; overflow: hidden; background: #7A1F1F; border: 1px solid rgba(232,204,154,0.25);">
+<div aria-hidden="true" style="position: absolute; right: -40px; top: -50px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(closest-side, rgba(240,207,152,0.32), rgba(240,207,152,0));"></div>
+<div aria-hidden="true" class="flutua" style="position: absolute; right: 16px; top: 20px; width: 108px; height: 108px; border-radius: 22px; overflow: hidden; border: 3px solid #F3DCC8; background: radial-gradient(120% 90% at 50% 15%, #F8F5F2 0%, #E0D9D2 78%); box-shadow: 0 14px 30px rgba(0,0,0,0.4);">
+<dc-import name="Doce" kind="caixa" sabor="natal" hint-size="102px,102px"></dc-import>
+</div>
+<div style="position: absolute; left: 18px; top: 16px; bottom: 16px; width: 200px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #F0CF98; font-weight: 700;">Campanha de Natal</span>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; line-height: 1.05; color: #FFF4E6;">Natal Mone</span>
+<span style="font-size: 12px; line-height: 1.35; color: #F6DCCB;">Encomendas até 20/12</span>
+<button type="button" class="toque" onClick="{{verNatal}}" style="margin-top: auto; align-self: flex-start; height: 44px; padding: 0 16px; border: 0; border-radius: 999px; background: #F3DCC8; color: #5A1414; font-size: 13px; font-weight: 700; cursor: pointer;">Ver doces de Natal</button>
+</div>
+</section>
+
+<section aria-label="Destaque da semana" style="position: relative; margin: 14px 20px 0; height: 232px; border-radius: 28px; overflow: hidden; background: #3A1D13; border: 1px solid rgba(232,204,154,0.16);">
+<div aria-hidden="true" style="position: absolute; right: -50px; top: -30px; width: 270px; height: 270px; border-radius: 50%; background: radial-gradient(closest-side, rgba(230,196,142,0.30), rgba(230,196,142,0));"></div>
+<div class="flutua" style="position: absolute; right: 16px; top: 38px; width: 146px; height: 146px; border-radius: 22px; overflow: hidden; border: 3px solid #F3DCC8; box-shadow: 0 18px 40px rgba(0,0,0,0.45);">
+<img src="/_blob/c47d19a8f0358169b1680502acb5cb4e" alt="Palha italiana da Mone Brigaderia na embalagem" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+</div>
+<div style="position: absolute; left: 20px; top: 20px; bottom: 20px; width: 180px; display: flex; flex-direction: column; gap: 8px;">
+<span style="align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: rgba(158,214,160,0.12); color: #9ED6A0; font-size: 11px; font-weight: 700;"><span class="pulsa" style="width: 6px; height: 6px; border-radius: 50%; background: #9ED6A0;"></span>Feito hoje</span>
+<span style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #E6C48E; font-weight: 700;">Carro-chefe</span>
+<h1 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 30px; line-height: 1.02; color: #F7ECDD;">Palha italiana</h1>
+<p style="margin: 0; font-size: 13px; line-height: 1.4; color: #D9C3A8;">Brigadeiro com biscoito e açúcar de confeiteiro.</p>
+<div style="margin-top: auto; display: flex; align-items: center; gap: 12px;">
+<a href="Produto.dc.html" class="toque" style="display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 18px; border-radius: 999px; background: #E6C48E; color: #2A140D; font-weight: 700; font-size: 14px; text-decoration: none;">Ver doce</a>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 20px; font-weight: 600; color: #F7ECDD;">R$ 9,00</span>
+</div>
+</div>
+</section>
+
+<div class="rolagem" role="group" aria-label="Categorias" style="display: flex; gap: 8px; overflow-x: auto; padding: 18px 20px 4px;">
+<sc-for list="{{chips}}" as="c" hint-placeholder-count="5">
+<button type="button" class="chip toque" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="flex-shrink: 0; height: 44px; padding: 0 16px; border-radius: 999px; border: 1px solid {{c.borda}}; background: {{c.bg}}; color: {{c.cor}}; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer;">{{c.nome}}</button>
+</sc-for>
+</div>
+
+<sc-for list="{{secoes}}" as="s" hint-placeholder-count="2">
+<section aria-label="{{s.titulo}}">
+<div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 18px 20px 12px;">
+<div style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+<h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; color: #F7ECDD;">{{s.titulo}}</h2>
+<span style="font-size: 12px; color: #B09780;">{{s.sub}}</span>
+</div>
+<span style="flex-shrink: 0; font-size: 12px; color: #B09780;">{{s.contagem}}</span>
+</div>
+
+<sc-if value="{{s.vazio}}" hint-placeholder-val="{{false}}">
+<p style="margin: 4px 20px 0; padding: 24px; border-radius: 20px; border: 1px dashed rgba(232,204,154,0.28); color: #D9C3A8; font-size: 14px; line-height: 1.5; text-align: center;">Toque no coração de um doce para guardar aqui.</p>
+</sc-if>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 0 20px;">
+<sc-for list="{{s.lista}}" as="d" hint-placeholder-count="4">
+<div class="card" style="position: relative; display: flex; flex-direction: column; padding: 8px 8px 14px; border-radius: 24px; background: #2A140D; border: 1px solid rgba(232,204,154,0.12);">
+<a href="{{d.link}}" style="display: flex; flex-direction: column; gap: 10px; color: #F7ECDD; text-decoration: none;">
+<div class="arte" style="position: relative; border-radius: 18px; overflow: hidden; background: radial-gradient(120% 90% at 50% 15%, #F8F5F2 0%, #E0D9D2 78%);">
+<div style="opacity: {{d.opac}};">
+<dc-import name="Doce" kind="{{d.kind}}" sabor="{{d.sabor}}" hint-size="100%,153px"></dc-import>
+</div>
+<sc-if value="{{d.esgotado}}" hint-placeholder-val="{{false}}">
+<span style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); padding: 6px 12px; border-radius: 999px; background: #2A140D; color: #F7ECDD; font-size: 12px; font-weight: 700; white-space: nowrap;">Esgotado</span>
+</sc-if>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 0 6px;">
+<span style="font-size: 14px; font-weight: 600; line-height: 1.25; min-height: 35px;">{{d.nome}}</span>
+<span style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: {{d.dispCor}};"><span style="width: 6px; height: 6px; border-radius: 50%; background: {{d.dispCor}};"></span>{{d.dispTxt}}</span>
+<sc-if value="{{d.semGluten}}" hint-placeholder-val="{{false}}">
+<span style="align-self: flex-start; padding: 3px 8px; border-radius: 999px; border: 1px solid rgba(232,204,154,0.4); color: #E6C48E; font-size: 10px; font-weight: 700;">Sem glúten</span>
+</sc-if>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 19px; font-weight: 600; color: #E6C48E;">{{d.preco}}</span>
+</div>
+</a>
+<sc-if value="{{d.temSelo}}" hint-placeholder-val="{{false}}">
+<span style="position: absolute; top: 16px; left: 16px; padding: 4px 9px; border-radius: 999px; background: {{d.seloBg}}; color: #2A140D; font-size: 10px; font-weight: 700;">{{d.selo}}</span>
+</sc-if>
+<button type="button" class="toque" aria-label="{{d.favLabel}}" aria-pressed="{{d.favPressed}}" onClick="{{d.fav}}" style="position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+<span style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center;">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="{{d.favFill}}" stroke="{{d.favCor}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>
+</span>
+</button>
+</div>
+</sc-for>
+</div>
+</section>
+</sc-for>
+</div>
+
+<nav aria-label="Navegação principal" style="position: absolute; left: 16px; right: 16px; bottom: 18px; height: 68px; border-radius: 26px; background: rgba(42,20,13,0.72); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border: 1px solid rgba(232,204,154,0.16); box-shadow: 0 12px 30px rgba(0,0,0,0.4); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center;">
+<button type="button" onClick="{{verInicio}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 56px; border: 0; background: transparent; color: {{inicioCor}}; font-size: 11px; font-weight: 600; cursor: pointer;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V20h14V9.5"></path><path d="M10 20v-6h4v6"></path></svg>
+<span>Início</span>
+</button>
+<button type="button" onClick="{{verFavs}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 56px; border: 0; background: transparent; color: {{favNavCor}}; font-size: 11px; font-weight: 600; cursor: pointer;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"></path></svg>
+<span>Favoritos</span>
+</button>
+<button type="button" onClick="{{abrirZap}}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 56px; border: 0; background: transparent; color: #4ADE80; font-size: 11px; font-weight: 700; cursor: pointer;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19l-4 1z"></path></svg>
+<span>Encomendar</span>
+</button>
+</nav>
+
+<sc-if value="{{zap}}" hint-placeholder-val="{{false}}">
+<div style="position: absolute; left: 0; top: 0; right: 0; bottom: 0; background: rgba(10,5,3,0.62); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: flex; align-items: flex-end;">
+<div class="sobe" role="dialog" aria-label="Encomendar pelo WhatsApp" style="width: 100%; box-sizing: border-box; padding: 26px 22px 28px; border-radius: 32px 32px 0 0; background: #2A140D; border-top: 1px solid rgba(232,204,154,0.2); display: flex; flex-direction: column; gap: 14px;">
+<h2 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #F7ECDD;">Encomendar pelo WhatsApp</h2>
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #D9C3A8;">A conversa abre com esta mensagem pronta. Depois é só combinar os detalhes.</p>
+<div style="align-self: flex-end; max-width: 300px; padding: 12px 14px; border-radius: 18px 18px 4px 18px; background: #F3DCC8; color: #2A140D; font-size: 14px; line-height: 1.5;">Olá, Mone Brigaderia! Vi a vitrine no app e quero fazer uma encomenda.</div>
+<button type="button" class="toque" onClick="{{fecharZap}}" style="height: 54px; border: 0; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #25D366; color: #052E16; font-size: 16px; font-weight: 700; cursor: pointer;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19l-4 1z"></path></svg>
+Abrir WhatsApp
+</button>
+<button type="button" onClick="{{fecharZap}}" style="height: 44px; border: 0; background: transparent; color: #D9C3A8; font-size: 14px; font-weight: 600; cursor: pointer;">Agora não</button>
+<span style="text-align: center; font-size: 12px; color: #B09780;">WhatsApp 98063-1673</span>
+</div>
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const s = this.state || {};
+    const cat = s.cat || 'todos';
+    const favs = s.favs || { palha: true };
+    const soFavs = !!s.soFavs;
+    const doces = [
+      { id: 'caixa-natal', nome: 'Caixa de Natal com 4 brigadeiros', cat: 'kits', kind: 'caixa', sabor: 'natal', preco: 'R$ 22,00', selo: 'Natal', qtd: 0, encomenda: true, prazo: '3 dias', natal: true },
+      { id: 'pote-natal', nome: 'Bolo de pote de Natal: nozes e doce de leite', cat: 'potes', kind: 'pote', sabor: 'natal', preco: 'R$ 18,00', selo: 'Natal', qtd: 10, natal: true },
+      { id: 'palha', nome: 'Palha italiana', cat: 'palhas', kind: 'palha', sabor: 'morango', preco: 'R$ 9,00', selo: 'Mais vendido', qtd: 12, natal: true },
+      { id: 'brig-trad', nome: 'Brigadeiro tradicional', cat: 'brigadeiros', kind: 'brigadeiro', sabor: 'chocolate', preco: 'R$ 3,50', selo: '', qtd: 30 },
+      { id: 'pote-morango', nome: 'Bolo de pote Ninho com morango', cat: 'potes', kind: 'pote', sabor: 'morango', preco: 'R$ 16,00', selo: 'Novo', qtd: 6 },
+      { id: 'brig-ninho', nome: 'Brigadeiro de Ninho', cat: 'brigadeiros', kind: 'brigadeiro', sabor: 'ninho', preco: 'R$ 3,50', selo: '', qtd: 3 },
+      { id: 'pote-prestigio', nome: 'Bolo de pote Prestígio', cat: 'potes', kind: 'pote', sabor: 'prestigio', preco: 'R$ 15,00', selo: '', qtd: 8 },
+      { id: 'pote-maracuja', nome: 'Bolo de pote Maracujá', cat: 'potes', kind: 'pote', sabor: 'maracuja', preco: 'R$ 15,00', selo: '', qtd: 0 },
+      { id: 'caixa', nome: 'Caixa presente com 4 brigadeiros', cat: 'kits', kind: 'caixa', sabor: 'sortido', preco: 'R$ 16,00', selo: '', qtd: 0, encomenda: true, prazo: '2 dias' },
+      { id: 'cento', nome: 'Cento de brigadeiros para festa', cat: 'kits', kind: 'brigadeiro', sabor: 'chocolate', preco: 'R$ 120,00', selo: '', qtd: 0, encomenda: true, prazo: '3 dias' },
+      { id: 'caixa-9', nome: 'Caixa com 9 doces sortidos', cat: 'kits', kind: 'caixa', sabor: 'sortido', preco: 'R$ 34,00', selo: '', qtd: 0, encomenda: true, prazo: '2 dias' }
+    ].map((d) => ({ ...d, disp: !!d.encomenda || d.qtd > 0, selo: d.selo || (!d.encomenda && d.qtd > 0 && d.qtd <= 3 ? 'Últimas unidades' : '') }));
+    const cats = [
+      { id: 'todos', nome: 'Todos' },
+      { id: 'natal', nome: 'Natal' },
+      { id: 'brigadeiros', nome: 'Brigadeiros' },
+      { id: 'palhas', nome: 'Palhas' },
+      { id: 'potes', nome: 'Bolos de pote' },
+      { id: 'kits', nome: 'Caixas e kits' }
+    ];
+    const selos = { 'Mais vendido': '#E6C48E', 'Novo': '#F7ECDD', 'Últimas unidades': '#F2A7A0', 'Natal': '#F6C9C9' };
+    const lista = doces
+      .filter((d) => (soFavs ? !!favs[d.id] : cat === 'todos' || d.cat === cat || (cat === 'natal' && d.natal)))
+      .map((d) => {
+        const fav = !!favs[d.id];
+        return {
+          ...d,
+          temSelo: !!d.selo && d.disp,
+          semGluten: d.cat === 'brigadeiros',
+          seloBg: selos[d.selo] || '#E6C48E',
+          esgotado: !d.disp,
+          opac: d.disp ? '1' : '0.4',
+          dispTxt: d.encomenda ? 'Sob encomenda · ' + d.prazo : d.qtd > 3 ? d.qtd + ' disponíveis hoje' : d.qtd > 0 ? 'Só restam ' + d.qtd : 'Esgotado',
+          dispCor: d.encomenda ? '#F3DCC8' : d.qtd > 3 ? '#9ED6A0' : d.qtd > 0 ? '#F2A7A0' : '#B09780',
+          link: d.encomenda ? 'ProdutoEncomenda.dc.html' : 'Produto.dc.html',
+          favFill: fav ? '#8B2E1E' : 'none',
+          favCor: fav ? '#8B2E1E' : '#3A1D13',
+          favPressed: fav ? 'true' : 'false',
+          favLabel: (fav ? 'Remover dos favoritos: ' : 'Favoritar: ') + d.nome,
+          fav: () => this.setState({ favs: { ...favs, [d.id]: !fav } })
+        };
+      });
+    const conta = (l) => l.length + (l.length === 1 ? ' doce' : ' doces');
+    const secao = (titulo, sub, l) => ({ titulo, sub, lista: l, contagem: conta(l), vazio: l.length === 0 });
+    const frescos = lista.filter((d) => !d.encomenda);
+    const encomendas = lista.filter((d) => !!d.encomenda);
+    const secoes = soFavs
+      ? [secao('Seus favoritos', 'Os doces que você guardou', lista)]
+      : cat === 'natal'
+      ? [secao('Doces de Natal', 'Campanha Natal Mone · encomendas até 20/12', lista)]
+      : [
+          secao('Ítens fresquinhos!', 'Feitos hoje, prontos para levar', frescos),
+          secao('Sob encomenda', 'Peça com antecedência pelo WhatsApp', encomendas)
+        ].filter((x) => !x.vazio);
+    return {
+      chips: cats.map((c) => {
+        const ativo = !soFavs && c.id === cat;
+        return {
+          ...c,
+          pressed: ativo ? 'true' : 'false',
+          bg: ativo ? '#E6C48E' : 'rgba(247,236,221,0.04)',
+          cor: ativo ? '#2A140D' : '#D9C3A8',
+          borda: ativo ? '#E6C48E' : 'rgba(232,204,154,0.18)',
+          pick: () => this.setState({ cat: c.id, soFavs: false })
+        };
+      }),
+      secoes,
+      inicioCor: soFavs ? '#B09780' : '#E6C48E',
+      favNavCor: soFavs ? '#E6C48E' : '#B09780',
+      verInicio: () => this.setState({ soFavs: false }),
+      verFavs: () => this.setState({ soFavs: true }),
+      verNatal: () => this.setState({ cat: 'natal', soFavs: false }),
+      zap: !!s.zap,
+      abrirZap: () => this.setState({ zap: true }),
+      fecharZap: () => this.setState({ zap: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

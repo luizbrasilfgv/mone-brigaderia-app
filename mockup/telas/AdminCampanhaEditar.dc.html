@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Criar campanha</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&amp;family=Manrope:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#E6C48E}a:hover{color:#F3DCC8}
+button,input,textarea{font-family:inherit}
+input::placeholder,textarea::placeholder{color:#8F7865}
+input:focus,textarea:focus{outline:2px solid #E6C48E;outline-offset:1px}
+input[type=checkbox]{accent-color:#E6C48E}
+.rolagem{scrollbar-width:none}
+.rolagem::-webkit-scrollbar{display:none}
+.chip{transition:background-color .2s,color .2s,border-color .2s,box-shadow .2s}
+.toque{transition:transform .15s}
+.toque:active{transform:scale(.96)}
+.banner{transition:background-color .3s}
+.aviso{animation:aviso .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes aviso{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.toque,.chip,.banner{transition:none}.aviso{animation:none}}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: #1C0D08; color: #F7ECDD; font-family: 'Manrope', system-ui, sans-serif;">
+<div class="rolagem" style="position: absolute; left: 0; top: 0; right: 0; bottom: 96px; overflow-y: auto;">
+
+<header style="display: flex; align-items: center; gap: 12px; padding: 18px 20px 6px;">
+<a href="AdminCampanhas.dc.html" class="toque" aria-label="Voltar para campanhas" style="width: 44px; height: 44px; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(247,236,221,0.06); border: 1px solid rgba(232,204,154,0.16); color: #F7ECDD; text-decoration: none; flex-shrink: 0;">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>
+</a>
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+<h1 style="margin: 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; font-weight: 600; color: #F7ECDD;">Campanha</h1>
+<span style="font-size: 12px; color: #B09780;">Só aparece na vitrine dentro do período</span>
+</div>
+</header>
+
+<div style="display: flex; flex-direction: column; gap: 20px; padding: 14px 20px 28px;">
+
+<div role="group" aria-label="Tipo de campanha" style="display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Data</span>
+<div style="display: flex; gap: 8px; flex-wrap: wrap;">
+<sc-for list="{{tipos}}" as="t" hint-placeholder-count="7">
+<button type="button" class="chip toque" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" style="height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid {{t.borda}}; background: {{t.bg}}; color: {{t.cor}}; font-size: 13px; font-weight: 600; cursor: pointer;">{{t.nome}}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<label for="nome" style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Nome da campanha</label>
+<input id="nome" type="text" value="{{nome}}" onChange="{{setNome}}" placeholder="Ex.: Festa junina" style="height: 48px; box-sizing: border-box; padding: 0 14px; border-radius: 14px; border: 1px solid rgba(232,204,154,0.22); background: rgba(247,236,221,0.04); color: #F7ECDD; font-size: 15px;">
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+<label for="inicio" style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Começa em</label>
+<input id="inicio" type="date" value="{{inicio}}" onChange="{{setInicio}}" style="height: 48px; box-sizing: border-box; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(232,204,154,0.22); background: rgba(247,236,221,0.04); color: #F7ECDD; font-size: 14px; color-scheme: dark; min-width: 0;">
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0;">
+<label for="fim" style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Termina em</label>
+<input id="fim" type="date" value="{{fim}}" onChange="{{setFim}}" style="height: 48px; box-sizing: border-box; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(232,204,154,0.22); background: rgba(247,236,221,0.04); color: #F7ECDD; font-size: 14px; color-scheme: dark; min-width: 0;">
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<label for="limite" style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Último dia para encomendar</label>
+<input id="limite" type="date" value="{{limite}}" onChange="{{setLimite}}" style="height: 48px; box-sizing: border-box; padding: 0 12px; border-radius: 14px; border: 1px solid rgba(232,204,154,0.22); background: rgba(247,236,221,0.04); color: #F7ECDD; font-size: 14px; color-scheme: dark;">
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<label for="frase" style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Frase do banner</label>
+<textarea id="frase" rows="2" value="{{frase}}" onChange="{{setFrase}}" placeholder="Ex.: Encomende até 20/12" style="resize: none; padding: 12px 14px; border-radius: 14px; border: 1px solid rgba(232,204,154,0.22); background: rgba(247,236,221,0.04); color: #F7ECDD; font-size: 15px; line-height: 1.5;"></textarea>
+</div>
+
+<div role="group" aria-label="Cor do banner" style="display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Cor do banner</span>
+<div style="display: flex; gap: 6px; flex-wrap: wrap;">
+<sc-for list="{{cores}}" as="c" hint-placeholder-count="7">
+<button type="button" class="chip toque" aria-label="{{c.nome}}" aria-pressed="{{c.pressed}}" onClick="{{c.pick}}" style="width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+<span style="width: 32px; height: 32px; border-radius: 50%; background: {{c.hex}}; box-shadow: {{c.anel}};"></span>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Doces da campanha</span>
+<div style="display: flex; flex-direction: column; border-radius: 20px; background: #2A140D; border: 1px solid rgba(232,204,154,0.12); overflow: hidden;">
+<sc-for list="{{doces}}" as="d" hint-placeholder-count="5">
+<label style="display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px 8px 8px; border-bottom: 1px solid rgba(232,204,154,0.08); cursor: pointer;">
+<span style="width: 44px; height: 44px; flex-shrink: 0; border-radius: 10px; overflow: hidden; background: radial-gradient(120% 90% at 50% 15%, #F8F5F2 0%, #E0D9D2 78%);">
+<dc-import name="Doce" kind="{{d.kind}}" sabor="{{d.sabor}}" hint-size="44px,44px"></dc-import>
+</span>
+<span style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1; min-width: 0;">
+<span style="font-size: 14px; font-weight: 600; line-height: 1.25;">{{d.nome}}</span>
+<span style="font-size: 11px; color: {{d.tagCor}};">{{d.tag}}</span>
+</span>
+<input type="checkbox" checked="{{d.checked}}" onChange="{{d.toggle}}" style="width: 22px; height: 22px; flex-shrink: 0; cursor: pointer;">
+</label>
+</sc-for>
+<a href="AdminEditar.dc.html" style="display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; color: #E6C48E; font-size: 14px; font-weight: 700; text-decoration: none;">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+Criar doce só para esta campanha
+</a>
+</div>
+<span style="font-size: 12px; color: #B09780;">{{nSelTxt}}</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #B09780;">Como aparece na vitrine</span>
+<div class="banner" style="position: relative; height: 150px; border-radius: 28px; overflow: hidden; background: {{cor}}; border: 1px solid rgba(232,204,154,0.25);">
+<div aria-hidden="true" style="position: absolute; right: -40px; top: -50px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(closest-side, rgba(240,207,152,0.30), rgba(240,207,152,0));"></div>
+<div aria-hidden="true" style="position: absolute; right: 16px; top: 20px; width: 108px; height: 108px; border-radius: 22px; overflow: hidden; border: 3px solid #F3DCC8; background: radial-gradient(120% 90% at 50% 15%, #F8F5F2 0%, #E0D9D2 78%); transform: rotate(-4deg);">
+<dc-import name="Doce" kind="caixa" sabor="{{caixaSabor}}" hint-size="102px,102px"></dc-import>
+</div>
+<div style="position: absolute; left: 18px; top: 16px; bottom: 16px; width: 200px; display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #F0CF98; font-weight: 700;">{{eyebrow}}</span>
+<span style="font-family: 'Fraunces', Georgia, serif; font-size: 22px; font-weight: 600; line-height: 1.05; color: #FFF4E6;">{{nomeTxt}}</span>
+<span style="font-size: 12px; line-height: 1.35; color: #F6DCCB;">{{fraseTxt}}</span>
+<span style="margin-top: auto; align-self: flex-start; display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 999px; background: #F3DCC8; color: #2A140D; font-size: 12px; font-weight: 700;">Ver doces da campanha</span>
+</div>
+</div>
+<span style="font-size: 12px; color: #B09780;">{{periodoTxt}}</span>
+</div>
+</div>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 96px; box-sizing: border-box; padding: 14px 20px 26px; display: flex; align-items: center; background: rgba(28,13,8,0.9); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); border-top: 1px solid rgba(232,204,154,0.14);">
+<button type="button" class="toque" onClick="{{salvar}}" style="width: 100%; height: 54px; border: 0; border-radius: 999px; background: #E6C48E; color: #2A140D; font-size: 16px; font-weight: 700; cursor: pointer;">Salvar campanha</button>
+</div>
+
+<sc-if value="{{salvo}}" hint-placeholder-val="{{false}}">
+<div class="aviso" role="status" style="position: absolute; left: 20px; right: 20px; top: 18px; display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 18px; background: #F3DCC8; color: #2A140D; font-size: 14px; font-weight: 700; box-shadow: 0 12px 30px rgba(0,0,0,0.4);">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2F7A3E" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"></path></svg>
+{{avisoTxt}}
+</div>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  componentWillUnmount() {
+    clearTimeout(this.aviso);
+  }
+  renderVals() {
+    const s = this.state || {};
+    const presets = {
+      natal: { rotulo: 'Natal', nome: 'Natal Mone', inicio: '2026-11-10', fim: '2026-12-24', limite: '2026-12-20', frase: 'Caixas e brigadeiros para a ceia. Encomende até 20/12.', cor: '#7A1F1F' },
+      pascoa: { rotulo: 'Páscoa', nome: 'Páscoa Mone', inicio: '2027-03-01', fim: '2027-03-28', limite: '2027-03-24', frase: 'Caixas de brigadeiro e bolos de pote para a Páscoa.', cor: '#5B3F7A' },
+      maes: { rotulo: 'Dia das Mães', nome: 'Dia das Mães', inicio: '2027-04-25', fim: '2027-05-09', limite: '2027-05-06', frase: 'Um presente doce para quem cuida de você.', cor: '#8A3B5A' },
+      namorados: { rotulo: 'Dia dos Namorados', nome: 'Dia dos Namorados', inicio: '2027-06-01', fim: '2027-06-12', limite: '2027-06-10', frase: 'Brigadeiros para dividir a dois.', cor: '#8A2A3A' },
+      chocolate: { rotulo: 'Dia do Chocolate', nome: 'Dia do Chocolate', inicio: '2027-07-01', fim: '2027-07-07', limite: '2027-07-05', frase: 'Uma semana inteira de chocolate.', cor: '#6B3A22' },
+      pais: { rotulo: 'Dia dos Pais', nome: 'Dia dos Pais', inicio: '2027-07-26', fim: '2027-08-08', limite: '2027-08-05', frase: 'Uma caixa de presente para o seu pai.', cor: '#1F3A5A' },
+      outra: { rotulo: 'Outra', nome: '', inicio: '', fim: '', limite: '', frase: '', cor: '#3A1D13' }
+    };
+    const tipo = s.tipo || 'natal';
+    const p = presets.natal;
+    const nome = s.nome ?? p.nome;
+    const inicio = s.inicio ?? p.inicio;
+    const fim = s.fim ?? p.fim;
+    const limite = s.limite ?? p.limite;
+    const frase = s.frase ?? p.frase;
+    const cor = s.cor || p.cor;
+    const sel = s.sel || { 'caixa-natal': true, 'pote-natal': true, 'palha': true };
+    const fmt = (iso) => (iso ? iso.split('-').reverse().join('/') : '');
+    const seg = (ativo) => ({
+      pressed: ativo ? 'true' : 'false',
+      bg: ativo ? 'rgba(230,196,142,0.14)' : 'rgba(247,236,221,0.03)',
+      borda: ativo ? '#E6C48E' : 'rgba(232,204,154,0.18)',
+      cor: ativo ? '#E6C48E' : '#D9C3A8'
+    });
+    const cores = [
+      { nome: 'Vermelho', hex: '#7A1F1F' },
+      { nome: 'Lilás', hex: '#5B3F7A' },
+      { nome: 'Rosa', hex: '#8A3B5A' },
+      { nome: 'Vinho', hex: '#8A2A3A' },
+      { nome: 'Chocolate', hex: '#6B3A22' },
+      { nome: 'Azul', hex: '#1F3A5A' },
+      { nome: 'Verde', hex: '#1F4D3A' }
+    ];
+    const lista = [
+      { id: 'caixa-natal', nome: 'Caixa de Natal com 4 brigadeiros', kind: 'caixa', sabor: 'natal', tag: 'Só nesta campanha · sob encomenda', tagCor: '#F3DCC8' },
+      { id: 'pote-natal', nome: 'Bolo de pote de Natal', kind: 'pote', sabor: 'natal', tag: 'Só nesta campanha', tagCor: '#F3DCC8' },
+      { id: 'palha', nome: 'Palha italiana', kind: 'palha', sabor: 'morango', tag: 'Do cardápio', tagCor: '#B09780' },
+      { id: 'brig-trad', nome: 'Brigadeiro tradicional', kind: 'brigadeiro', sabor: 'chocolate', tag: 'Do cardápio', tagCor: '#B09780' },
+      { id: 'brig-ninho', nome: 'Brigadeiro de Ninho', kind: 'brigadeiro', sabor: 'ninho', tag: 'Do cardápio', tagCor: '#B09780' },
+      { id: 'caixa', nome: 'Caixa presente com 4 brigadeiros', kind: 'caixa', sabor: 'sortido', tag: 'Do cardápio', tagCor: '#B09780' }
+    ];
+    const nSel = lista.filter((d) => sel[d.id]).length;
+    const campo = (k) => (e) => this.setState({ [k]: e.target.value });
+    return {
+      tipos: Object.keys(presets).map((k) => ({
+        nome: presets[k].rotulo,
+        ...seg(tipo === k),
+        pick: () => this.setState({ tipo: k, nome: presets[k].nome, inicio: presets[k].inicio, fim: presets[k].fim, limite: presets[k].limite, frase: presets[k].frase, cor: presets[k].cor })
+      })),
+      nome, inicio, fim, limite, frase, cor,
+      setNome: campo('nome'),
+      setInicio: campo('inicio'),
+      setFim: campo('fim'),
+      setLimite: campo('limite'),
+      setFrase: campo('frase'),
+      cores: cores.map((c) => ({
+        ...c,
+        pressed: c.hex === cor ? 'true' : 'false',
+        anel: c.hex === cor ? '0 0 0 3px #1C0D08, 0 0 0 5px #E6C48E' : '0 0 0 1px rgba(247,236,221,0.25)',
+        pick: () => this.setState({ cor: c.hex })
+      })),
+      doces: lista.map((d) => ({ ...d, checked: !!sel[d.id], toggle: () => this.setState({ sel: { ...sel, [d.id]: !sel[d.id] } }) })),
+      nSelTxt: nSel === 1 ? '1 doce aparece no banner da campanha' : nSel + ' doces aparecem no banner da campanha',
+      eyebrow: tipo === 'outra' ? 'Campanha' : 'Campanha de ' + presets[tipo].rotulo,
+      nomeTxt: nome || 'Nome da campanha',
+      fraseTxt: frase || 'Frase do banner',
+      caixaSabor: tipo === 'natal' ? 'natal' : 'sortido',
+      periodoTxt: inicio && fim ? 'No ar de ' + fmt(inicio) + ' a ' + fmt(fim) + (limite ? '. Encomendas até ' + fmt(limite) + '.' : '.') : 'Escolha o período para a campanha entrar no ar sozinha.',
+      salvo: !!s.salvo,
+      avisoTxt: inicio ? 'Campanha salva. Entra no ar em ' + fmt(inicio) + '.' : 'Campanha salva como rascunho.',
+      salvar: () => {
+        this.setState({ salvo: true });
+        clearTimeout(this.aviso);
+        this.aviso = setTimeout(() => this.setState({ salvo: false }), 2500);
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

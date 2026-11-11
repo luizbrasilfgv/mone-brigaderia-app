@@ -1,0 +1,155 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Admin.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "3. Painel: o que tem hoje",
+      "w": 390,
+      "x": 1410,
+      "y": 0
+    },
+    "AdminEditar.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "4. Painel: editar a ficha do doce",
+      "w": 390,
+      "x": 1880,
+      "y": 0
+    },
+    "AdminCampanhas.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "5. Painel: campanhas",
+      "w": 390,
+      "x": 2350,
+      "y": 0
+    },
+    "AdminCampanhaEditar.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "6. Painel: criar ou editar campanha",
+      "w": 390,
+      "x": 2820,
+      "y": 0
+    },
+    "Balcao.dc.html": {
+      "h": 720,
+      "is_interactive": true,
+      "radius": 24,
+      "title": "Extra: modo balcão (TV na loja)",
+      "w": 1280,
+      "x": 0,
+      "y": 964
+    },
+    "Carrinho.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "Fase 2 (depois): encomenda pelo app",
+      "w": 390,
+      "x": 0,
+      "y": 1804
+    },
+    "Doce.dc.html": {
+      "h": 240,
+      "title": "Componente: imagem do doce",
+      "w": 240,
+      "x": 1360,
+      "y": 964
+    },
+    "Main.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "1. Vitrine",
+      "w": 390,
+      "x": 0,
+      "y": 0
+    },
+    "Produto.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "2. Ficha do doce e pedido no WhatsApp",
+      "w": 390,
+      "x": 470,
+      "y": 0
+    },
+    "ProdutoEncomenda.dc.html": {
+      "h": 844,
+      "is_interactive": true,
+      "radius": 44,
+      "title": "2b. Doce sob encomenda",
+      "w": 390,
+      "x": 940,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-20T19:12:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {
+    "fase2": {
+      "fill": "blue",
+      "text": "Fase 2, depois: a encomenda passa a ser feita no próprio app, com sacola, retirada ou entrega e data. O pedido continua chegando no WhatsApp da loja.",
+      "w": 340,
+      "x": 470,
+      "y": 1804
+    },
+    "fotos": {
+      "fill": "orange",
+      "text": "Só a palha italiana usa foto real. Os outros doces aparecem como ilustração até chegarem as fotos. Preços, sabores e textos das fichas são exemplos.",
+      "w": 300,
+      "x": 1680,
+      "y": 964
+    },
+    "note-6put0v": {
+      "fill": "green",
+      "size": 24,
+      "text": "IDEIAS\n\nCriador precisa incluir quais os produtos estão disponíveis e suas quantidades.\n\nFEITO: quantidade de cada doce no Painel (telas 3 e 4). A vitrine mostra quantos restam.",
+      "w": 300,
+      "x": -380,
+      "y": -19
+    },
+    "note-s3xwsg": {
+      "fill": "green",
+      "text": "Pode marcar com flag um item como \"sob encomenda\" pq demora e é caro pra fazer e ficar sempre apto para venda.\n\nFEITO: chave \"Sob encomenda\" na ficha (tela 4), com prazo de preparo. Esse doce fica sem quantidade e nunca aparece como esgotado. Exemplo: caixa presente (telas 1, 2b e 3).",
+      "w": 300,
+      "x": -381,
+      "y": 410
+    },
+    "titulo": {
+      "kind": "title1",
+      "maxW": 3210,
+      "text": "Agora: vitrine e encomenda pelo WhatsApp",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "Produto.dc.html",
+    "ProdutoEncomenda.dc.html",
+    "Admin.dc.html",
+    "AdminEditar.dc.html",
+    "AdminCampanhas.dc.html",
+    "AdminCampanhaEditar.dc.html",
+    "Balcao.dc.html",
+    "Doce.dc.html",
+    "Carrinho.dc.html"
+  ],
+  "pages": [],
+  "title": "Mockup Vitrine de Doces"
+}
