@@ -9,9 +9,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Uma publicação por vez. No main, a próxima espera a anterior terminar: cancelar
+# no meio deixaria o servidor com metade dos arquivos. Em pull request, cancela.
 concurrency:
   group: publicar-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   publicar:
