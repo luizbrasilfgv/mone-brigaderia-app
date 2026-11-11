@@ -2,6 +2,8 @@
 
 Cada push no `main` faz o GitHub verificar o código, compilar o app e enviar por FTPS para a hospedagem (arquivo `.github/workflows/publicar.yml`). Na primeira vez que o app conecta no banco vazio, ele cria as tabelas e carrega os doces de exemplo sozinho.
 
+O FTP de hospedagem compartilhada derruba envios longos, então a publicação manda um pacote só (`pacote.tar.gz`), mais `pacote.id`, `app.js`, `.env` e `tmp/restart.txt`. Quando o app reinicia, o `app.js` desempacota a versão nova em `mone-app/versoes/<id>` e guarda só a anterior, para voltar se precisar.
+
 Nenhuma senha fica no código: os acessos ficam nos **Secrets** do repositório e, no servidor, num arquivo `.env` que a publicação escreve dentro da pasta do app (fora da pasta pública do site).
 
 ## 1. Criar o app Node.js no cPanel (uma vez)
@@ -76,6 +78,7 @@ Depois da primeira publicação, no cPanel, em **Setup Node.js App**, clique em 
 | Sintoma | O que olhar |
 | --- | --- |
 | A publicação falha no passo "Enviar para o servidor" | Usuário, senha e servidor do FTP. Se o erro falar de TLS, troque `protocol: ftps` por `ftp` no workflow (menos seguro) |
+| Sobraram muitos arquivos soltos em `mone-app` (de uma publicação antiga, arquivo por arquivo) | Pode apagar tudo em `mone-app`, menos `app.js`, `.env`, `pacote.tar.gz`, `pacote.id`, `versoes` e `tmp` |
 | O site mostra erro 503 ou a página da hospedagem | No cPanel, **Setup Node.js App**: o app está rodando? Veja o arquivo `stderr.log` na pasta `mone-app` |
 | Erro de banco no log | Usuário e senha do MySQL, e se o usuário tem acesso ao banco (cPanel › **MySQL Databases** › adicionar usuário ao banco com todos os privilégios) |
 | O Google mostra "redirect_uri_mismatch" | O endereço do passo 2.4 tem que ser exatamente `https://monebrigaderia.com.br/auth/google/retorno` |

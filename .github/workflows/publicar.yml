@@ -40,15 +40,20 @@ jobs:
           # Vai dentro do app (aparece no navegador), por isso entra na hora de compilar.
           NEXT_PUBLIC_WHATSAPP_NUMERO: ${{ vars.WHATSAPP_NUMERO }}
 
-      - name: Montar a pasta para o servidor
+      # O FTP da hospedagem derruba envios longos, então vai um pacote só. No servidor,
+      # deploy/app.js desempacota a versão nova em versoes/<id> quando o app reinicia.
+      - name: Montar o pacote para o servidor
         run: |
-          mkdir -p publicar/.next publicar/tmp
-          cp -r .next/standalone/. publicar/
-          cp -r .next/static publicar/.next/static
-          mkdir -p publicar/public && cp -r public/. publicar/public/
+          mkdir -p pacote/.next pacote/public publicar/tmp
+          cp -r .next/standalone/. pacote/
+          cp -r .next/static pacote/.next/static
+          cp -r public/. pacote/public/
+          tar -czf publicar/pacote.tar.gz -C pacote .
+          echo "${GITHUB_SHA::12}" > publicar/pacote.id
           cp deploy/app.js publicar/app.js
           # Mudar este arquivo faz a hospedagem (Passenger) reiniciar o app.
           date -u +%Y-%m-%dT%H:%M:%SZ > publicar/tmp/restart.txt
+          ls -la publicar
 
       - name: Escrever as configurações do servidor
         if: env.PUBLICAR == 'true'
@@ -93,7 +98,6 @@ jobs:
           security: loose
           local-dir: ./publicar/
           server-dir: ${{ vars.PASTA_DO_APP || 'mone-app' }}/
-          # O padrão da action pula node_modules, mas o servidor do Next.js precisa dela.
           exclude: |
             **/.git*
             **/.git*/**
