@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import { bancoConfigurado } from "@/lib/banco";
-import { loginConfigurado, usuarioAtual } from "@/lib/auth";
+import { googleConfigurado, senhaConfigurada, usuarioAtual } from "@/lib/auth";
 import { LOJA } from "@/lib/loja";
+import { FormularioSenha } from "./FormularioSenha";
 
 export const metadata: Metadata = { title: "Entrar no painel" };
 
@@ -15,7 +16,7 @@ const ERROS: Record<string, string> = {
   cancelado: "O login com o Google foi cancelado.",
   expirou: "O login demorou demais. Tente de novo.",
   google: "Não deu para confirmar sua conta do Google. Tente de novo.",
-  config: "O login com Google ainda não foi configurado no servidor. Veja docs/publicar.md.",
+  config: "A entrada do painel ainda não foi configurada no servidor. Veja docs/publicar.md.",
 };
 
 export default function PaginaEntrar({ searchParams }: PageProps<"/entrar">) {
@@ -75,10 +76,13 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/entrar">["
   if (await usuarioAtual()) redirect("/painel");
   const { erro } = await searchParams;
   const mensagem = typeof erro === "string" ? ERROS[erro] : undefined;
+  const google = googleConfigurado();
+  const senha = senhaConfigurada();
   return (
     <div className="flex w-full flex-col gap-4">
       {mensagem && <Aviso erro>{mensagem}</Aviso>}
-      {loginConfigurado() ? (
+      {!google && !senha && !mensagem && <Aviso erro>{ERROS.config}</Aviso>}
+      {google && (
         <a
           href="/auth/google"
           className="flex h-[54px] w-full items-center justify-center gap-3 rounded-full bg-white text-base font-bold text-[#1f1f1f] shadow-lg transition-transform active:scale-[0.97]"
@@ -86,12 +90,10 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/entrar">["
           <LogoGoogle />
           Entrar com Google
         </a>
-      ) : (
-        !mensagem && <Aviso erro>{ERROS.config}</Aviso>
       )}
-      <p className="text-center text-xs leading-relaxed text-creme-400">
-        Só entra quem a administradora cadastrou em Acessos, com o mesmo e-mail do Google.
-      </p>
+      {google && senha && <span className="text-center text-xs text-creme-400">ou</span>}
+      {senha && <FormularioSenha />}
+      <p className="text-center text-xs leading-relaxed text-creme-400">Só entra quem a administração cadastrou em Acessos.</p>
     </div>
   );
 }

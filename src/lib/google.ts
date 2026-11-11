@@ -38,12 +38,3 @@ export function contaDoIdToken(idToken: string, clientId: string): ContaGoogle |
     return null;
   }
 }
-
-// E-mails que sempre entram como administrador (ADMIN_EMAILS, separados por vírgula).
-// Servem para o primeiro acesso: depois, o administrador libera os outros em Acessos.
-export function emailsAdmin(): string[] {
-  return (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-}

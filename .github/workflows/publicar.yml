@@ -64,6 +64,7 @@ jobs:
           MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
           MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
           SESSAO_SEGREDO: ${{ secrets.SESSAO_SEGREDO }}
+          PAINEL_SENHA: ${{ secrets.PAINEL_SENHA }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           # Quem sempre entra como administrador (e libera os outros em Acessos).
@@ -78,6 +79,7 @@ jobs:
             echo "MYSQL_PASSWORD=$MYSQL_PASSWORD"
             echo "MYSQL_DATABASE=$MYSQL_DATABASE"
             echo "SESSAO_SEGREDO=$SESSAO_SEGREDO"
+            echo "PAINEL_SENHA=$PAINEL_SENHA"
             echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
             echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
             echo "ADMIN_EMAILS=$ADMIN_EMAILS"

@@ -1,8 +1,6 @@
 import { NextResponse, connection, type NextRequest } from "next/server";
-import type { RowDataPacket } from "mysql2/promise";
-import { banco } from "@/lib/banco";
-import { enderecoDoSite, usaHttps } from "@/lib/auth";
-import { CAMINHO_RETORNO, COOKIE_LOGIN, GOOGLE_TOKEN, contaDoIdToken, emailsAdmin } from "@/lib/google";
+import { enderecoDoSite, idDeQuemTemAcesso, usaHttps } from "@/lib/auth";
+import { CAMINHO_RETORNO, COOKIE_LOGIN, GOOGLE_TOKEN, contaDoIdToken } from "@/lib/google";
 import { COOKIE_SESSAO, chaveDaSessao, criarToken } from "@/lib/sessao";
 
 // O Google volta para cá depois que a pessoa escolhe a conta.
@@ -46,17 +44,8 @@ export async function GET(pedido: NextRequest) {
     const conta = contaDoIdToken((await troca.json()).id_token ?? "", clientId);
     if (!conta) return sair("/entrar?erro=google");
 
-    const db = await banco();
-    if (emailsAdmin().includes(conta.email)) {
-      await db.query(
-        "INSERT INTO usuarios (email, papel) VALUES (?, 'admin') ON DUPLICATE KEY UPDATE papel = 'admin', ativo = 1",
-        [conta.email],
-      );
-    }
-    const [linhas] = await db.query<RowDataPacket[]>("SELECT id FROM usuarios WHERE email = ? AND ativo = 1", [conta.email]);
-    if (!linhas[0]) return sair("/entrar?erro=sem-acesso");
-    const id = linhas[0].id as number;
-    await db.query("UPDATE usuarios SET nome = ?, foto = ?, ultimo_acesso = NOW() WHERE id = ?", [conta.nome, conta.foto, id]);
+    const id = await idDeQuemTemAcesso(conta.email, conta.nome, conta.foto);
+    if (!id) return sair("/entrar?erro=sem-acesso");
 
     const { token, expira } = await criarToken(id, chave);
     const resposta = sair("/painel");

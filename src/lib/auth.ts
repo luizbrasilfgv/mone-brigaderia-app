@@ -1,8 +1,9 @@
 import "server-only";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import type { RowDataPacket } from "mysql2/promise";
 import { banco, bancoConfigurado } from "./banco";
-import { COOKIE_SESSAO, chaveDaSessao, lerToken } from "./sessao";
+import { COOKIE_SESSAO, chaveDaSessao, criarToken, lerToken } from "./sessao";
 import type { Papel } from "./papeis";
 
 export { pode, type Papel } from "./papeis";
@@ -29,8 +30,52 @@ const USUARIO_DEMO: Usuario = {
   tutorialVisto: false,
 };
 
-export function loginConfigurado(): boolean {
+// Duas formas de entrar: com Google (se configurado) ou com e-mail + senha da loja
+// (PAINEL_SENHA). Nas duas, o e-mail precisa estar em Acessos.
+export function googleConfigurado(): boolean {
   return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && chaveDaSessao());
+}
+
+export function senhaConfigurada(): boolean {
+  return Boolean(process.env.PAINEL_SENHA && chaveDaSessao());
+}
+
+export function senhaConfere(senha: string): boolean {
+  const certa = process.env.PAINEL_SENHA;
+  if (!certa) return false;
+  // Compara os resumos para o tempo de resposta não revelar a senha.
+  const a = createHash("sha256").update(senha).digest();
+  const b = createHash("sha256").update(certa).digest();
+  return timingSafeEqual(a, b);
+}
+
+// Depois de confirmar quem é (Google ou senha): garante os e-mails de ADMIN_EMAILS
+// como administradores e devolve o id se a pessoa tiver acesso.
+export async function idDeQuemTemAcesso(email: string, nome?: string, foto?: string | null): Promise<number | null> {
+  const db = await banco();
+  const admins = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  if (admins.includes(email)) {
+    await db.query(
+      "INSERT INTO usuarios (email, papel) VALUES (?, 'admin') ON DUPLICATE KEY UPDATE papel = 'admin', ativo = 1",
+      [email],
+    );
+  }
+  const [linhas] = await db.query<RowDataPacket[]>("SELECT id FROM usuarios WHERE email = ? AND ativo = 1", [email]);
+  if (!linhas[0]) return null;
+  const id = linhas[0].id as number;
+  if (nome !== undefined) {
+    await db.query("UPDATE usuarios SET nome = ?, foto = ?, ultimo_acesso = NOW() WHERE id = ?", [nome, foto ?? null, id]);
+  } else {
+    await db.query("UPDATE usuarios SET ultimo_acesso = NOW() WHERE id = ?", [id]);
+  }
+  return id;
+}
+
+export async function iniciarSessao(usuarioId: number): Promise<void> {
+  const chave = chaveDaSessao();
+  if (!chave) throw new Error("SESSAO_SEGREDO não configurado");
+  const { token, expira } = await criarToken(usuarioId, chave);
+  (await cookies()).set(COOKIE_SESSAO, token, { httpOnly: true, secure: await usaHttps(), sameSite: "lax", path: "/", expires: expira });
 }
 
 export function linhaParaUsuario(l: RowDataPacket): Usuario {

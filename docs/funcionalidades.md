@@ -26,7 +26,7 @@ Preços, sabores, quantidades e textos que aparecem no mockup são exemplos. Só
 
 ### Painel da dona
 
-Entrada com a conta do Google (`/entrar`). Só entra quem estiver em **Acessos**. Tudo o que é salvo vai para o banco e aparece na vitrine na hora.
+Entrada em `/entrar` com e-mail + senha da loja, ou com Google se estiver configurado. Só entra quem estiver em **Acessos**. Tudo o que é salvo vai para o banco e aparece na vitrine na hora.
 
 - **Como usar:** guia em passos que abre sozinho no primeiro acesso e depois pelo botão "Como usar". Mostra só o que o papel da pessoa permite.
 - **Acessos** (só Administração): adicionar pessoas pelo e-mail do Google, escolher o papel e tirar o acesso. O painel nunca fica sem administrador.

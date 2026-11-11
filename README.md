@@ -1,10 +1,10 @@
 # Mone Brigaderia: app vitrine
 
-App vitrine da Mone Brigaderia. A cliente vê os doces do dia, abre a ficha de cada um (descrição, glúten, lactose, composição) e faz a encomenda pelo WhatsApp. A dona controla tudo num painel com login do Google: o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda, campanhas como Natal e Páscoa, e quem mais pode entrar no painel.
+App vitrine da Mone Brigaderia. A cliente vê os doces do dia, abre a ficha de cada um (descrição, glúten, lactose, composição) e faz a encomenda pelo WhatsApp. A dona controla tudo num painel com login (e-mail e senha da loja, ou Google): o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda, campanhas como Natal e Páscoa, e quem mais pode entrar no painel.
 
 ## Onde estamos
 
-O app está pronto para ir ao ar em **monebrigaderia.com.br**: grava no MySQL, o painel entra com Google (cada pessoa com o seu papel) e o GitHub publica sozinho a cada push no `main`. Para a primeira publicação, siga [docs/publicar.md](docs/publicar.md).
+O app está pronto para ir ao ar em **monebrigaderia.com.br**: grava no MySQL, o painel tem login (cada pessoa com o seu papel) e o GitHub publica sozinho a cada push no `main`. Para a primeira publicação, siga [docs/publicar.md](docs/publicar.md).
 
 - **O que o app faz e as regras:** [docs/funcionalidades.md](docs/funcionalidades.md)
 - **O que vem depois:** [docs/proximos-passos.md](docs/proximos-passos.md)
@@ -23,14 +23,14 @@ npm run dev
 Abra http://localhost:3000.
 
 - **Sem MySQL** (deixe `MYSQL_DATABASE` vazio): o app usa os dados de exemplo e o painel abre sem login, em modo demonstração.
-- **Com MySQL**: crie um banco vazio, preencha `MYSQL_*`, `SESSAO_SEGREDO`, `GOOGLE_CLIENT_*` e `ADMIN_EMAILS` no `.env.local`. Na primeira visita, o app cria as tabelas e carrega os doces de exemplo.
+- **Com MySQL**: crie um banco vazio, preencha `MYSQL_*`, `SESSAO_SEGREDO`, `PAINEL_SENHA` e `ADMIN_EMAILS` no `.env.local` (Google é opcional: `GOOGLE_CLIENT_*`). Na primeira visita, o app cria as tabelas e carrega os doces de exemplo.
 
 | Endereço | Tela |
 | --- | --- |
 | `/` | Vitrine |
 | `/doce/palha-italiana` | Ficha do doce |
 | `/doce/caixa-presente-4` | Ficha de doce sob encomenda, com escolha de data |
-| `/entrar` | Entrada do painel (Entrar com Google) |
+| `/entrar` | Entrada do painel (e-mail + senha da loja, ou Google) |
 | `/painel` | O que tem hoje e quantidades |
 | `/painel/doces/novo` | Cadastro de doce |
 | `/painel/campanhas` | Campanhas |

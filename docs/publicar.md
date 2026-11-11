@@ -22,9 +22,9 @@ Salve. Não precisa rodar "npm install": o app já vai pronto, com tudo o que pr
 
 > Se o cPanel não tiver **Setup Node.js App**, a hospedagem não roda Node.js. Opções: pedir à hospedagem um plano com Node.js, contratar uma VPS, ou publicar o app na Vercel usando este mesmo MySQL (liberando acesso externo em **Remote MySQL**).
 
-## 2. Criar o login com Google (uma vez)
+## 2. Login com Google (opcional)
 
-O painel usa o login do Google. Para isso, a loja precisa de um "cliente OAuth" no Google Cloud (é grátis):
+O painel entra com **e-mail + senha da loja** (`PAINEL_SENHA`). Se quiserem também o botão "Entrar com Google", crie um "cliente OAuth" no Google Cloud (é grátis, sem faturamento; se a conta atingir o limite de projetos, use outra conta Google, de preferência da loja):
 
 1. Entre em https://console.cloud.google.com com uma conta Google da loja e crie um projeto (ex.: "Mone Brigaderia").
 2. No menu, abra **APIs e serviços › Tela de permissão OAuth** (pode aparecer como **Google Auth Platform**) e clique em **Começar**: nome do app "Mone Brigaderia", e-mail de suporte, público **Externo**.
@@ -47,8 +47,9 @@ Só o dono do repositório consegue. Em **Settings › Secrets and variables ›
 | `MYSQL_PASSWORD` | senha do usuário do banco |
 | `MYSQL_DATABASE` | nome do banco (ex.: `monebrigaderia_appdb`) |
 | `SESSAO_SEGREDO` | um texto aleatório longo (64 letras e números) |
-| `GOOGLE_CLIENT_ID` | ID do cliente do passo 2 |
-| `GOOGLE_CLIENT_SECRET` | chave secreta do cliente do passo 2 |
+| `PAINEL_SENHA` | senha da loja para entrar no painel com e-mail + senha |
+| `GOOGLE_CLIENT_ID` | opcional: ID do cliente do passo 2 |
+| `GOOGLE_CLIENT_SECRET` | opcional: chave secreta do cliente do passo 2 |
 
 **Aba Variables** (opcionais):
 
@@ -70,7 +71,7 @@ Depois da primeira publicação, no cPanel, em **Setup Node.js App**, clique em 
 ## 5. Conferir
 
 - `https://monebrigaderia.com.br`: vitrine.
-- `https://monebrigaderia.com.br/entrar`: **Entrar com Google** com um e-mail de `ADMIN_EMAILS`. Depois, em **Acessos**, libere as outras pessoas.
+- `https://monebrigaderia.com.br/entrar`: entre com um e-mail de `ADMIN_EMAILS` e a `PAINEL_SENHA` (ou com o Google, se configurado). Depois, em **Acessos**, libere as outras pessoas e passe a senha da loja para elas.
 - HTTPS: se o navegador reclamar, rode **SSL/TLS Status › Run AutoSSL** no cPanel.
 
 ## Se algo der errado

@@ -1,12 +1,12 @@
 import { NextResponse, connection } from "next/server";
-import { enderecoDoSite, loginConfigurado, usaHttps } from "@/lib/auth";
+import { enderecoDoSite, googleConfigurado, usaHttps } from "@/lib/auth";
 import { CAMINHO_RETORNO, COOKIE_LOGIN, GOOGLE_AUTORIZAR, desafioPkce, textoAleatorio } from "@/lib/google";
 
 // Leva para a tela de login do Google.
 export async function GET() {
   await connection();
   const site = await enderecoDoSite();
-  if (!loginConfigurado()) return NextResponse.redirect(new URL("/entrar?erro=config", site));
+  if (!googleConfigurado()) return NextResponse.redirect(new URL("/entrar?erro=config", site));
 
   const estado = textoAleatorio(16);
   const verificador = textoAleatorio(32);
