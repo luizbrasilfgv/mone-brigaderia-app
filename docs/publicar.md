@@ -2,7 +2,7 @@
 
 Cada push no `main` faz o GitHub verificar o código, compilar o app e enviar por FTPS para a hospedagem (arquivo `.github/workflows/publicar.yml`). Na primeira vez que o app conecta no banco vazio, ele cria as tabelas e carrega os doces de exemplo sozinho.
 
-O FTP de hospedagem compartilhada derruba envios longos, então a publicação manda um pacote só (`pacote.tar.gz`), mais `pacote.id`, `app.js`, `.env` e `tmp/restart.txt`. Quando o app reinicia, o `app.js` desempacota a versão nova em `mone-app/versoes/<id>` e guarda só a anterior, para voltar se precisar.
+O FTP de hospedagem compartilhada derruba envios longos, então a publicação manda um pacote só (`pacote.tar.gz`), mais `pacote.id`, `app.js`, `.env` e `tmp/restart.txt`. Quando o app reinicia, o `app.js` desempacota a versão nova em `app/versoes/<id>` e guarda só a anterior, para voltar se precisar.
 
 Nenhuma senha fica no código: os acessos ficam nos **Secrets** do repositório e, no servidor, num arquivo `.env` que a publicação escreve dentro da pasta do app (fora da pasta pública do site).
 
@@ -14,9 +14,11 @@ No cPanel da hospedagem, abra **Setup Node.js App** › **Create Application**:
 | --- | --- |
 | Node.js version | 20 ou mais nova (22 se tiver) |
 | Application mode | Production |
-| Application root | `mone-app` |
+| Application root | `app` |
 | Application URL | `monebrigaderia.com.br` |
 | Application startup file | `app.js` |
+
+O **Application URL** tem que ser o domínio puro, sem nada depois (nada de `/app`): a vitrine abre na raiz do site.
 
 Salve. Não precisa rodar "npm install": o app já vai pronto, com tudo o que precisa.
 
@@ -58,7 +60,7 @@ Só o dono do repositório consegue. Em **Settings › Secrets and variables ›
 | `ADMIN_EMAILS` | e-mails do Google que sempre entram como administrador, separados por vírgula | `luizbrasil.rj@gmail.com` |
 | `WHATSAPP_NUMERO` | WhatsApp da loja com 55 + DDD, só números | abre o WhatsApp sem contato |
 | `SITE_URL` | endereço do site | `https://monebrigaderia.com.br` |
-| `PASTA_DO_APP` | pasta do app no servidor | `mone-app` |
+| `PASTA_DO_APP` | pasta do app no servidor | `app` |
 | `UPLOAD_DIR` | pasta das fotos enviadas pelo painel | `/home/<usuário>/mone-fotos` |
 | `MYSQL_HOST` (como secret) | servidor do banco | `localhost` |
 
@@ -79,8 +81,8 @@ Depois da primeira publicação, no cPanel, em **Setup Node.js App**, clique em 
 | Sintoma | O que olhar |
 | --- | --- |
 | A publicação falha no passo "Enviar para o servidor" | Usuário, senha e servidor do FTP. Se o erro falar de TLS, troque `protocol: ftps` por `ftp` no workflow (menos seguro) |
-| Sobraram muitos arquivos soltos em `mone-app` (de uma publicação antiga, arquivo por arquivo) | Pode apagar tudo em `mone-app`, menos `app.js`, `.env`, `pacote.tar.gz`, `pacote.id`, `versoes` e `tmp` |
-| O site mostra erro 503 ou a página da hospedagem | No cPanel, **Setup Node.js App**: o app está rodando? Veja o arquivo `stderr.log` na pasta `mone-app` |
+| Sobraram muitos arquivos soltos em `app` (de uma publicação antiga, arquivo por arquivo) | Pode apagar tudo em `app`, menos `app.js`, `.env`, `pacote.tar.gz`, `pacote.id`, `versoes` e `tmp` |
+| O site mostra erro 503 ou a página da hospedagem | No cPanel, **Setup Node.js App**: o app está rodando? Veja o arquivo `stderr.log` na pasta `app` |
 | Erro de banco no log | Usuário e senha do MySQL, e se o usuário tem acesso ao banco (cPanel › **MySQL Databases** › adicionar usuário ao banco com todos os privilégios) |
 | O Google mostra "redirect_uri_mismatch" | O endereço do passo 2.4 tem que ser exatamente `https://monebrigaderia.com.br/auth/google/retorno` |
 | "Esse e-mail do Google não tem acesso" | A pessoa precisa estar em **Acessos** com o mesmo e-mail do Google (ou em `ADMIN_EMAILS`) |

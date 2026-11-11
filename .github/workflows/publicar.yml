@@ -99,7 +99,7 @@ jobs:
           # O certificado do FTP da hospedagem costuma ser do nome do servidor, não do domínio.
           security: loose
           local-dir: ./publicar/
-          server-dir: ${{ vars.PASTA_DO_APP || 'mone-app' }}/
+          server-dir: ${{ vars.PASTA_DO_APP || 'app' }}/
           exclude: |
             **/.git*
             **/.git*/**
