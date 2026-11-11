@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/* Cores da marca, tiradas da etiqueta da Mone: chocolate, dourado e pêssego. */
+@theme {
+  --color-cacau-950: #1c0d08;
+  --color-cacau-900: #2a140d;
+  --color-cacau-800: #3a1d13;
+  --color-cacau-700: #4a3329;
+  --color-creme: #f7ecdd;
+  --color-creme-200: #d9c3a8;
+  --color-creme-400: #b09780;
+  --color-creme-600: #8f7865;
+  --color-dourado: #e6c48e;
+  --color-pessego: #f3dcc8;
+  --color-menta: #9ed6a0;
+  --color-rosa: #f2a7a0;
+  --color-favorito: #8b2e1e;
+  --color-whatsapp: #25d366;
+  --color-whatsapp-texto: #052e16;
+
+  --animate-flutua: flutua 5s ease-in-out infinite;
+  --animate-pulsa: pulsa 1.8s ease-out infinite;
+  --animate-sobe: sobe 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-entra: entra 0.7s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @keyframes flutua {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-4deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(-1deg);
+    }
+  }
+  @keyframes pulsa {
+    0% {
+      box-shadow: 0 0 0 0 rgb(158 214 160 / 0.55);
+    }
+    100% {
+      box-shadow: 0 0 0 7px rgb(158 214 160 / 0);
+    }
+  }
+  @keyframes sobe {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: none;
+    }
+  }
+  @keyframes entra {
+    from {
+      opacity: 0;
+      transform: scale(0.94) translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+@theme inline {
+  --font-sans: var(--font-manrope), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), Georgia, serif;
+}
+
+@layer base {
+  body {
+    @apply bg-cacau-950 font-sans text-creme antialiased;
+  }
+  button {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-dourado);
+    outline-offset: 2px;
+  }
+}
+
+@utility sem-barra {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Fundo claro e iluminado onde a foto ou o desenho do doce aparece. */
+@utility fundo-vitrine {
+  background: radial-gradient(120% 90% at 50% 15%, #f8f5f2 0%, #e0d9d2 78%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

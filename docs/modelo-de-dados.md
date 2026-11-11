@@ -1,6 +1,6 @@
 # Modelo de dados (proposta)
 
-Ponto de partida para o banco, tirado das telas do mockup. Ajustem à vontade quando escolherem a stack. Valores em dinheiro ficam em centavos para evitar erro de arredondamento.
+Ponto de partida para o banco, tirado das telas do mockup. A versão pronta para rodar está em [`supabase/schema.sql`](../supabase/schema.sql). Valores em dinheiro ficam em centavos para evitar erro de arredondamento. Doces, categorias e campanhas usam um id em texto (ex.: `palha-italiana`), que também aparece no endereço da página.
 
 ```mermaid
 erDiagram
@@ -18,7 +18,7 @@ erDiagram
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
-| id | uuid | |
+| id | texto | |
 | nome | texto | Brigadeiros, Palhas, Bolos de pote, Caixas e kits |
 | ordem | inteiro | ordem dos chips na vitrine |
 
@@ -26,11 +26,12 @@ erDiagram
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
-| id | uuid | |
-| categoria_id | uuid | |
+| id | texto | endereço da página: `/doce/<id>` |
+| categoria_id | texto | |
 | nome | texto | |
 | descricao | texto | |
-| preco_centavos | inteiro | preço por unidade ou por caixa |
+| preco_centavos | inteiro | |
+| unidade | texto | "por unidade", "por caixa" |
 | contem_gluten | booleano | |
 | contem_lactose | booleano | |
 | composicao | texto | |
@@ -48,7 +49,7 @@ erDiagram
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
 | id | uuid | |
-| doce_id | uuid | |
+| doce_id | texto | |
 | nome | texto | Tradicional, Ninho... |
 | preco_centavos | inteiro, opcional | vazio = mesmo preço do doce |
 | ordem | inteiro | |
@@ -58,10 +59,9 @@ erDiagram
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
 | id | uuid | |
-| doce_id | uuid | |
-| url | texto | arquivo no storage |
-| principal | booleano | |
-| ordem | inteiro | |
+| doce_id | texto | |
+| caminho | texto | arquivo no storage |
+| ordem | inteiro | a de menor ordem é a principal |
 
 ### estoque_dia
 
@@ -69,7 +69,7 @@ Uma linha por doce e por dia guarda o histórico do que foi produzido.
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
-| doce_id | uuid | chave junto com `data` |
+| doce_id | texto | chave junto com `data` |
 | data | data | |
 | quantidade | inteiro | 0 = esgotado |
 
@@ -77,7 +77,7 @@ Uma linha por doce e por dia guarda o histórico do que foi produzido.
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
-| id | uuid | |
+| id | texto | |
 | tipo | enum | natal, pascoa, dia_das_maes, dia_dos_namorados, dia_do_chocolate, dia_dos_pais, outra |
 | nome | texto | "Natal Mone" |
 | inicio, fim | data | período no ar |
@@ -93,8 +93,8 @@ Liga doces e campanhas (um doce pode estar em várias campanhas).
 
 | Coluna | Tipo |
 | --- | --- |
-| campanha_id | uuid |
-| doce_id | uuid |
+| campanha_id | texto |
+| doce_id | texto |
 
 ## Consultas principais
 

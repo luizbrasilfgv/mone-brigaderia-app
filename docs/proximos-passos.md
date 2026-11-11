@@ -1,42 +1,53 @@
 # Próximos passos
 
-Caminho sugerido do mockup até o app no ar. A escolha da stack é do time; abaixo está uma sugestão para começar rápido e barato.
+O app já tem todas as telas funcionando com dados de exemplo. Abaixo, o que falta para ele ir ao ar, em ordem.
 
-## 1. Escolher a stack
+## 1. Banco de dados (sugestão: Supabase)
 
-Sugestão:
+1. Criar um projeto no [Supabase](https://supabase.com) e rodar `supabase/schema.sql` no SQL Editor.
+2. Popular as tabelas com os doces de `src/lib/dados-exemplo.ts` (ou cadastrar pelo painel depois do passo 3).
+3. Trocar o corpo das funções de `src/lib/dados.ts` por consultas ao banco. As telas não mudam.
+4. Criar o bucket público `fotos-doces` no Storage para as fotos.
 
-- **App:** Next.js (React) publicado como PWA, para a cliente instalar no celular sem loja de aplicativos.
-- **Banco, login e fotos:** Supabase (Postgres, autenticação para o painel da dona, storage para as fotos).
-- **Hospedagem:** Vercel para o app.
+Qualquer Postgres com login e armazenamento de imagens resolve; o Supabase junta os três.
 
-Vercel e Supabase costumam ter plano gratuito para começar; conferir as condições atuais antes de decidir. Qualquer stack que tenha Postgres, login e storage de imagens resolve.
+## 2. Login no painel
 
-## 2. Banco de dados
+1. Criar as contas da dona e da equipe no Supabase Auth e desligar o cadastro público.
+2. Proteger tudo em `/painel` (no Next.js 16, o antigo `middleware.ts` virou `proxy.ts`).
+3. Ver o guia `authentication-with-cache-components.md` em `node_modules/next/dist/docs/01-app/02-guides/`.
 
-1. Criar as tabelas de [modelo-de-dados.md](modelo-de-dados.md).
-2. Popular com os doces do mockup para testar.
-3. Proteger as tabelas: a vitrine só lê; só a dona e a equipe escrevem.
+## 3. Salvar as alterações do painel
 
-## 3. Telas, nesta ordem
+Hoje os botões de salvar mostram um aviso de demonstração. Para gravar de verdade:
 
-1. Vitrine e ficha do doce, lendo do banco.
-2. Botão do WhatsApp: link `https://wa.me/55<DDD><número>?text=<mensagem>` (confirmar o DDD).
-3. Painel com login: o que tem hoje (quantidades) e ficha do doce com upload de fotos.
-4. Campanhas.
-5. Modo balcão (opcional).
+1. Criar Server Actions para: quantidades do dia, ficha do doce (com upload de fotos), campanhas, destaque e pausa de campanha.
+2. Depois de gravar, atualizar o cache das páginas com `updateTag()` (marcar os dados com `cacheTag()` em `src/lib/dados.ts`).
+3. A vitrine e a ficha passam a buscar o estoque do dia no servidor a cada visita.
 
-O visual está nos arquivos de `mockup/telas`: cores, fontes (Fraunces e Manrope), espaçamentos e textos.
+## 4. WhatsApp
 
-## 4. Domínio
+Confirmar o DDD da loja e preencher `NEXT_PUBLIC_WHATSAPP_NUMERO` (ex.: `55` + DDD + `980631673`).
+
+## 5. Servidor
+
+Sugestão: [Vercel](https://vercel.com), que é de quem faz o Next.js.
+
+1. Importar o repositório do GitHub.
+2. Cadastrar as variáveis de `.env.example`.
+3. Cada push no `main` publica sozinho; cada pull request ganha um endereço de teste.
+
+Vercel e Supabase costumam ter plano gratuito para começar; conferir as condições atuais antes de decidir.
+
+## 6. Domínio
 
 1. Escolher o nome e verificar se está livre no [Registro.br](https://registro.br) (para `.com.br`).
 2. Registrar (taxa anual).
-3. Apontar o DNS para a hospedagem e ativar HTTPS.
+3. Apontar o DNS para a Vercel; o HTTPS é automático.
 
-## 5. Antes de lançar
+## 7. Antes de lançar
 
-- Fotos reais de todos os doces.
+- Fotos reais de todos os doces (hoje só a palha italiana tem foto; os outros usam desenho provisório).
 - Preços, sabores e textos das fichas revisados pela dona.
-- Ícone do app (logo) e nome que aparece no celular.
-- Testar em celulares Android e iPhone.
+- Testar a instalação no celular (Android e iPhone): o app já tem manifesto e ícone.
+- Testar a tela do balcão na TV da loja.
