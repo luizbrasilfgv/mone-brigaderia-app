@@ -17,5 +17,8 @@ if (fs.existsSync(arquivoEnv)) {
 }
 
 process.env.NODE_ENV = "production";
+// Hospedagens costumam definir HOSTNAME com o nome da máquina; o Next.js usaria
+// isso como endereço de escuta. A hospedagem (Passenger) cuida do resto.
+process.env.HOSTNAME = "0.0.0.0";
 process.chdir(__dirname);
 require("./server.js");
