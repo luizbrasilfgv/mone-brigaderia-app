@@ -10,7 +10,8 @@ import { sugestaoDeEmail } from "@/lib/texto";
 import { adicionarAcesso, gerarSenhaNova, mudarPapel, removerAcesso, type Convite, type Resultado } from "@/app/painel/acoes";
 import { IconeChave, IconeConversa, IconeCopiar, IconeFechar, IconeLixo } from "../Icones";
 import { botaoPrimario, botaoWhatsApp, campo, cartao, cx, escolha, rotulo } from "../ui";
-import { CabecalhoPainel, FaixaAviso, FaixaDemo, tentar, useAviso, useConfirmacao, useErroDeCampo } from "./comum";
+import { FaixaAviso, FaixaDemo, tentar, useAviso, useConfirmacao, useErroDeCampo } from "./comum";
+import { CabecalhoPainel } from "./Menu";
 
 // Situação da senha de cada pessoa, para quem administra saber quem já entrou.
 function situacao(a: Acesso): { texto: string; alerta: boolean } {
@@ -28,11 +29,12 @@ function mensagemDoConvite(c: Convite, enderecoPainel: string): string {
   return [
     `Oi, ${c.nome}! Seu acesso ao painel da Mone Brigaderia está pronto.`,
     "",
-    `Entre em: ${enderecoPainel}`,
+    "Para entrar pela primeira vez, toque no link:",
+    enderecoPainel,
     `E-mail: ${c.email}`,
     `Senha provisória: ${c.senha}`,
     "",
-    `A senha provisória vale 7 dias (até ${formatarDiaMes(c.vence)}). No primeiro acesso, o painel pede para você criar a sua senha.`,
+    `A senha provisória vale 7 dias (até ${formatarDiaMes(c.vence)}). No primeiro acesso, o painel pede para você criar a sua senha. Depois, para ter o painel como app no celular, toque em Menu › Instalar no celular.`,
   ].join("\n");
 }
 

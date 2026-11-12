@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FormularioCampanha } from "@/components/painel/FormularioCampanha";
+import { PessoaDoPainel } from "@/components/painel/Menu";
 import { TIPOS_CAMPANHA } from "@/lib/campanhas-modelo";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
@@ -28,16 +29,19 @@ async function Conteudo({ params }: { params: Promise<{ tipo: string }> }) {
   const { tipo } = await params;
   if (!TIPOS_CAMPANHA.includes(tipo as TipoCampanha)) notFound();
   await connection();
-  await exigirAcesso("equipe");
+  const usuario = await exigirAcesso("equipe");
+  const demo = !bancoConfigurado();
   const [doces, campanhas] = await Promise.all([listarTodosDoces(), listarCampanhas()]);
   return (
-    <FormularioCampanha
-      campanha={null}
-      tipoInicial={tipo as TipoCampanha}
-      doces={doces}
-      campanhas={campanhas}
-      hoje={hojeNaLoja()}
-      demo={!bancoConfigurado()}
-    />
+    <PessoaDoPainel nome={usuario.nome} papel={usuario.papel} demo={demo}>
+      <FormularioCampanha
+        campanha={null}
+        tipoInicial={tipo as TipoCampanha}
+        doces={doces}
+        campanhas={campanhas}
+        hoje={hojeNaLoja()}
+        demo={demo}
+      />
+    </PessoaDoPainel>
   );
 }

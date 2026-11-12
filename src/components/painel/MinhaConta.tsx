@@ -8,7 +8,8 @@ import { sairDeTodos, salvarNome, trocarSenha } from "@/app/painel/acoes";
 import { CampoSenha } from "../CampoSenha";
 import { IconeCheck } from "../Icones";
 import { botaoPrimario, campo, cartao, cx, rotulo } from "../ui";
-import { CabecalhoPainel, FaixaDemo, apagarRascunhosDoEstoque, tentar, useAviso, useConfirmacao, useErroDeCampo } from "./comum";
+import { FaixaDemo, apagarRascunhosDoEstoque, tentar, useAviso, useConfirmacao, useErroDeCampo } from "./comum";
+import { CabecalhoPainel } from "./Menu";
 
 // Minha conta: nome, troca de senha e saída deste celular ou de todos os aparelhos.
 export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: string; email: string; papel: Papel; demo: boolean }) {

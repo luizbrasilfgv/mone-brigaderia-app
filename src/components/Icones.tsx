@@ -205,3 +205,31 @@ export const IconeSacola = (p: Props) => (
     <path d="M9 10.5V7a3 3 0 0 1 6 0v3.5" />
   </Base>
 );
+
+export const IconeMenu = (p: Props) => (
+  <Base strokeWidth={2} {...p}>
+    <path d="M4 7h16M4 12h16M4 17h16" />
+  </Base>
+);
+
+export const IconeTela = (p: Props) => (
+  <Base {...p}>
+    <rect x="2.5" y="4" width="19" height="13" rx="2" />
+    <path d="M8 21h8M12 17v4" />
+  </Base>
+);
+
+export const IconeLivro = (p: Props) => (
+  <Base {...p}>
+    <path d="M12 6.5C10.5 5 8 4.5 4 4.5v14c4 0 6.5.5 8 2 1.5-1.5 4-2 8-2v-14c-4 0-6.5.5-8 2z" />
+    <path d="M12 6.5v14" />
+  </Base>
+);
+
+export const IconeSair = (p: Props) => (
+  <Base {...p}>
+    <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4" />
+    <path d="M10 16l-4-4 4-4" />
+    <path d="M6 12h10" />
+  </Base>
+);

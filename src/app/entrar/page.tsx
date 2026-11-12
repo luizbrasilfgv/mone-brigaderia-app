@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
+import { IconeVoltar } from "@/components/Icones";
 import { bancoConfigurado } from "@/lib/banco";
 import { MANUTENCAO, loginConfigurado, usuarioAtual } from "@/lib/auth";
 import { destinoSeguro } from "@/lib/painel";
@@ -35,6 +36,11 @@ export default function PaginaEntrar({ searchParams }: PageProps<"/entrar">) {
       <Suspense>
         <Conteudo searchParams={searchParams} />
       </Suspense>
+      {/* No app instalado não há barra de endereço: o caminho de volta para a vitrine. */}
+      <Link href="/" className="flex min-h-11 items-center gap-1 text-sm font-semibold text-creme-400">
+        <IconeVoltar tamanho={16} />
+        Ver a vitrine
+      </Link>
     </main>
   );
 }

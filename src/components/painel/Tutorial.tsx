@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { pode, type Papel } from "@/lib/papeis";
-import { IconeAlerta, IconeCaixa, IconeCalendario, IconeConversa, IconeEstrela, IconeLoja, IconePessoa, IconePessoas, IconeRelogio } from "../Icones";
+import { IconeAlerta, IconeCaixa, IconeCalendario, IconeConversa, IconeEstrela, IconeLoja, IconeMenu, IconePessoas, IconeRelogio } from "../Icones";
 import { botaoPrimario, cx } from "../ui";
 
 interface Passo {
@@ -75,9 +75,10 @@ const PASSOS: Passo[] = [
     minimo: "admin",
   },
   {
-    titulo: "Sua conta",
-    texto: "Toque no seu nome, no alto, para trocar a senha ou sair. Para rever este guia, toque em Como usar.",
-    icone: <IconePessoa tamanho={40} />,
+    titulo: "Tudo no Menu",
+    texto:
+      "Em qualquer tela, toque em Menu, no alto à direita: lá estão todas as partes do painel, a tela do balcão, este guia (Como usar), o guia da loja, Minha conta (para trocar a senha) e Sair.",
+    icone: <IconeMenu tamanho={40} />,
     minimo: "estoque",
   },
   {

@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FormularioCampanha } from "@/components/painel/FormularioCampanha";
+import { PessoaDoPainel } from "@/components/painel/Menu";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
 import { hojeNaLoja } from "@/lib/horarios";
@@ -20,20 +21,23 @@ export default function PaginaEditarCampanha({ params }: PageProps<"/painel/camp
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   await connection();
-  await exigirAcesso("equipe");
+  const usuario = await exigirAcesso("equipe");
+  const demo = !bancoConfigurado();
   const { id } = await params;
   const [campanhas, doces] = await Promise.all([listarCampanhas(), listarTodosDoces()]);
   const campanha = campanhas.find((c) => c.id === id);
   if (!campanha) notFound();
   return (
-    <FormularioCampanha
-      key={campanha.id}
-      campanha={campanha}
-      tipoInicial={campanha.tipo}
-      doces={doces}
-      campanhas={campanhas}
-      hoje={hojeNaLoja()}
-      demo={!bancoConfigurado()}
-    />
+    <PessoaDoPainel nome={usuario.nome} papel={usuario.papel} demo={demo}>
+      <FormularioCampanha
+        key={campanha.id}
+        campanha={campanha}
+        tipoInicial={campanha.tipo}
+        doces={doces}
+        campanhas={campanhas}
+        hoje={hojeNaLoja()}
+        demo={demo}
+      />
+    </PessoaDoPainel>
   );
 }

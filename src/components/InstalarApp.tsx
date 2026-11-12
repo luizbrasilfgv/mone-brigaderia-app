@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
 import { IconeCelular, IconeCompartilhar, IconeSeta } from "./Icones";
 import { botaoPrimario, cartao, cx } from "./ui";
 
@@ -45,23 +45,13 @@ function situacaoAgora(): Situacao {
   return "outro";
 }
 
+// Fluxo de instalar, para quem desenha o próprio botão (ex.: o Menu do painel).
+// disponivel: falso enquanto carrega e quando já está instalado (o botão some).
+// instalar(): abre a janela do Chrome ou, sem ela, o passo a passo (o elemento ajuda).
 // entrarDeNovo: no iPhone, o app instalado não leva o login feito no Safari.
-// variante "atalho": quadradinho da grade de atalhos do painel (classe vem de quem chama).
-export function InstalarApp({
-  variante,
-  nome,
-  entrarDeNovo,
-  classe,
-}: {
-  variante: "cartao" | "link" | "atalho";
-  nome: string;
-  entrarDeNovo?: boolean;
-  classe?: string;
-}) {
+export function useInstalarApp(nome: string, entrarDeNovo?: boolean): { disponivel: boolean; instalar: () => void; ajuda: ReactNode } {
   const situacao = useSyncExternalStore(assinar, situacaoAgora, (): Situacao => "carregando");
   const [ajudaAberta, setAjudaAberta] = useState(false);
-
-  if (situacao === "carregando" || situacao === "instalado") return null;
 
   const instalar = async () => {
     if (aviso) {
@@ -76,6 +66,30 @@ export function InstalarApp({
     }
     setAjudaAberta(true);
   };
+
+  return {
+    disponivel: situacao !== "carregando" && situacao !== "instalado",
+    instalar: () => void instalar(),
+    ajuda: ajudaAberta ? (
+      <ComoInstalar iphone={situacao === "iphone"} nome={nome} entrarDeNovo={entrarDeNovo} aoFechar={() => setAjudaAberta(false)} />
+    ) : null,
+  };
+}
+
+// variante "atalho": quadradinho da grade de atalhos do painel (classe vem de quem chama).
+export function InstalarApp({
+  variante,
+  nome,
+  entrarDeNovo,
+  classe,
+}: {
+  variante: "cartao" | "link" | "atalho";
+  nome: string;
+  entrarDeNovo?: boolean;
+  classe?: string;
+}) {
+  const { disponivel, instalar, ajuda } = useInstalarApp(nome, entrarDeNovo);
+  if (!disponivel) return null;
 
   return (
     <>
@@ -101,9 +115,7 @@ export function InstalarApp({
           Instalar o app
         </button>
       )}
-      {ajudaAberta && (
-        <ComoInstalar iphone={situacao === "iphone"} nome={nome} entrarDeNovo={entrarDeNovo} aoFechar={() => setAjudaAberta(false)} />
-      )}
+      {ajuda}
     </>
   );
 }
@@ -161,7 +173,7 @@ function ComoInstalar({
         aria-modal="true"
         aria-label="Como instalar no celular"
         onClick={(e) => e.stopPropagation()}
-        className="flex w-full max-w-md animate-sobe flex-col gap-4 rounded-t-[32px] border-t border-dourado/20 bg-cacau-900 px-[22px] pt-[26px] pb-7"
+        className="flex w-full max-w-md animate-sobe flex-col gap-4 rounded-t-[32px] border-t border-dourado/20 bg-cacau-900 px-[22px] pt-[26px] pb-[max(28px,env(safe-area-inset-bottom))]"
       >
         <h2 className="font-display text-2xl font-semibold">Instalar no celular</h2>
         <p className="text-sm leading-relaxed text-creme-200">

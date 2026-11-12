@@ -25,7 +25,6 @@ import { COR_ESTOQUE, barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotu
 import { salvarDoce } from "@/app/painel/acoes";
 import {
   AvisoNaoSalvo,
-  CabecalhoPainel,
   Chave,
   Contador,
   FaixaDemo,
@@ -37,6 +36,7 @@ import {
   useErroDeCampo,
   useReiniciarAoSair,
 } from "./comum";
+import { CabecalhoPainel } from "./Menu";
 
 const SELOS: { valor: Selo; nome: string }[] = [
   { valor: "nenhum", nome: "Nenhum" },

@@ -29,6 +29,7 @@ import { ImagemDoce } from "../ImagemDoce";
 import {
   IconeAjuda,
   IconeCalendario,
+  IconeCasa,
   IconeConversa,
   IconeEstrela,
   IconeLoja,
@@ -50,6 +51,7 @@ import {
   useAviso,
   useConfirmacao,
 } from "./comum";
+import { MenuPainel } from "./Menu";
 import { Tutorial } from "./Tutorial";
 import { InstalarApp } from "../InstalarApp";
 
@@ -111,6 +113,7 @@ export function EstoqueDoDia({
   pessoa,
   demo,
   semPermissao,
+  abrirComoUsar,
 }: {
   doces: Doce[];
   campanhas: Campanha[];
@@ -122,6 +125,8 @@ export function EstoqueDoDia({
   demo: boolean;
   // Explicação de quem tentou abrir uma parte do painel que o papel não permite.
   semPermissao: string | null;
+  // Menu › Como usar, tocado em outra tela (/painel?como-usar=1): abre o guia.
+  abrirComoUsar: boolean;
 }) {
   const hoje = useHoje(hojeDoServidor);
   const router = useRouter();
@@ -132,9 +137,22 @@ export function EstoqueDoDia({
   const aviso = avisoFechado ? null : semPermissao;
   const [salvando, iniciar] = useTransition();
 
-  // O guia abre sozinho no primeiro acesso e depois pelo botão "Como usar".
+  // O guia abre sozinho no primeiro acesso e depois pelo botão "Como usar" (ou Menu › Como usar).
   const vistoNoNavegador = useSyncExternalStore(semAssinatura, lerTutorialVisto, () => true);
   const [tutorial, setTutorial] = useState<"auto" | "aberto" | "fechado">("auto");
+  const [comoUsarPedido, setComoUsarPedido] = useState(false);
+  if (abrirComoUsar !== comoUsarPedido) {
+    setComoUsarPedido(abrirComoUsar);
+    if (abrirComoUsar) setTutorial("aberto");
+  }
+  // Tira o ?como-usar do endereço, para o guia não abrir de novo ao recarregar.
+  useEffect(() => {
+    if (!abrirComoUsar) return;
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has("como-usar")) return;
+    url.searchParams.delete("como-usar");
+    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, [abrirComoUsar]);
   const tutorialAberto = tutorial === "aberto" || (tutorial === "auto" && !(demo ? vistoNoNavegador : pessoa.tutorialVisto));
   const fecharTutorial = useCallback(() => {
     setTutorial("fechado");
@@ -148,6 +166,7 @@ export function EstoqueDoDia({
       void marcarTutorialVisto();
     }
   }, [demo, pessoa.tutorialVisto]);
+  const abrirTutorial = useCallback(() => setTutorial("aberto"), []);
 
   // Quantidades que a pessoa mexeu e ainda não salvou: ficam no celular (por pessoa), para
   // não sumirem ao recarregar, ao entrar de novo ou ao fechar o app.
@@ -346,12 +365,7 @@ export function EstoqueDoDia({
             <span className="text-xs text-creme-400">{LOJA.nome}</span>
             <h1 className="font-display text-[22px] font-semibold">Painel da loja</h1>
           </div>
-          <Link
-            href="/"
-            className="flex h-11 shrink-0 items-center rounded-full border border-dourado/30 px-3.5 text-[13px] font-bold text-dourado"
-          >
-            Ver vitrine
-          </Link>
+          <MenuPainel aoComoUsar={abrirTutorial} />
         </div>
         <div className="flex items-center gap-1 rounded-2xl border border-dourado/10 bg-cacau-900 py-1 pr-1 pl-1">
           <Link
@@ -371,7 +385,7 @@ export function EstoqueDoDia({
           </Link>
           <button
             type="button"
-            onClick={() => setTutorial("aberto")}
+            onClick={abrirTutorial}
             className="flex h-11 shrink-0 items-center gap-1 rounded-xl border-l border-dourado/10 px-3 text-[13px] font-semibold text-dourado"
           >
             <IconeAjuda tamanho={18} />
@@ -638,6 +652,13 @@ export function EstoqueDoDia({
             <span className="flex min-w-0 flex-col">
               <span className="text-sm leading-tight font-bold">Guia da loja</span>
               <span className="truncate text-xs text-creme-400">Respostas prontas</span>
+            </span>
+          </Link>
+          <Link href="/" className={atalho}>
+            <IconeCasa tamanho={22} className="shrink-0 text-dourado" />
+            <span className="flex min-w-0 flex-col">
+              <span className="text-sm leading-tight font-bold">Ver vitrine</span>
+              <span className="truncate text-xs text-creme-400">O que quem compra vê</span>
             </span>
           </Link>
           <InstalarApp variante="atalho" classe={atalho} nome="o painel" entrarDeNovo />
