@@ -8,6 +8,7 @@
 - Guia "Como usar" no primeiro acesso.
 - Dados da loja no painel (WhatsApp, horário de cada dia, retirada, entrega, pagamento, ingredientes da cozinha), "Aberto agora" e "Como funciona" na vitrine.
 - Vitrine honesta: faixas "Tem hoje / Últimas unidades / Esgotado", aviso quando a quantidade não é de hoje e lembrete no painel; esgotado e doce fora de época com saída; campanhas com prazo de encomenda de verdade.
+- Sacola e recibo pelo WhatsApp: vários doces num pedido só, com número, itens e total; retirada ou entrega, dia e pagamento combinados na conversa; nada gravado no banco. Vitrine em lista com abas fixas, compartilhar doce (com foto no link) e alergênicos completos.
 - Painel grava de verdade: quantidades do dia, destaque, fichas dos doces (com foto reduzida no celular antes de enviar), doces fora da vitrine, campanhas e pausa de campanha.
 - Publicação automática pelo GitHub a cada push no `main` (docs/publicar.md).
 
@@ -32,4 +33,5 @@
 - Reordenar os doces da vitrine arrastando no painel.
 - Backup automático do banco (o cPanel costuma ter em **Backup**).
 - "Esqueci a senha" por e-mail, com link de uso único, quando o SMTP da hospedagem estiver configurado com SPF/DKIM.
-- Fase 2: encomenda pelo app, com sacola, retirada ou entrega, data e Pix (tela pronta no mockup).
+- Botão "+" na linha do doce sem opções, "Pedir de novo" a partir do último pedido e estoque por sabor.
+- Lista de pedidos no painel (tabelas `pedidos` e `itens_pedido`, com revisão de LGPD), se a loja quiser.

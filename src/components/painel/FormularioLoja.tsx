@@ -6,7 +6,7 @@ import { TRACOS, formatarWhatsApp, linkWhatsApp, normalizarWhatsApp, type DadosL
 import { useAgora } from "@/lib/hooks";
 import { salvarLoja } from "@/app/painel/acoes";
 import { InfoDaLoja } from "../InfoDaLoja";
-import { botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
+import { barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
 import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso } from "./comum";
 
 const HORARIO_PADRAO: Horario = { abre: "09:00", fecha: "18:00" };
@@ -91,7 +91,7 @@ export function FormularioLoja({ loja, agora: agoraDoServidor, demo }: { loja: D
   }
 
   return (
-    <form onSubmit={salvar} className="pb-28">
+    <form onSubmit={salvar} className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {aviso}
       <FaixaDemo demo={demo} />
       <CabecalhoPainel titulo="Dados da loja" subtitulo="O que quem compra vê na vitrine e no WhatsApp" voltar="/painel" />
@@ -230,7 +230,7 @@ export function FormularioLoja({ loja, agora: agoraDoServidor, demo }: { loja: D
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-24 max-w-md items-center border-t border-dourado/14 bg-cacau-950/90 px-5 pt-3.5 pb-6 backdrop-blur-lg">
+      <div className={cx(barraFixa, "items-center")}>
         <button type="submit" disabled={salvando} className={cx(botaoPrimario, "disabled:opacity-60")}>
           {salvando ? "Salvando…" : "Salvar dados da loja"}
         </button>

@@ -34,8 +34,9 @@ doces.forEach((d, i) => {
       texto(d.descricao),
       numero(d.precoCentavos),
       texto(d.unidade),
-      bool(d.contemGluten),
-      bool(d.contemLactose),
+      // As colunas do banco base; a migração 006 leva para alergenicos.
+      bool(d.alergenicos === null || d.alergenicos.includes("trigo")),
+      bool(d.alergenicos === null || d.alergenicos.includes("leite")),
       texto(d.composicao),
       texto(d.conservacao),
       texto(d.selo),

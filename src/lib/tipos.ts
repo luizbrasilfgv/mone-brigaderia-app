@@ -1,5 +1,7 @@
 // Tipos do domínio. Espelham as tabelas de docs/modelo-de-dados.md (em camelCase).
 
+import type { Traco } from "./loja";
+
 export type TipoIlustracao = "pote" | "brigadeiro" | "caixa";
 export type SaborIlustracao =
   | "morango"
@@ -40,8 +42,9 @@ export interface Doce {
   precoCentavos: number;
   // Texto que acompanha o preço: "por unidade", "por caixa"...
   unidade: string;
-  contemGluten: boolean;
-  contemLactose: boolean;
+  // O que o doce contém (leite, trigo, ovo...). [] = nenhum destes; null = não informado
+  // (a ficha pede para perguntar no WhatsApp).
+  alergenicos: Traco[] | null;
   composicao: string;
   conservacao: string;
   selo: Selo;

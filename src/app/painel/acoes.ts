@@ -24,7 +24,7 @@ import { nomeDoPapel } from "@/lib/papeis";
 import { gerarSenhaProvisoria, problemaNaSenhaNova, resumirSenha, senhaConfere } from "@/lib/senhas";
 import { COLUNAS_HORARIO, TAG_CAMPANHAS, TAG_CARDAPIO, TAG_LOJA } from "@/lib/dados";
 import { escreverHorario, lerHorario } from "@/lib/horarios";
-import { ehTraco, normalizarWhatsApp } from "@/lib/loja";
+import { TRACOS, ehTraco, normalizarWhatsApp } from "@/lib/loja";
 import { TAMANHO_MAXIMO_FOTO, TIPOS_DE_FOTO, pastaDeFotos } from "@/lib/fotos";
 import { TIPOS_CAMPANHA } from "@/lib/campanhas-modelo";
 import { slugificar } from "@/lib/texto";
@@ -159,6 +159,23 @@ export async function salvarEstoque(quantidades: Record<string, number>, destaqu
   }
 }
 
+// Sabores ou tamanhos do formulário: [{ nome, precoCentavos }] (precoCentavos null = preço
+// do doce). Aceita também a lista antiga só com nomes.
+function lerSabores(valor: FormDataEntryValue | null): { nome: string; precoCentavos: number | null }[] {
+  const lidos = JSON.parse(String(valor ?? "[]")) as unknown;
+  if (!Array.isArray(lidos)) throw new Invalido("Confira os sabores ou tamanhos.");
+  const sabores: { nome: string; precoCentavos: number | null }[] = [];
+  for (const item of lidos) {
+    const bruto: { nome?: unknown; precoCentavos?: unknown } = typeof item === "object" && item ? item : { nome: item };
+    const nome = String(bruto.nome ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
+    if (!nome) continue;
+    if (sabores.some((s) => s.nome.toLowerCase() === nome.toLowerCase())) throw new Invalido(`O sabor "${nome}" aparece duas vezes.`);
+    const preco = bruto.precoCentavos == null || bruto.precoCentavos === "" ? null : inteiro(bruto.precoCentavos, 1, 10_000_000, `Preço de ${nome}`);
+    sabores.push({ nome, precoCentavos: preco });
+  }
+  return sabores;
+}
+
 // Cria ou atualiza a ficha de um doce. Recebe FormData por causa da foto.
 export async function salvarDoce(dados: FormData): Promise<Resultado> {
   const { usuario, bloqueio } = await autorizar("equipe");
@@ -175,15 +192,17 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
     const selo = String(dados.get("selo")) as Selo;
     const onde = String(dados.get("ondeAparece")) as OndeAparece;
     if (!SELOS.includes(selo) || !ONDE.includes(onde)) throw new Invalido("Confira o selo e onde o doce aparece.");
-    const contemGluten = dados.get("contemGluten") === "1";
-    const contemLactose = dados.get("contemLactose") === "1";
+    // null = não informado; [] = nenhum destes.
+    const alergenicosLidos = JSON.parse(String(dados.get("alergenicos") ?? "null")) as unknown;
+    const alergenicos = Array.isArray(alergenicosLidos) ? TRACOS.filter((t) => alergenicosLidos.includes(t)) : null;
+    // contem_gluten e contem_lactose seguem gravadas (trigo e leite) para quem ainda lê o banco antigo.
+    const contemGluten = alergenicos === null || alergenicos.includes("trigo");
+    const contemLactose = alergenicos === null || alergenicos.includes("leite");
     const sobEncomenda = dados.get("sobEncomenda") === "1";
     const prazoDias = sobEncomenda ? inteiro(dados.get("prazoDias"), 1, 60, "Prazo de preparo") : null;
     const quantidade = sobEncomenda ? 0 : inteiro(dados.get("quantidade"), 0, 9999, "Quantidade hoje");
     const ativo = dados.get("ativo") !== "0";
-    const sabores = (JSON.parse(String(dados.get("sabores") ?? "[]")) as unknown[])
-      .map((s) => String(s).trim().slice(0, 80))
-      .filter(Boolean);
+    const sabores = lerSabores(dados.get("sabores"));
     const campanhaIds = (JSON.parse(String(dados.get("campanhaIds") ?? "[]")) as unknown[]).map(String);
     const foto = dados.get("foto");
     const arquivo = foto instanceof File && foto.size > 0 ? foto : null;
@@ -199,7 +218,7 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
       // Mesma ordem das colunas no UPDATE e no INSERT abaixo.
       const campos = [
         nome, categoriaId, descricao, precoCentavos, unidade, contemGluten, contemLactose,
-        composicao, conservacao, selo, sobEncomenda, prazoDias, onde, ativo,
+        alergenicos === null ? null : alergenicos.join(","), composicao, conservacao, selo, sobEncomenda, prazoDias, onde, ativo,
       ];
 
       let docId = idAtual;
@@ -208,7 +227,7 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
         if (res.length === 0) throw new Invalido("Esse doce não existe mais.");
         await c.query(
           `UPDATE doces SET nome = ?, categoria_id = ?, descricao = ?, preco_centavos = ?, unidade = ?, contem_gluten = ?,
-             contem_lactose = ?, composicao = ?, conservacao = ?, selo = ?, sob_encomenda = ?, prazo_dias = ?,
+             contem_lactose = ?, alergenicos = ?, composicao = ?, conservacao = ?, selo = ?, sob_encomenda = ?, prazo_dias = ?,
              onde_aparece = ?, ativo = ? WHERE id = ?`,
           [...campos, docId],
         );
@@ -217,21 +236,20 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
         const [ordem] = await c.query<RowDataPacket[]>("SELECT COALESCE(MAX(ordem), 0) + 1 AS proxima FROM doces");
         await c.query(
           `INSERT INTO doces (nome, categoria_id, descricao, preco_centavos, unidade, contem_gluten, contem_lactose,
-             composicao, conservacao, selo, sob_encomenda, prazo_dias, onde_aparece, ativo, id, ordem)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             alergenicos, composicao, conservacao, selo, sob_encomenda, prazo_dias, onde_aparece, ativo, id, ordem)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [...campos, docId, ordem[0].proxima],
         );
       }
 
-      // Regrava os sabores sem perder o preço próprio de quem continua com o mesmo nome.
-      const [atuais] = await c.query<RowDataPacket[]>("SELECT nome, preco_centavos FROM sabores WHERE doce_id = ?", [docId]);
-      const precoAnterior = new Map(atuais.map((s) => [String(s.nome), s.preco_centavos as number | null]));
+      // Regrava os sabores com o nome e o preço que vieram do formulário (vazio = preço do
+      // doce). A sacola de quem compra guarda a opção pelo nome, não pelo id.
       await c.query("DELETE FROM sabores WHERE doce_id = ?", [docId]);
       for (const [i, sabor] of sabores.entries()) {
         await c.query("INSERT INTO sabores (doce_id, nome, preco_centavos, ordem) VALUES (?, ?, ?, ?)", [
           docId,
-          sabor,
-          precoAnterior.get(sabor) ?? null,
+          sabor.nome,
+          sabor.precoCentavos,
           i,
         ]);
       }

@@ -198,3 +198,10 @@ export const IconeDinheiro = (p: Props) => (
     <path d="M6 9.5v5M18 9.5v5" />
   </Base>
 );
+
+export const IconeSacola = (p: Props) => (
+  <Base {...p}>
+    <path d="M5 8h14l-1 12.5H6L5 8z" />
+    <path d="M9 10.5V7a3 3 0 0 1 6 0v3.5" />
+  </Base>
+);

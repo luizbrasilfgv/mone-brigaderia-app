@@ -17,6 +17,11 @@ export const botaoPrimario =
 export const botaoWhatsApp =
   "flex items-center justify-center gap-2 rounded-full bg-whatsapp font-bold text-whatsapp-texto transition-transform active:scale-[0.97]";
 
+// Barra presa embaixo da tela (botão de salvar, Adicionar, Enviar): 95% de opacidade e
+// folga para a barrinha do iPhone (env() só funciona com viewportFit: "cover").
+export const barraFixa =
+  "fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md border-t border-dourado/14 bg-cacau-950/95 px-5 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur-lg";
+
 export const botaoRedondo =
   "flex size-11 shrink-0 items-center justify-center rounded-full border border-dourado/16 bg-creme/[0.06] text-creme transition-transform active:scale-95";
 

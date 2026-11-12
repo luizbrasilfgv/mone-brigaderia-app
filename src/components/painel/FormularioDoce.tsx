@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import type { Campanha, Categoria, Doce, OndeAparece, Selo } from "@/lib/tipos";
 import { useHoje } from "@/lib/hooks";
-import { estoqueDoDoce, formatarData, formatarPreco, situacaoCampanha, type SituacaoCampanha } from "@/lib/regras";
+import { TRACOS, type Traco } from "@/lib/loja";
+import { campanhasNoAr, estoqueDoDoce, formatarData, semGluten, seloDoDoce, situacaoCampanha, type SituacaoCampanha } from "@/lib/regras";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
-import { COR_ESTOQUE, COR_SELO, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
+import { CartaoDoce } from "../vitrine/CartaoDoce";
+import { COR_ESTOQUE, barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
 import { salvarDoce } from "@/app/painel/acoes";
 import { CabecalhoPainel, Chave, Contador, FaixaDemo, tentar, useAviso } from "./comum";
 
@@ -56,25 +58,17 @@ async function reduzirFoto(arquivo: File): Promise<Blob> {
   }
 }
 
-function SimNao({ valor, aoMudar, rotulo: nome }: { valor: boolean; aoMudar: (v: boolean) => void; rotulo: string }) {
-  return (
-    <div role="group" aria-label={nome} className="flex items-center justify-between gap-3">
-      <span className="text-[15px] font-semibold">{nome}</span>
-      <div className="flex gap-1.5">
-        {[true, false].map((opcao) => (
-          <button
-            key={String(opcao)}
-            type="button"
-            aria-pressed={valor === opcao}
-            onClick={() => aoMudar(opcao)}
-            className={cx("h-11 w-16 rounded-xl", escolha(valor === opcao))}
-          >
-            {opcao ? "Sim" : "Não"}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
+// "9,00" a partir de centavos (campo de preço).
+function emReais(centavos: number): string {
+  return (centavos / 100).toFixed(2).replace(".", ",");
+}
+
+interface LinhaSabor {
+  // Só para a lista do React (não vai para o banco).
+  chave: number;
+  nome: string;
+  // Texto do campo "Preço (opcional)". Vazio = preço do doce.
+  preco: string;
 }
 
 export function FormularioDoce({
@@ -82,12 +76,15 @@ export function FormularioDoce({
   categorias,
   campanhas,
   hoje: hojeDoServidor,
+  tracos,
   demo,
 }: {
   doce: Doce | null;
   categorias: Categoria[];
   campanhas: Campanha[];
   hoje: string;
+  // Ingredientes da cozinha (Dados da loja), para a prévia do "Sem glúten".
+  tracos: Traco[];
   demo: boolean;
 }) {
   const hoje = useHoje(hojeDoServidor);
@@ -96,13 +93,15 @@ export function FormularioDoce({
   const [salvando, iniciar] = useTransition();
   const [nome, setNome] = useState(doce?.nome ?? "");
   const [categoriaId, setCategoriaId] = useState(doce?.categoriaId ?? categorias[0]?.id ?? "");
-  const [preco, setPreco] = useState(doce ? (doce.precoCentavos / 100).toFixed(2).replace(".", ",") : "");
+  const [preco, setPreco] = useState(doce ? emReais(doce.precoCentavos) : "");
   const [unidade, setUnidade] = useState(doce?.unidade ?? "por unidade");
   const [descricao, setDescricao] = useState(doce?.descricao ?? "");
-  const [sabores, setSabores] = useState<string[]>(doce?.sabores.map((s) => s.nome) ?? []);
+  const [sabores, setSabores] = useState<LinhaSabor[]>(
+    () => doce?.sabores.map((s, i) => ({ chave: i, nome: s.nome, preco: s.precoCentavos != null ? emReais(s.precoCentavos) : "" })) ?? [],
+  );
   const [novoSabor, setNovoSabor] = useState("");
-  const [contemGluten, setContemGluten] = useState(doce?.contemGluten ?? true);
-  const [contemLactose, setContemLactose] = useState(doce?.contemLactose ?? true);
+  // Doce novo começa "não informado" (null), nunca "sem".
+  const [alergenicos, setAlergenicos] = useState<Traco[] | null>(doce?.alergenicos ?? null);
   const [composicao, setComposicao] = useState(doce?.composicao ?? "");
   const [conservacao, setConservacao] = useState(doce?.conservacao ?? "");
   const [selo, setSelo] = useState<Selo>(doce?.selo ?? "nenhum");
@@ -127,6 +126,7 @@ export function FormularioDoce({
         ? "Marque pelo menos uma campanha, senão o doce não aparece na vitrine."
         : `Só aparece na vitrine durante: ${juntar(nomesEscolhidos)}. Fora delas, some sozinho.`;
 
+  const saboresValidos = sabores.filter((s) => s.nome.trim());
   // Rascunho com os valores do formulário, para a prévia usar as mesmas regras da vitrine.
   const rascunho: Doce = {
     id: doce?.id ?? "novo",
@@ -135,8 +135,7 @@ export function FormularioDoce({
     descricao,
     precoCentavos: centavos(preco),
     unidade,
-    contemGluten,
-    contemLactose,
+    alergenicos,
     composicao,
     conservacao,
     selo,
@@ -147,18 +146,30 @@ export function FormularioDoce({
     ativo,
     quantidadeHoje: quantidade,
     dataQuantidade: hoje,
-    sabores: sabores.map((s, i) => ({ id: String(i), nome: s })),
-    fotos: fotoNova ? [] : (doce?.fotos ?? []),
+    sabores: saboresValidos.map((s) => ({ id: String(s.chave), nome: s.nome.trim(), ...(s.preco.trim() && { precoCentavos: centavos(s.preco) }) })),
+    fotos: fotoNova ? [fotoNova.url] : (doce?.fotos ?? []),
     ilustracao: doce?.ilustracao ?? null,
     campanhaIds,
   };
   const estoque = estoqueDoDoce(rascunho, hoje);
-  const seloTexto = SELOS.find((s) => s.valor === selo && s.valor !== "nenhum")?.nome;
 
   function adicionarSabor() {
     const limpo = novoSabor.trim();
-    if (limpo && !sabores.includes(limpo)) setSabores([...sabores, limpo]);
+    if (limpo && !sabores.some((s) => s.nome.trim().toLowerCase() === limpo.toLowerCase())) {
+      setSabores([...sabores, { chave: Math.max(-1, ...sabores.map((s) => s.chave)) + 1, nome: limpo, preco: "" }]);
+    }
     setNovoSabor("");
+  }
+
+  function mudarSabor(chave: number, mudanca: Partial<LinhaSabor>) {
+    setSabores((lista) => lista.map((s) => (s.chave === chave ? { ...s, ...mudanca } : s)));
+  }
+
+  // Marcar um ingrediente sai de "não informado"; desmarcar o último volta para lá.
+  function alternarAlergenico(t: Traco) {
+    const atual = alergenicos ?? [];
+    const novo = atual.includes(t) ? atual.filter((x) => x !== t) : TRACOS.filter((x) => x === t || atual.includes(x));
+    setAlergenicos(novo.length > 0 ? novo : null);
   }
 
   function salvar(e: FormEvent) {
@@ -170,9 +181,11 @@ export function FormularioDoce({
     dados.set("precoCentavos", String(centavos(preco)));
     dados.set("unidade", unidade);
     dados.set("descricao", descricao);
-    dados.set("sabores", JSON.stringify(sabores));
-    dados.set("contemGluten", contemGluten ? "1" : "0");
-    dados.set("contemLactose", contemLactose ? "1" : "0");
+    dados.set(
+      "sabores",
+      JSON.stringify(saboresValidos.map((s) => ({ nome: s.nome.trim(), precoCentavos: s.preco.trim() ? centavos(s.preco) : null }))),
+    );
+    dados.set("alergenicos", JSON.stringify(alergenicos));
     dados.set("composicao", composicao);
     dados.set("conservacao", conservacao);
     dados.set("selo", selo);
@@ -193,7 +206,7 @@ export function FormularioDoce({
   }
 
   return (
-    <form onSubmit={salvar} className="pb-28">
+    <form onSubmit={salvar} className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {aviso}
       <FaixaDemo demo={demo} />
       <CabecalhoPainel
@@ -300,26 +313,57 @@ export function FormularioDoce({
           />
         </div>
 
-        <div className="flex flex-col gap-2.5">
-          <span className={rotulo}>Sabores ou tamanhos</span>
-          <div className="flex flex-wrap gap-2">
-            {sabores.map((s) => (
-              <span
-                key={s}
-                className="inline-flex h-10 items-center gap-0.5 rounded-xl border border-dourado/20 bg-creme/[0.06] pl-3.5 text-sm font-semibold"
-              >
-                {s}
-                <button
-                  type="button"
-                  aria-label={`Remover ${s}`}
-                  onClick={() => setSabores(sabores.filter((x) => x !== s))}
-                  className="size-9 text-lg text-creme-400"
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
+        <div role="group" aria-labelledby="titulo-sabores" className="flex flex-col gap-2.5">
+          <span id="titulo-sabores" className={rotulo}>
+            Sabores ou tamanhos
+          </span>
+          <span className="text-xs leading-snug text-creme-200">
+            Cada sabor ou tamanho tem seu preço. A quantidade do dia é uma só para todos.
+          </span>
+          {sabores.length > 0 && (
+            <ul className={cx(cartao, "flex flex-col overflow-hidden")}>
+              {sabores.map((s, i) => (
+                <li key={s.chave} className="flex items-end gap-2 border-b border-dourado/8 p-2.5 last:border-b-0">
+                  <div className="flex min-w-0 grow flex-col gap-1">
+                    <label htmlFor={`sabor-${s.chave}`} className="text-xs font-semibold text-creme-400">
+                      Sabor ou tamanho {i + 1}
+                    </label>
+                    <input
+                      id={`sabor-${s.chave}`}
+                      value={s.nome}
+                      maxLength={80}
+                      onChange={(e) => mudarSabor(s.chave, { nome: e.target.value })}
+                      className={cx(campo, "h-11")}
+                    />
+                  </div>
+                  <div className="flex w-[118px] shrink-0 flex-col gap-1">
+                    <label htmlFor={`preco-sabor-${s.chave}`} className="text-xs font-semibold text-creme-400">
+                      Preço (opcional)
+                    </label>
+                    <div className={cx(campo, "flex h-11 items-center gap-1.5 px-2.5")}>
+                      <span className="text-sm text-creme-400">R$</span>
+                      <input
+                        id={`preco-sabor-${s.chave}`}
+                        inputMode="decimal"
+                        placeholder={preco || "0,00"}
+                        value={s.preco}
+                        onChange={(e) => mudarSabor(s.chave, { preco: e.target.value })}
+                        className="h-10 min-w-0 grow bg-transparent outline-none"
+                      />
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Remover ${s.nome || "este sabor"}`}
+                    onClick={() => setSabores(sabores.filter((x) => x.chave !== s.chave))}
+                    className="flex size-11 shrink-0 items-center justify-center text-lg text-creme-400"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <div className="flex gap-2">
             <input
               aria-label="Novo sabor ou tamanho"
@@ -342,12 +386,44 @@ export function FormularioDoce({
               Adicionar
             </button>
           </div>
+          <span className="text-xs leading-snug text-creme-400">
+            Preço vazio = mesmo preço do doce. Acabou um sabor hoje? Não apague nem renomeie: quem já pôs na sacola perde esse item.
+          </span>
         </div>
 
-        <div className={cx(cartao, "flex flex-col gap-3.5 p-4")}>
-          <SimNao rotulo="Contém glúten?" valor={contemGluten} aoMudar={setContemGluten} />
-          <div className="h-px bg-dourado/12" />
-          <SimNao rotulo="Contém lactose?" valor={contemLactose} aoMudar={setContemLactose} />
+        <div role="group" aria-labelledby="titulo-alergenicos" className={cx(cartao, "flex flex-col gap-3 p-4")}>
+          <span id="titulo-alergenicos" className="text-[15px] font-semibold">
+            Alergênicos: o doce contém
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {TRACOS.map((t) => (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={Boolean(alergenicos?.includes(t))}
+                onClick={() => alternarAlergenico(t)}
+                className={cx("h-11 rounded-full px-4 text-sm", escolha(Boolean(alergenicos?.includes(t))))}
+              >
+                {t}
+              </button>
+            ))}
+            <button
+              type="button"
+              aria-pressed={alergenicos !== null && alergenicos.length === 0}
+              onClick={() => setAlergenicos(alergenicos !== null && alergenicos.length === 0 ? null : [])}
+              className={cx("h-11 rounded-full px-4 text-sm", escolha(alergenicos !== null && alergenicos.length === 0))}
+            >
+              Nenhum destes
+            </button>
+          </div>
+          <span className={cx("text-xs leading-snug", alergenicos === null ? "text-rosa" : "text-creme-200")}>
+            {alergenicos === null
+              ? "Não informado: a ficha pede para perguntar no WhatsApp antes de pedir. Marque o que o doce leva ou “Nenhum destes”."
+              : alergenicos.length === 0
+                ? "A ficha mostra que o doce não leva nenhum destes."
+                : `A ficha mostra: “Contém: ${alergenicos.join(", ")}”.`}
+            {tracos.length > 0 && ` Os traços da cozinha (${tracos.join(", ")}) aparecem sozinhos em “Pode conter”.`}
+          </span>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -490,44 +566,18 @@ export function FormularioDoce({
 
         <div className="flex flex-col gap-2.5">
           <span className={rotulo}>Como aparece na vitrine</span>
-          <div className={cx(cartao, "flex gap-3 rounded-[22px] p-2.5")}>
-            <div className="fundo-vitrine relative size-24 shrink-0 overflow-hidden rounded-2xl">
-              {fotoNova ? (
-                <Image src={fotoNova.url} alt="" fill unoptimized className="object-cover" />
-              ) : (
-                <ImagemDoce doce={rascunho} tamanhos="96px" />
-              )}
-              {seloTexto && (
-                <span
-                  className={cx(
-                    "absolute top-1.5 left-1.5 rounded-full px-1.5 py-0.5 text-[9px] font-bold text-cacau-900",
-                    COR_SELO[seloTexto],
-                  )}
-                >
-                  {seloTexto}
-                </span>
-              )}
-            </div>
-            <div className="flex min-w-0 grow flex-col gap-1">
-              <span className="text-[15px] leading-tight font-semibold">{rascunho.nome}</span>
-              <span
-                className={cx(
-                  "self-start rounded-full border px-2 py-0.5 text-[11px] font-bold",
-                  contemGluten ? "border-rosa/45 text-rosa" : "border-dourado/40 text-dourado",
-                )}
-              >
-                {contemGluten ? "Contém glúten" : "Sem glúten"}
-              </span>
-              <span className={cx("text-[11px] font-semibold", COR_ESTOQUE[estoque.tom])}>{estoque.texto}</span>
-              <span className="mt-auto font-display text-[19px] font-semibold text-dourado">
-                {formatarPreco(rascunho.precoCentavos)}
-              </span>
-            </div>
-          </div>
+          <CartaoDoce
+            doce={rascunho}
+            estoque={estoque}
+            selo={seloDoDoce(rascunho, campanhasNoAr(campanhas, hoje), hoje)}
+            semGluten={semGluten(rascunho, tracos)}
+            dicaEsgotado="Peça para amanhã"
+            previa
+          />
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-24 max-w-md items-center border-t border-dourado/14 bg-cacau-950/90 px-5 pt-3.5 pb-6 backdrop-blur-lg">
+      <div className={cx(barraFixa, "items-center")}>
         <button type="submit" disabled={salvando || preparandoFoto} className={cx(botaoPrimario, "disabled:opacity-60")}>
           {preparandoFoto ? "Preparando a foto…" : salvando ? "Salvando…" : "Salvar ficha"}
         </button>

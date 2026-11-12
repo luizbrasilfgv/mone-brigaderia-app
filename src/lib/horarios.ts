@@ -132,6 +132,14 @@ export function situacaoDaLoja(horarios: Horarios, momento: Date | number): Situ
   return null;
 }
 
+// Rodapé da sacola com a loja fechada: "Fechado no momento · Abrimos terça às 9h" (ou
+// "hoje às 14h", "amanhã às 9h"). O pedido pode ser enviado mesmo assim.
+export function textoFechadoNaSacola(situacao: SituacaoLoja): string | null {
+  if (situacao.aberta) return null;
+  const quando = situacao.emDias === 0 ? "hoje" : situacao.emDias === 1 ? "amanhã" : DIAS[situacao.diaDaSemana].toLowerCase();
+  return `Fechado no momento · Abrimos ${quando} às ${formatarHora(situacao.abre)}`;
+}
+
 // [1, 2, 3, 4, 5] → "seg. a sex."; [6, 0] → "sáb. e dom."; [1, 3, 5] → "seg., qua. e sex."
 function nomesDosDias(dias: number[]): string {
   if (dias.length === 7) return "todos os dias";

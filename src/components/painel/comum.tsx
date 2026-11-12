@@ -57,7 +57,7 @@ export function useAviso(): [
     <div
       role={aviso.deuCerto ? "status" : "alert"}
       className={cx(
-        "fixed inset-x-4 top-[18px] z-50 mx-auto flex max-w-[calc(28rem-2rem)] animate-entra flex-col gap-2 rounded-[18px] py-3 pr-1.5 pl-4 text-sm font-bold shadow-2xl",
+        "fixed inset-x-4 top-[calc(18px+env(safe-area-inset-top))] z-50 mx-auto flex max-w-[calc(28rem-2rem)] animate-entra flex-col gap-2 rounded-[18px] py-3 pr-1.5 pl-4 text-sm font-bold shadow-2xl",
         aviso.deuCerto ? "bg-menta text-cacau-950" : "border-2 border-[#8a2a22] bg-rosa text-cacau-950",
       )}
     >

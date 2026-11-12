@@ -10,7 +10,7 @@ import { NOMES_CAMPANHA, encomendaAberta, formatarData, nomeCurtoDaCampanha, nom
 import { BannerCampanha, botaoBanner } from "../BannerCampanha";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
-import { botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
+import { barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
 import { salvarCampanha } from "@/app/painel/acoes";
 import { CabecalhoPainel, FaixaAviso, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
 
@@ -121,7 +121,7 @@ export function FormularioCampanha({
   };
 
   return (
-    <form onSubmit={salvar} className="pb-28">
+    <form onSubmit={salvar} className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
       {aviso}
       {confirmacao}
       <FaixaDemo demo={demo} />
@@ -337,7 +337,7 @@ export function FormularioCampanha({
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-24 max-w-md items-center border-t border-dourado/14 bg-cacau-950/90 px-5 pt-3.5 pb-6 backdrop-blur-lg">
+      <div className={cx(barraFixa, "items-center")}>
         <button type="submit" disabled={salvando} className={cx(botaoPrimario, "disabled:opacity-60")}>
           {salvando ? "Salvando…" : "Salvar campanha"}
         </button>

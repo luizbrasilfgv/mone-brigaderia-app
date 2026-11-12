@@ -1,6 +1,6 @@
 # Mone Brigaderia: app vitrine
 
-App vitrine da Mone Brigaderia. A cliente vê os doces do dia, abre a ficha de cada um (descrição, glúten, lactose, composição) e faz a encomenda pelo WhatsApp. A dona controla tudo num painel com login (cada pessoa com o seu e-mail e a sua senha): o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda, campanhas como Natal e Páscoa, e quem mais pode entrar no painel.
+App vitrine da Mone Brigaderia. Quem compra vê os doces do dia, abre a ficha de cada um (descrição, alergênicos, composição), monta a sacola e envia o pedido pelo WhatsApp, com o recibo já escrito. A dona controla tudo num painel com login (cada pessoa com o seu e-mail e a sua senha): o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda, campanhas como Natal e Páscoa, e quem mais pode entrar no painel.
 
 ## Onde estamos
 
@@ -29,7 +29,9 @@ Abra http://localhost:3000.
 | --- | --- |
 | `/` | Vitrine |
 | `/doce/palha-italiana` | Ficha do doce |
-| `/doce/caixa-presente-4` | Ficha de doce sob encomenda, com escolha de data |
+| `/doce/caixa-presente-4` | Ficha de doce sob encomenda ("pronto a partir de") |
+| `/sacola` | Sua sacola: confere os doces e envia o pedido pelo WhatsApp (fica só no celular) |
+| `/sacola/enviado` | Pedido no WhatsApp: reenviar, copiar, pedir mudança ou cancelar |
 | `/entrar` | Entrada do painel (e-mail e senha de cada pessoa) |
 | `/entrar/esqueci` | Esqueci a senha: pedir uma senha nova pelo WhatsApp |
 | `/painel` | O que tem hoje e quantidades |
@@ -55,7 +57,8 @@ Outros comandos: `npm run build` (versão de produção), `npm run lint` (verifi
 | `src/components/` | Partes das telas: vitrine, ficha, painel, balcão |
 | `src/lib/dados.ts` | Leitura dos dados (MySQL ou exemplos), com cache |
 | `src/lib/banco.ts` | Conexão com o MySQL; cria as tabelas num banco vazio |
-| `src/lib/regras.ts` | Regras de negócio: estoque, selos, campanhas no ar e prazo de encomenda, mensagem do WhatsApp |
+| `src/lib/regras.ts` | Regras de negócio: estoque, selos, preços ("a partir de"), alergênicos, campanhas no ar e prazo de encomenda, mensagens do WhatsApp |
+| `src/lib/sacola.ts` | Sacola (funções puras): limites, conferência com o cardápio do dia e o recibo que vai no WhatsApp |
 | `src/lib/loja.ts` e `src/lib/horarios.ts` | Dados da loja (WhatsApp, textos, traços) e horário: "Aberto agora", "Atendimento: …" e "hoje" no horário de Brasília |
 | `src/lib/campanhas-modelo.ts` | Datas prontas das campanhas (Páscoa, Dia das Mães e Dia dos Pais calculados por ano) |
 | `banco/` | Tabelas (`schema.sql`) e dados de exemplo (`dados-exemplo.sql`) |

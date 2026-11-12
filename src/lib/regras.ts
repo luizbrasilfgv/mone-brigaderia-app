@@ -1,5 +1,6 @@
 import type { Campanha, Doce, Sabor, TipoCampanha } from "./tipos";
 import { abreNoDia, type Horarios } from "./horarios";
+import { TRACOS, type Traco } from "./loja";
 
 // Regras de negócio descritas em docs/funcionalidades.md.
 
@@ -128,18 +129,38 @@ export function seloDoDoce(doce: Doce, noAr: Campanha[], hoje: string): string |
   return null;
 }
 
-// Quantas unidades a ficha deixa pedir de uma vez.
+// Limites por doce na sacola (src/lib/sacola.ts): contagem de outro dia e sob encomenda.
 export const LIMITE_SEM_CONTAGEM = 20;
 export const LIMITE_ENCOMENDA = 99;
 
-export function limiteDoPedido(doce: Doce, hoje: string): number {
-  if (doce.sobEncomenda) return LIMITE_ENCOMENDA;
-  if (!contagemDeHoje(doce, hoje)) return LIMITE_SEM_CONTAGEM;
-  return Math.max(doce.quantidadeHoje, 1);
+export function precoDoSabor(doce: Doce, sabor: Sabor | undefined | null): number {
+  return sabor?.precoCentavos ?? doce.precoCentavos;
 }
 
-export function precoDoSabor(doce: Doce, sabor: Sabor | undefined): number {
-  return sabor?.precoCentavos ?? doce.precoCentavos;
+// Menor preço entre os sabores ou tamanhos (o do doce, se não tiver nenhum).
+export function precoMinimo(doce: Doce): number {
+  if (doce.sabores.length === 0) return doce.precoCentavos;
+  return Math.min(...doce.sabores.map((s) => precoDoSabor(doce, s)));
+}
+
+// Os sabores ou tamanhos têm preços diferentes entre si.
+export function temPrecosDiferentes(doce: Doce): boolean {
+  return doce.sabores.length > 1 && new Set(doce.sabores.map((s) => precoDoSabor(doce, s))).size > 1;
+}
+
+// "a partir de R$ 9,00" quando os sabores têm preços diferentes; senão "R$ 9,00".
+export function textoDoPreco(doce: Doce): string {
+  return `${temPrecosDiferentes(doce) ? "a partir de " : ""}${formatarPreco(precoMinimo(doce))}`;
+}
+
+// Selo "Sem glúten": só quando o doce informa que não leva trigo e a cozinha não usa trigo.
+export function semGluten(doce: Doce, tracosDaCozinha: readonly Traco[]): boolean {
+  return doce.alergenicos !== null && !doce.alergenicos.includes("trigo") && !tracosDaCozinha.includes("trigo");
+}
+
+// "Pode conter": o que a cozinha usa e o doce não leva.
+export function podeConter(doce: Doce, tracosDaCozinha: readonly Traco[]): Traco[] {
+  return TRACOS.filter((t) => tracosDaCozinha.includes(t) && !doce.alergenicos?.includes(t));
 }
 
 // Primeiro dia em que um doce sob encomenda fica pronto: hoje mais o prazo,
@@ -148,17 +169,6 @@ export function prontoAPartirDe(prazoDias: number, hoje: string, horarios: Horar
   let dia = somarDias(hoje, prazoDias);
   for (let i = 0; i < 7 && !abreNoDia(horarios, dia); i++) dia = somarDias(dia, 1);
   return dia;
-}
-
-// Datas que quem compra pode escolher para um doce sob encomenda: só dias em que a
-// loja abre e, em doce de campanha, até o fim da campanha.
-export function datasDeEncomenda(prazoDias: number, hoje: string, horarios: Horarios, ate?: string | null, quantas = 3): string[] {
-  const datas: string[] = [];
-  for (let dia = prontoAPartirDe(prazoDias, hoje, horarios); datas.length < quantas; dia = somarDias(dia, 1)) {
-    if (ate && dia > ate) break;
-    if (abreNoDia(horarios, dia)) datas.push(dia);
-  }
-  return datas;
 }
 
 export interface PrazoDaCampanha {
@@ -208,6 +218,12 @@ export function naCampanha(campanha: Campanha): string {
   return `${campanha.tipo === "pascoa" ? "na" : "no"} ${NOMES_CAMPANHA[campanha.tipo]}`;
 }
 
+// "do Natal", "da Páscoa", "de Semana do Doce"
+export function daCampanha(campanha: Campanha): string {
+  if (campanha.tipo === "outra") return `de ${campanha.nome}`;
+  return `${campanha.tipo === "pascoa" ? "da" : "do"} ${NOMES_CAMPANHA[campanha.tipo]}`;
+}
+
 // "para o Natal", "para a Páscoa"
 export function paraCampanha(campanha: Campanha): string {
   if (campanha.tipo === "outra") return `para ${campanha.nome}`;
@@ -224,14 +240,20 @@ export function voltaDoDoce(doce: Doce, campanhas: Campanha[], hoje: string): st
   return ultima ? `Este doce volta ${naCampanha(ultima)}.` : "Este doce volta numa próxima campanha.";
 }
 
+// Folha "Falar com a Mone" (cabeçalho e rodapé da vitrine, sacola vazia).
 export function mensagemGeral(nomeLoja: string): string {
-  return `Olá, ${nomeLoja}! Vi a vitrine no app e quero fazer uma encomenda.`;
+  return `Olá, ${nomeLoja}! Vim pela vitrine e queria falar com vocês.`;
 }
 
 // "a Palha italiana", "o Bolo de pote"; sem artigo quando não dá para saber ("Brownie").
 function comArtigo(nome: string): string {
   const fim = nome.split(" ")[0].slice(-1).toLowerCase();
   return fim === "a" || fim === "o" ? `${fim} ${nome}` : nome;
+}
+
+// Link "Tirar uma dúvida no WhatsApp" da ficha.
+export function mensagemDuvida(nomeLoja: string, doce: Doce): string {
+  return `Olá, ${nomeLoja}! Tenho uma dúvida sobre ${comArtigo(doce.nome)}: `;
 }
 
 // Doce de pronta entrega que esgotou hoje.
@@ -242,24 +264,4 @@ export function mensagemOutroDia(nomeLoja: string, doce: Doce): string {
 // Doce de campanha com as encomendas encerradas ou sem tempo de ficar pronto.
 export function mensagemEncerrada(nomeLoja: string, campanha: Campanha, doce: Doce): string {
   return `Olá, ${nomeLoja}! Vi que as encomendas ${campanha.tipo === "outra" ? `de ${campanha.nome}` : `de ${NOMES_CAMPANHA[campanha.tipo]}`} encerraram. Ainda consigo pedir ${doce.nome}?`;
-}
-
-export function mensagemDoDoce(opcoes: {
-  nomeLoja: string;
-  doce: Doce;
-  sabor?: Sabor;
-  quantidade: number;
-  data?: string | null;
-}): string {
-  const { nomeLoja, doce, sabor, quantidade, data } = opcoes;
-  const item = sabor && doce.sabores.length > 1 ? `${doce.nome} (${sabor.nome})` : doce.nome;
-  const linhas = [
-    `Olá, ${nomeLoja}! Quero encomendar:`,
-    `• ${quantidade}x ${item}`,
-    `Valor: ${formatarPreco(precoDoSabor(doce, sabor) * quantidade)}`,
-  ];
-  if (doce.sobEncomenda) {
-    linhas.push(`Para o dia: ${data ? rotuloData(data) : "vou combinar com vocês"}`);
-  }
-  return linhas.join("\n");
 }

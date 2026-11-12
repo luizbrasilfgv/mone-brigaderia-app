@@ -5,7 +5,7 @@ import type { Campanha, Categoria, Doce, Ilustracao } from "./tipos";
 import * as exemplo from "./dados-exemplo";
 import { banco, bancoConfigurado } from "./banco";
 import { lerHorario } from "./horarios";
-import { LOJA_PADRAO, ehTraco, normalizarWhatsApp, type DadosLoja } from "./loja";
+import { LOJA_PADRAO, ehTraco, normalizarWhatsApp, type DadosLoja, type Traco } from "./loja";
 
 // Ponto único de leitura dos dados. Com MySQL configurado, lê do banco; sem ele,
 // usa os dados de exemplo (modo demonstração).
@@ -29,6 +29,12 @@ function lerIlustracao(valor: string | null): Ilustracao | null {
   if (!valor) return null;
   const [tipo, sabor] = valor.split(":");
   return { tipo, sabor } as Ilustracao;
+}
+
+// Coluna SET do MySQL: "leite,trigo", "" (nenhum destes) ou NULL (não informado).
+function lerAlergenicos(valor: string | null): Traco[] | null {
+  if (valor == null) return null;
+  return String(valor).split(",").filter(ehTraco);
 }
 
 async function docesDoBanco(incluirInativos: boolean): Promise<Doce[]> {
@@ -62,8 +68,7 @@ async function docesDoBanco(incluirInativos: boolean): Promise<Doce[]> {
     descricao: l.descricao,
     precoCentavos: l.preco_centavos,
     unidade: l.unidade,
-    contemGluten: Boolean(l.contem_gluten),
-    contemLactose: Boolean(l.contem_lactose),
+    alergenicos: lerAlergenicos(l.alergenicos),
     composicao: l.composicao,
     conservacao: l.conservacao,
     selo: l.selo,

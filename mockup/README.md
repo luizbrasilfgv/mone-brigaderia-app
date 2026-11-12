@@ -13,3 +13,8 @@ Servem de referência para o app de verdade: estrutura das telas, cores, fontes,
 | `telas/*.dc.html` | Uma tela por arquivo; a lista está em [../docs/funcionalidades.md](../docs/funcionalidades.md) |
 | `imagens/mone-logo.png` | Logo recortado da etiqueta |
 | `imagens/palha-italiana.jpg` | Foto real da palha italiana |
+
+## O que o app mudou em relação ao mockup
+
+- `telas/Carrinho.dc.html` (sacola): continuam valendo a lista com contador, o total e a prévia da mensagem. Saíram "Como você quer receber?", "Para quando?", "Observação" e a linha "Entrega" (retirada ou entrega, dia e pagamento são combinados no WhatsApp), e "Pedido pronto!" virou "Pedido nº 4821 no WhatsApp".
+- Vitrine: os doces aparecem em lista (um por linha), não em grade de 2 colunas.

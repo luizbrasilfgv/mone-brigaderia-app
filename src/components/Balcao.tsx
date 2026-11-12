@@ -8,7 +8,7 @@ import type { Campanha, Doce } from "@/lib/tipos";
 import { LOJA, formatarWhatsApp, type DadosLoja } from "@/lib/loja";
 import { hojeNaLoja } from "@/lib/horarios";
 import { useAgora } from "@/lib/hooks";
-import { campanhasNoAr, doceApareceNaVitrine, estoqueDoDoce, formatarPreco } from "@/lib/regras";
+import { campanhasNoAr, doceApareceNaVitrine, estoqueDoDoce, formatarPreco, precoMinimo, temPrecosDiferentes } from "@/lib/regras";
 import { ImagemDoce } from "./ImagemDoce";
 import { cx } from "./ui";
 
@@ -117,7 +117,10 @@ export function Balcao({
         </span>
         <h1 className="font-display text-5xl leading-none font-semibold md:text-6xl">{doce.nome}</h1>
         <p className="max-w-[480px] text-xl leading-relaxed text-creme-200 md:text-[22px]">{doce.descricao}</p>
-        <span className="font-display text-5xl font-semibold text-dourado">{formatarPreco(doce.precoCentavos)}</span>
+        <span className="flex items-baseline gap-3 font-display text-5xl font-semibold text-dourado">
+          {temPrecosDiferentes(doce) && <span className="font-sans text-2xl font-semibold text-creme-200">a partir de</span>}
+          {formatarPreco(precoMinimo(doce))}
+        </span>
 
         <div className="mt-4 flex items-center gap-5 rounded-[26px] border border-dourado/18 bg-creme/[0.06] p-4 backdrop-blur-lg">
           <QrDaVitrine endereco={endereco} />

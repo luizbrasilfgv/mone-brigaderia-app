@@ -284,6 +284,9 @@ export function EstoqueDoDia({
             Informe quantas unidades tem de cada doce. Chegou a zero, ele aparece como esgotado.
             {editaDoces && " Doce sob encomenda não tem quantidade. Toque no doce para editar a ficha."}
           </p>
+          <p className="text-[13px] leading-snug text-creme-200">
+            Confirmou um pedido no WhatsApp? Diminua aqui ou toque em Esgotou. A sacola de quem compra respeita este número.
+          </p>
           {salvoHoje && (
             <p className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-menta">
               <IconeCheck tamanho={16} />

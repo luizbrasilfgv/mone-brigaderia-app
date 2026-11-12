@@ -30,7 +30,7 @@ const PASSOS: Passo[] = [
   {
     titulo: "Fichas dos doces",
     texto:
-      "Toque num doce para mudar foto, preço, sabores, glúten, lactose e composição. Para um doce novo, use Cadastrar novo doce. A estrela escolhe o destaque da vitrine.",
+      "Toque num doce para mudar foto, preço, sabores (cada um com seu preço), alergênicos e composição. Para um doce novo, use Cadastrar novo doce. A estrela escolhe o destaque da vitrine.",
     icone: <IconeEstrela tamanho={40} />,
     minimo: "equipe",
   },
@@ -64,16 +64,16 @@ const PASSOS: Passo[] = [
   },
   {
     titulo: "Sua conta",
-    texto: "Toque no seu nome, no alto, para trocar a senha ou sair.",
+    texto: "Toque no seu nome, no alto, para trocar a senha ou sair. Para rever este guia, toque em Como usar.",
     icone: <IconePessoa tamanho={40} />,
     minimo: "estoque",
   },
   {
-    titulo: "As encomendas chegam no WhatsApp",
+    titulo: "Os pedidos chegam no WhatsApp",
     texto:
-      "Quem compra escolhe na vitrine e manda o pedido já escrito no WhatsApp da loja. Divulgue o endereço monebrigaderia.com.br. Para rever este guia, toque em Como usar.",
+      "Quem compra monta a sacola na vitrine e manda o pedido com número, itens e total. Responda em cima da mensagem confirmando o número e o total, e combine retirada ou entrega, dia, horário e pagamento. A quantidade do dia não baixa sozinha: depois de confirmar, ajuste em O que tem hoje ou toque em Esgotou. Respostas prontas: veja o guia.",
     icone: <IconeConversa tamanho={40} />,
-    minimo: "estoque",
+    minimo: "equipe",
   },
 ];
 

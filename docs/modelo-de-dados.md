@@ -32,8 +32,8 @@ erDiagram
 | descricao | texto | |
 | preco_centavos | inteiro | |
 | unidade | texto | "por unidade", "por caixa" |
-| contem_gluten | booleano | |
-| contem_lactose | booleano | |
+| alergenicos | conjunto, opcional | o que o doce contém: leite, trigo, ovo, castanhas, amendoim, soja. Vazio = nenhum destes; NULL = não informado (a ficha pede para perguntar no WhatsApp). Entra pela migração `banco/migracoes/006-alergenicos.sql` |
+| contem_gluten, contem_lactose | booleano | colunas antigas: o app continua gravando (trigo e leite), mas lê `alergenicos` |
 | composicao | texto | |
 | conservacao | texto | |
 | selo | enum | nenhum, novo, mais_vendido. "Últimas unidades" é calculado pelo estoque |
@@ -53,7 +53,7 @@ erDiagram
 | id | inteiro (automático) | |
 | doce_id | texto | |
 | nome | texto | Tradicional, Ninho... |
-| preco_centavos | inteiro, opcional | vazio = mesmo preço do doce |
+| preco_centavos | inteiro, opcional | vazio = mesmo preço do doce. Editado em "Sabores ou tamanhos" na ficha do doce |
 | ordem | inteiro | |
 
 ### fotos
@@ -150,6 +150,8 @@ Senhas erradas, para o limite de tentativas. Linhas com mais de 1 dia são apaga
 - **Vitrine de hoje:** doces ativos com `onde_aparece = ano_todo`, mais os doces `so_campanhas` que estão em alguma campanha no ar. Junta o `estoque_dia` de hoje.
 - **Doces da campanha:** `campanha_doces` da campanha no ar.
 
-## Fase 2
+## Pedidos
 
-Tabelas `pedidos` e `itens_pedido` quando a encomenda passar a ser feita dentro do app. Ao guardar dados de clientes, revisar a LGPD.
+A sacola e o último pedido ficam só no celular de quem compra (`localStorage`: `mone:sacola`, `mone:nome` e `mone:ultimo-pedido`); nada vai para o banco. Enviar a mensagem no WhatsApp é fazer o pedido. A sacola guarda o id do doce e a opção pelo **nome** (o id do sabor muda a cada "Salvar ficha").
+
+Para depois, se a loja quiser uma lista de pedidos no painel: tabelas `pedidos` e `itens_pedido`. Ao guardar dados de quem compra, revisar a LGPD.

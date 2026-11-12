@@ -5,7 +5,7 @@ import { FormularioDoce } from "@/components/painel/FormularioDoce";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
 import { hojeNaLoja } from "@/lib/horarios";
-import { listarCampanhas, listarCategorias } from "@/lib/dados";
+import { listarCampanhas, listarCategorias, obterLoja } from "@/lib/dados";
 
 export const metadata: Metadata = { title: "Novo doce" };
 
@@ -20,6 +20,15 @@ export default function PaginaNovoDoce() {
 async function Conteudo() {
   await connection();
   await exigirAcesso("equipe");
-  const [categorias, campanhas] = await Promise.all([listarCategorias(), listarCampanhas()]);
-  return <FormularioDoce doce={null} categorias={categorias} campanhas={campanhas} hoje={hojeNaLoja()} demo={!bancoConfigurado()} />;
+  const [categorias, campanhas, loja] = await Promise.all([listarCategorias(), listarCampanhas(), obterLoja()]);
+  return (
+    <FormularioDoce
+      doce={null}
+      categorias={categorias}
+      campanhas={campanhas}
+      hoje={hojeNaLoja()}
+      tracos={loja.tracos}
+      demo={!bancoConfigurado()}
+    />
+  );
 }

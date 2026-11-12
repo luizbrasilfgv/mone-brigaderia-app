@@ -6,7 +6,7 @@ import { FormularioDoce } from "@/components/painel/FormularioDoce";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
 import { hojeNaLoja } from "@/lib/horarios";
-import { listarCampanhas, listarCategorias, obterDoce } from "@/lib/dados";
+import { listarCampanhas, listarCategorias, obterDoce, obterLoja } from "@/lib/dados";
 
 export const metadata: Metadata = { title: "Editar doce" };
 
@@ -22,7 +22,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   await exigirAcesso("equipe");
   const { id } = await params;
-  const [doce, categorias, campanhas] = await Promise.all([obterDoce(id), listarCategorias(), listarCampanhas()]);
+  const [doce, categorias, campanhas, loja] = await Promise.all([obterDoce(id), listarCategorias(), listarCampanhas(), obterLoja()]);
   if (!doce) notFound();
   return (
     <FormularioDoce
@@ -31,6 +31,7 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       categorias={categorias}
       campanhas={campanhas}
       hoje={hojeNaLoja()}
+      tracos={loja.tracos}
       demo={!bancoConfigurado()}
     />
   );
