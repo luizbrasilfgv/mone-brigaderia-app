@@ -66,8 +66,18 @@
 }
 
 @layer base {
+  /* O app é escuro: listas de opções, calendários e outras janelas do sistema
+     também abrem escuras, senão aparecem brancas com letra clara. */
+  html {
+    color-scheme: dark;
+  }
   body {
     @apply bg-cacau-950 font-sans text-creme antialiased;
+  }
+  select option,
+  select optgroup {
+    background-color: var(--color-cacau-900);
+    color: var(--color-creme);
   }
   button {
     cursor: pointer;
