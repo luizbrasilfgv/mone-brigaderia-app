@@ -49,6 +49,8 @@ export async function exigirAcesso(minimo: Papel): Promise<Usuario> {
 
 // Só o que as telas precisam saber da pessoa (vai para o navegador).
 export interface PessoaNoPainel {
+  // Para guardar o rascunho de O que tem hoje no celular, por pessoa.
+  id: number;
   nome: string;
   email: string;
   papel: Papel;
@@ -56,5 +58,5 @@ export interface PessoaNoPainel {
 }
 
 export function paraTela(u: Usuario): PessoaNoPainel {
-  return { nome: u.nome, email: u.email, papel: u.papel, tutorialVisto: u.tutorialVisto };
+  return { id: u.id, nome: u.nome, email: u.email, papel: u.papel, tutorialVisto: u.tutorialVisto };
 }

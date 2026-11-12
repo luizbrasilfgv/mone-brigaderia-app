@@ -7,7 +7,7 @@ import { useAgora } from "@/lib/hooks";
 import { salvarLoja } from "@/app/painel/acoes";
 import { InfoDaLoja } from "../InfoDaLoja";
 import { barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
-import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso } from "./comum";
+import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso, useErroDeCampo } from "./comum";
 
 const HORARIO_PADRAO: Horario = { abre: "09:00", fecha: "18:00" };
 
@@ -44,6 +44,7 @@ function CampoTexto({
 export function FormularioLoja({ loja, agora: agoraDoServidor, demo }: { loja: DadosLoja; agora: number; demo: boolean }) {
   const agora = useAgora(agoraDoServidor);
   const [aviso, mostrar, mostrarResultado] = useAviso();
+  const erroCampo = useErroDeCampo();
   const [salvando, iniciar] = useTransition();
   const [whatsapp, setWhatsapp] = useState(formatarWhatsApp(loja.whatsapp));
   const [horarios, setHorarios] = useState<Horarios>(loja.horarios);
@@ -78,13 +79,23 @@ export function FormularioLoja({ loja, agora: agoraDoServidor, demo }: { loja: D
 
   function salvar(e: FormEvent) {
     e.preventDefault();
-    if (!numero) return mostrar("Confira o WhatsApp: escreva o DDD e o número, por exemplo (21) 98063-1673.", false);
-    if (diaComErro >= 0) return mostrar(`Confira o horário de ${DIAS[diaComErro].toLowerCase()}: a loja precisa fechar depois de abrir.`, false);
+    erroCampo.limpar();
+    if (!numero) {
+      const texto = "Confira o WhatsApp: escreva o DDD e o número, por exemplo (21) 98063-1673.";
+      erroCampo.marcar("whatsapp", texto);
+      return mostrar(texto, false);
+    }
+    if (diaComErro >= 0) {
+      const texto = `Confira o horário de ${DIAS[diaComErro].toLowerCase()}: a loja precisa fechar depois de abrir.`;
+      erroCampo.marcar(`fecha-${diaComErro}`, texto);
+      return mostrar(texto, false);
+    }
     const dados = { whatsapp: numero, horarios, retirada, entrega, pagamento, tracos };
     const enviar = () =>
       iniciar(async () => {
         const resultado = await tentar(() => salvarLoja(dados));
         mostrarResultado(resultado, enviar);
+        if (!resultado.ok && resultado.campo) erroCampo.marcar(resultado.campo, resultado.mensagem);
         if (resultado.ok) setWhatsapp(formatarWhatsApp(numero));
       });
     enviar();
@@ -112,7 +123,7 @@ export function FormularioLoja({ loja, agora: agoraDoServidor, demo }: { loja: D
             aria-describedby="whatsapp-ajuda"
             aria-invalid={whatsapp.trim() !== "" && !numero}
             placeholder="(21) 98063-1673"
-            className={cx(campo, "h-12")}
+            className={cx(campo, "h-12", erroCampo.classe("whatsapp"))}
           />
           <span id="whatsapp-ajuda" className={cx("text-xs leading-snug", numero ? "text-creme-400" : "text-rosa")}>
             {numero ? (
@@ -152,6 +163,7 @@ export function FormularioLoja({ loja, agora: agoraDoServidor, demo }: { loja: D
                       <label className="flex min-w-0 flex-col gap-1 text-xs text-creme-400">
                         Abre às
                         <input
+                          id={`abre-${dia}`}
                           type="time"
                           required
                           value={horario.abre}
@@ -162,11 +174,13 @@ export function FormularioLoja({ loja, agora: agoraDoServidor, demo }: { loja: D
                       <label className="flex min-w-0 flex-col gap-1 text-xs text-creme-400">
                         Fecha às
                         <input
+                          id={`fecha-${dia}`}
                           type="time"
                           required
                           value={horario.fecha}
                           onChange={(e) => e.target.value && mudarDia(dia, { ...horario, fecha: e.target.value })}
-                          className={cx(campo, "h-11 min-w-0 px-3 [color-scheme:dark]")}
+                          aria-invalid={errado || undefined}
+                          className={cx(campo, "h-11 min-w-0 px-3 [color-scheme:dark]", errado && "ring-2 ring-rosa")}
                         />
                       </label>
                       {errado && <span className="col-span-2 text-xs font-semibold text-rosa">A loja precisa fechar depois de abrir.</span>}

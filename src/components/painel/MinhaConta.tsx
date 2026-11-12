@@ -8,13 +8,14 @@ import { sairDeTodos, salvarNome, trocarSenha } from "@/app/painel/acoes";
 import { CampoSenha } from "../CampoSenha";
 import { IconeCheck } from "../Icones";
 import { botaoPrimario, campo, cartao, cx, rotulo } from "../ui";
-import { CabecalhoPainel, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
+import { CabecalhoPainel, FaixaDemo, apagarRascunhosDoEstoque, tentar, useAviso, useConfirmacao, useErroDeCampo } from "./comum";
 
 // Minha conta: nome, troca de senha e saída deste celular ou de todos os aparelhos.
 export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: string; email: string; papel: Papel; demo: boolean }) {
   const router = useRouter();
   const [aviso, , mostrarResultado] = useAviso();
   const [confirmacao, perguntar] = useConfirmacao();
+  const erroCampo = useErroDeCampo();
   const [ocupado, iniciar] = useTransition();
   const [nome, setNome] = useState(nomeInicial);
   const [nomeSalvo, setNomeSalvo] = useState(nomeInicial);
@@ -28,6 +29,7 @@ export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: st
       iniciar(async () => {
         const resultado = await tentar(() => salvarNome(nome));
         mostrarResultado(resultado, executar);
+        if (!resultado.ok && resultado.campo) erroCampo.marcar(resultado.campo, resultado.mensagem);
         if (resultado.ok) {
           setNomeSalvo(nome.trim());
           router.refresh();
@@ -42,6 +44,7 @@ export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: st
       iniciar(async () => {
         const resultado = await tentar(() => trocarSenha(atual, nova));
         mostrarResultado(resultado, executar);
+        if (!resultado.ok && resultado.campo) erroCampo.marcar(resultado.campo, resultado.mensagem);
         if (resultado.ok) {
           setAtual("");
           setNova("");
@@ -57,7 +60,9 @@ export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: st
       texto: "Para entrar de novo, você vai precisar do seu e-mail e da sua senha.",
       confirmar: "Sair",
     });
-    if (sim) iniciar(() => sair());
+    if (!sim) return;
+    apagarRascunhosDoEstoque();
+    iniciar(() => sair());
   }
 
   async function sairDeTodosOsAparelhos() {
@@ -67,7 +72,9 @@ export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: st
       confirmar: "Sair de todos",
       perigo: true,
     });
-    if (sim) iniciar(() => sairDeTodos());
+    if (!sim) return;
+    apagarRascunhosDoEstoque();
+    iniciar(() => sairDeTodos());
   }
 
   return (
@@ -90,9 +97,14 @@ export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: st
               autoComplete="name"
               autoCapitalize="words"
               value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className={cx(campo, "h-12")}
+              onChange={(e) => {
+                setNome(e.target.value);
+                erroCampo.limpar("nome");
+              }}
+              {...erroCampo.props("nome")}
+              className={cx(campo, "h-12", erroCampo.classe("nome"))}
             />
+            {erroCampo.texto("nome")}
             <span className="text-xs text-creme-400">Aparece no alto do painel e para quem administra, em Acessos.</span>
           </div>
           <div className="flex flex-col gap-1">
@@ -125,8 +137,12 @@ export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: st
               onChange={(e) => {
                 setAtual(e.target.value);
                 setSenhaTrocada(false);
+                erroCampo.limpar("senha-atual");
               }}
+              {...erroCampo.props("senha-atual")}
+              className={erroCampo.classe("senha-atual")}
             />
+            {erroCampo.texto("senha-atual")}
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="senha-nova" className={rotulo}>
@@ -142,8 +158,12 @@ export function MinhaConta({ nome: nomeInicial, email, papel, demo }: { nome: st
               onChange={(e) => {
                 setNova(e.target.value);
                 setSenhaTrocada(false);
+                erroCampo.limpar("senha-nova");
               }}
+              {...erroCampo.props("senha-nova")}
+              className={erroCampo.classe("senha-nova")}
             />
+            {erroCampo.texto("senha-nova")}
             <span className="text-xs text-creme-400">Pelo menos 8 letras ou números. Não precisa de maiúscula nem de símbolo.</span>
           </div>
           {senhaTrocada && (

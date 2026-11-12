@@ -79,6 +79,73 @@ export function doceApareceNaVitrine(doce: Doce, idsNoAr: Set<string>): boolean 
   return doce.campanhaIds.some((id) => idsNoAr.has(id));
 }
 
+export type ForaDaVitrine = "escondido" | "sem_campanha" | "agendada" | "pausada" | "encerrada";
+
+// Se o doce aparece na vitrine hoje e, se não, por quê (painel: lista "Fora da vitrine"
+// e o aviso depois de salvar a ficha). Mesma regra de doceApareceNaVitrine.
+export function vitrineDoDoce(
+  doce: Pick<Doce, "ativo" | "ondeAparece" | "campanhaIds">,
+  campanhas: Campanha[],
+  hoje: string,
+): { aparece: true } | { aparece: false; motivo: ForaDaVitrine; campanha?: Campanha } {
+  if (!doce.ativo) return { aparece: false, motivo: "escondido" };
+  if (doce.ondeAparece === "ano_todo") return { aparece: true };
+  const dele = campanhas.filter((c) => doce.campanhaIds.includes(c.id) && !c.rascunho);
+  const com = (situacao: SituacaoCampanha) => dele.filter((c) => situacaoCampanha(c, hoje) === situacao);
+  if (com("no_ar").length > 0) return { aparece: true };
+  if (dele.length === 0) return { aparece: false, motivo: "sem_campanha" };
+  const agendada = com("agendada").sort((a, b) => a.inicio.localeCompare(b.inicio))[0];
+  if (agendada) return { aparece: false, motivo: "agendada", campanha: agendada };
+  const pausada = com("pausada")[0];
+  if (pausada) return { aparece: false, motivo: "pausada", campanha: pausada };
+  return { aparece: false, motivo: "encerrada", campanha: dele.sort((a, b) => b.fim.localeCompare(a.fim))[0] };
+}
+
+// Motivo curto, para o cartão do doce na seção "Fora da vitrine".
+export function motivoForaDaVitrine(motivo: ForaDaVitrine, campanha?: Campanha): string {
+  switch (motivo) {
+    case "escondido":
+      return "Escondido: “Na vitrine” está desligado";
+    case "sem_campanha":
+      return "Só em campanhas, sem campanha marcada";
+    case "agendada":
+      return `Entra com ${campanha!.nome} em ${formatarDiaMes(campanha!.inicio)}`;
+    case "pausada":
+      return `${campanha!.nome} está pausada`;
+    case "encerrada":
+      return `${campanha!.nome} já terminou`;
+  }
+}
+
+// Aviso depois de salvar a ficha: se o doce aparece na vitrine e como, ou por que não.
+export function mensagemDoDoceSalvo(
+  doce: Pick<Doce, "ativo" | "ondeAparece" | "campanhaIds"> & DoceComEstoque,
+  campanhas: Campanha[],
+  hoje: string,
+): string {
+  const vitrine = vitrineDoDoce(doce, campanhas, hoje);
+  if (!vitrine.aparece) {
+    const c = vitrine.campanha;
+    switch (vitrine.motivo) {
+      case "escondido":
+        return "Salvo. Não aparece na vitrine: “Na vitrine” está desligado.";
+      case "sem_campanha":
+        return "Salvo, mas não aparece: marque uma campanha.";
+      case "agendada":
+        return `Salvo, mas só aparece quando a campanha ${c!.nome} entrar no ar, em ${formatarDiaMes(c!.inicio)}.`;
+      case "pausada":
+        return `Salvo, mas não aparece: a campanha ${c!.nome} está pausada.`;
+      case "encerrada":
+        return `Salvo, mas não aparece: a campanha ${c!.nome} já terminou.`;
+    }
+  }
+  const estoque = estoqueDoDoce(doce, hoje);
+  if (estoque.tom === "encomenda") return "Salvo. Já aparece na vitrine, sob encomenda.";
+  if (estoque.tom === "esgotado") return "Salvo. Aparece como esgotado (quantidade 0).";
+  if (estoque.tom === "confirmar") return "Salvo. Já aparece na vitrine, mas pedindo para confirmar no WhatsApp: a quantidade não é de hoje.";
+  return "Salvo. Já aparece na vitrine.";
+}
+
 export type TomEstoque = "ok" | "pouco" | "esgotado" | "encomenda" | "confirmar";
 
 export interface Estoque {
@@ -89,13 +156,16 @@ export interface Estoque {
   deHoje: boolean;
 }
 
+// O que as regras de estoque precisam saber do doce.
+type DoceComEstoque = Pick<Doce, "sobEncomenda" | "prazoDias" | "quantidadeHoje" | "dataQuantidade">;
+
 // A quantidade que a vitrine conhece é de hoje? (null = dados de exemplo: vale como hoje.)
-export function contagemDeHoje(doce: Doce, hoje: string): boolean {
+export function contagemDeHoje(doce: Pick<Doce, "dataQuantidade">, hoje: string): boolean {
   return doce.dataQuantidade === null || doce.dataQuantidade === hoje;
 }
 
 // O que quem compra vê: faixas, nunca o número exato (o número fica só no painel).
-export function estoqueDoDoce(doce: Doce, hoje: string): Estoque {
+export function estoqueDoDoce(doce: DoceComEstoque, hoje: string): Estoque {
   if (doce.sobEncomenda) {
     const prazo = doce.prazoDias ?? 1;
     return { tom: "encomenda", texto: `Sob encomenda · ${prazo} ${prazo === 1 ? "dia" : "dias"}`, disponivel: true, deHoje: true };

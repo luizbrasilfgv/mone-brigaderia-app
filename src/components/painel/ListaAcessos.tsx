@@ -10,7 +10,7 @@ import { sugestaoDeEmail } from "@/lib/texto";
 import { adicionarAcesso, gerarSenhaNova, mudarPapel, removerAcesso, type Convite, type Resultado } from "@/app/painel/acoes";
 import { IconeChave, IconeConversa, IconeCopiar, IconeFechar, IconeLixo } from "../Icones";
 import { botaoPrimario, botaoWhatsApp, campo, cartao, cx, escolha, rotulo } from "../ui";
-import { CabecalhoPainel, FaixaAviso, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
+import { CabecalhoPainel, FaixaAviso, FaixaDemo, tentar, useAviso, useConfirmacao, useErroDeCampo } from "./comum";
 
 // Situação da senha de cada pessoa, para quem administra saber quem já entrou.
 function situacao(a: Acesso): { texto: string; alerta: boolean } {
@@ -50,6 +50,7 @@ export function ListaAcessos({
   const router = useRouter();
   const [aviso, mostrarAviso, mostrarResultado] = useAviso();
   const [confirmacao, perguntar] = useConfirmacao();
+  const erroCampo = useErroDeCampo();
   const [ocupado, iniciar] = useTransition();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -68,9 +69,11 @@ export function ListaAcessos({
       if (resultado.convite) {
         setConvite(resultado.convite);
         setCopiado(false);
-        requestAnimationFrame(() => cartaoConvite.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+        const semAnimacao = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        requestAnimationFrame(() => cartaoConvite.current?.scrollIntoView({ behavior: semAnimacao ? "auto" : "smooth", block: "start" }));
       } else {
         mostrarResultado(resultado, () => executar(acao, depois));
+        if (!resultado.ok && resultado.campo) erroCampo.marcar(resultado.campo, resultado.mensagem);
       }
       if (resultado.ok) {
         depois?.();
@@ -251,9 +254,14 @@ export function ListaAcessos({
               enterKeyHint="next"
               placeholder="ex.: Ana da cozinha"
               value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              className={cx(campo, "h-12")}
+              onChange={(e) => {
+                setNome(e.target.value);
+                erroCampo.limpar("nome");
+              }}
+              {...erroCampo.props("nome")}
+              className={cx(campo, "h-12", erroCampo.classe("nome"))}
             />
+            {erroCampo.texto("nome")}
           </div>
           <div className="flex flex-col gap-2">
             <label htmlFor="email" className={rotulo}>
@@ -272,9 +280,12 @@ export function ListaAcessos({
               onChange={(e) => {
                 setEmail(e.target.value);
                 setSugestao(null);
+                erroCampo.limpar("email");
               }}
-              className={cx(campo, "h-12")}
+              {...erroCampo.props("email")}
+              className={cx(campo, "h-12", erroCampo.classe("email"))}
             />
+            {erroCampo.texto("email")}
             <span id="ajuda-email" className="text-xs text-creme-400">
               Qualquer e-mail serve: Gmail, Hotmail, Outlook, iCloud…
             </span>

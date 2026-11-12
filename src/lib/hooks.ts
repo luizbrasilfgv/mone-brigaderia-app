@@ -110,6 +110,29 @@ function guardadoNoCelular(chave: string) {
   };
 }
 
+// Valor guardado neste celular com chave que muda (ex.: rascunho do painel por pessoa).
+// valor: null enquanto o celular não foi lido; "" = nada guardado. atualizar recebe o valor
+// guardado agora (não o da última tela) e devolve o novo (null apaga).
+const guardadosPorChave = new Map<string, ReturnType<typeof guardadoNoCelular>>();
+export function useGuardado(chave: string): { valor: string | null; atualizar: (mudar: (atual: string) => string | null) => void } {
+  let guardado = guardadosPorChave.get(chave);
+  if (!guardado) {
+    guardado = guardadoNoCelular(chave);
+    guardadosPorChave.set(chave, guardado);
+  }
+  const atual = guardado;
+  const valor = useSyncExternalStore(atual.assinar, atual.ler, semServidor);
+  const atualizar = useCallback(
+    (mudar: (agora: string) => string | null) => {
+      const antes = atual.ler();
+      const depois = mudar(antes);
+      if ((depois ?? "") !== antes) atual.gravar(depois || null);
+    },
+    [atual],
+  );
+  return { valor, atualizar };
+}
+
 const sacolaGuardada = guardadoNoCelular("mone:sacola");
 const nomeGuardado = guardadoNoCelular("mone:nome");
 const pedidoGuardado = guardadoNoCelular("mone:ultimo-pedido");

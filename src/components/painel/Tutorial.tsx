@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { pode, type Papel } from "@/lib/papeis";
-import { IconeCaixa, IconeCalendario, IconeConversa, IconeEstrela, IconeLoja, IconePessoa, IconePessoas, IconeRelogio } from "../Icones";
+import { IconeAlerta, IconeCaixa, IconeCalendario, IconeConversa, IconeEstrela, IconeLoja, IconePessoa, IconePessoas, IconeRelogio } from "../Icones";
 import { botaoPrimario, cx } from "../ui";
 
 interface Passo {
@@ -11,6 +12,10 @@ interface Passo {
   icone: ReactNode;
   // Só aparece para quem tem pelo menos este papel.
   minimo: Papel;
+  // Só para estes papéis (ex.: o passo do Esgotou é só do Estoque).
+  so?: Papel[];
+  // Link no fim do passo (ex.: o guia da loja).
+  link?: { href: string; rotulo: string };
 }
 
 const PASSOS: Passo[] = [
@@ -21,16 +26,23 @@ const PASSOS: Passo[] = [
     minimo: "estoque",
   },
   {
-    titulo: "Todo dia: o que tem hoje",
+    titulo: "Toda manhã: o que tem hoje",
     texto:
-      "Ajuste a quantidade de cada doce com − e + e toque em Salvar o dia. Com zero, o doce aparece como esgotado; com 3 ou menos, como “Últimas unidades”. Salve todo dia: sem isso, a vitrine pede para quem compra confirmar no WhatsApp.",
+      "Confira a quantidade de cada doce (toque no número para digitar, ou use − e +) e toque em Salvar o dia. Se está tudo igual, toque em Está igual a ontem. Se não salvar, a vitrine mostra “confirme no WhatsApp”.",
     icone: <IconeCaixa tamanho={40} />,
     minimo: "estoque",
   },
   {
+    titulo: "Acabou um doce?",
+    texto: "Toque em Esgotou. Ele aparece como esgotado na hora, sem precisar de Salvar o dia.",
+    icone: <IconeAlerta tamanho={40} />,
+    minimo: "estoque",
+    so: ["estoque"],
+  },
+  {
     titulo: "Fichas dos doces",
     texto:
-      "Toque num doce para mudar foto, preço, sabores (cada um com seu preço), alergênicos e composição. Para um doce novo, use Cadastrar novo doce. A estrela escolhe o destaque da vitrine.",
+      "Toque num doce para mudar foto, preço, sabores (cada um com seu preço), alergênicos e composição. Para um doce novo, use Cadastrar novo doce. A estrela escolhe o destaque da vitrine e salva na hora.",
     icone: <IconeEstrela tamanho={40} />,
     minimo: "equipe",
   },
@@ -74,12 +86,13 @@ const PASSOS: Passo[] = [
       "Quem compra monta a sacola na vitrine e manda o pedido com número, itens e total. Responda em cima da mensagem confirmando o número e o total, e combine retirada ou entrega, dia, horário e pagamento. A quantidade do dia não baixa sozinha: depois de confirmar, ajuste em O que tem hoje ou toque em Esgotou. Respostas prontas: veja o guia.",
     icone: <IconeConversa tamanho={40} />,
     minimo: "equipe",
+    link: { href: "/guia", rotulo: "Abrir o guia da loja" },
   },
 ];
 
 // Guia de primeiro acesso, em passos. Mostra só o que o papel da pessoa permite usar.
 export function Tutorial({ papel, aberto, aoFechar }: { papel: Papel; aberto: boolean; aoFechar: () => void }) {
-  const passos = PASSOS.filter((p) => pode({ papel }, p.minimo));
+  const passos = PASSOS.filter((p) => pode({ papel }, p.minimo) && (!p.so || p.so.includes(papel)));
   const [indice, setIndice] = useState(0);
 
   useEffect(() => {
@@ -123,6 +136,11 @@ export function Tutorial({ papel, aberto, aoFechar }: { papel: Papel; aberto: bo
         <div className="flex min-h-[150px] flex-col gap-2.5">
           <h2 className="font-display text-[26px] leading-tight font-semibold">{passo.titulo}</h2>
           <p className="text-[15px] leading-relaxed text-creme-200">{passo.texto}</p>
+          {passo.link && (
+            <Link href={passo.link.href} onClick={fechar} className="mx-auto inline-flex min-h-11 items-center text-sm font-bold text-dourado underline underline-offset-4">
+              {passo.link.rotulo}
+            </Link>
+          )}
         </div>
         <div className="flex gap-1.5" aria-hidden="true">
           {passos.map((_, i) => (

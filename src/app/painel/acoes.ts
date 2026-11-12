@@ -22,8 +22,9 @@ import {
 import { destinoSeguro } from "@/lib/painel";
 import { nomeDoPapel } from "@/lib/papeis";
 import { gerarSenhaProvisoria, problemaNaSenhaNova, resumirSenha, senhaConfere } from "@/lib/senhas";
-import { COLUNAS_HORARIO, TAG_CAMPANHAS, TAG_CARDAPIO, TAG_LOJA } from "@/lib/dados";
-import { escreverHorario, lerHorario } from "@/lib/horarios";
+import { COLUNAS_HORARIO, TAG_CAMPANHAS, TAG_CARDAPIO, TAG_LOJA, listarCampanhas } from "@/lib/dados";
+import { escreverHorario, hojeNaLoja, lerHorario } from "@/lib/horarios";
+import { mensagemDoDoceSalvo } from "@/lib/regras";
 import { TRACOS, ehTraco, normalizarWhatsApp } from "@/lib/loja";
 import { TAMANHO_MAXIMO_FOTO, TIPOS_DE_FOTO, pastaDeFotos } from "@/lib/fotos";
 import { TIPOS_CAMPANHA } from "@/lib/campanhas-modelo";
@@ -38,6 +39,8 @@ export interface Resultado {
   id?: string;
   // Por que não deu certo: o aviso oferece "Entrar de novo" ou "Tentar de novo".
   motivo?: "sessao" | "rede" | "servidor";
+  // Campo do formulário com o problema (o id do campo na tela): a tela marca e rola até ele.
+  campo?: string;
   // Senha provisória recém-criada em Acessos (só aparece nesta resposta).
   convite?: Convite;
 }
@@ -60,7 +63,15 @@ const COR = /^#[0-9a-fA-F]{6}$/;
 const SELOS: Selo[] = ["nenhum", "novo", "mais_vendido"];
 const ONDE: OndeAparece[] = ["ano_todo", "so_campanhas"];
 
-class Invalido extends Error {}
+// Erro de quem preencheu (não do servidor), com o campo que precisa mudar.
+class Invalido extends Error {
+  constructor(
+    mensagem: string,
+    readonly campo?: string,
+  ) {
+    super(mensagem);
+  }
+}
 
 const SESSAO_TERMINOU: Resultado = { ok: false, motivo: "sessao", mensagem: "Sua sessão terminou. Entre de novo para continuar." };
 
@@ -94,21 +105,21 @@ async function emTransacao<T>(trabalho: (c: PoolConnection) => Promise<T>): Prom
 }
 
 function falha(erro: unknown): Resultado {
-  if (erro instanceof Invalido) return { ok: false, mensagem: erro.message };
+  if (erro instanceof Invalido) return { ok: false, mensagem: erro.message, ...(erro.campo && { campo: erro.campo }) };
   console.error("[painel]", erro);
   return { ok: false, motivo: "servidor", mensagem: "Não deu para salvar agora. Tente de novo em instantes." };
 }
 
-function inteiro(valor: unknown, min: number, max: number, nome: string): number {
+function inteiro(valor: unknown, min: number, max: number, nome: string, campo?: string): number {
   const n = Number(valor);
-  if (!Number.isInteger(n) || n < min || n > max) throw new Invalido(`Confira o campo "${nome}".`);
+  if (!Number.isInteger(n) || n < min || n > max) throw new Invalido(`Confira o campo "${nome}".`, campo);
   return n;
 }
 
-function textoObrigatorio(valor: unknown, max: number, nome: string): string {
+function textoObrigatorio(valor: unknown, max: number, nome: string, campo?: string): string {
   const t = String(valor ?? "").trim();
-  if (!t) throw new Invalido(`Preencha o campo "${nome}".`);
-  if (t.length > max) throw new Invalido(`O campo "${nome}" passou de ${max} letras.`);
+  if (!t) throw new Invalido(`Preencha o campo "${nome}".`, campo);
+  if (t.length > max) throw new Invalido(`O campo "${nome}" passou de ${max} letras.`, campo);
   return t;
 }
 
@@ -134,26 +145,47 @@ async function gravarQuantidade(c: PoolConnection, doceId: string, quantidade: n
   );
 }
 
-// Quantidades do dia e doce em destaque.
-export async function salvarEstoque(quantidades: Record<string, number>, destaqueId: string | null): Promise<Resultado> {
+// Quantidades do dia. Só chegam os doces que a pessoa mexeu (quantidades: gravam por cima),
+// para não apagar o que outro celular salvou em outro doce. confirmar: doces que ninguém
+// salvou hoje e que ficam com a última quantidade ("Está igual a ontem"); só entram se
+// ainda não houver quantidade de hoje para eles.
+export async function salvarEstoque(quantidades: Record<string, number>, confirmar: Record<string, number> = {}): Promise<Resultado> {
   const { usuario, bloqueio } = await autorizar("estoque");
   if (bloqueio) return bloqueio;
   try {
     await emTransacao(async (c) => {
       const [doces] = await c.query<RowDataPacket[]>("SELECT id, sob_encomenda FROM doces");
-      const existentes = new Map(doces.map((d) => [d.id as string, Boolean(d.sob_encomenda)]));
-      for (const [id, quantidade] of Object.entries(quantidades)) {
-        if (!existentes.has(id) || existentes.get(id)) continue;
-        const q = inteiro(quantidade, 0, 9999, "quantidade");
-        await gravarQuantidade(c, id, q, usuario);
+      const deProntaEntrega = new Set(doces.filter((d) => !d.sob_encomenda).map((d) => d.id as string));
+      for (const [id, quantidade] of Object.entries(quantidades ?? {})) {
+        if (!deProntaEntrega.has(id)) continue;
+        await gravarQuantidade(c, id, inteiro(quantidade, 0, 9999, "quantidade"), usuario);
       }
-      // Escolher o destaque da vitrine é para Equipe e Administração.
-      if (destaqueId && existentes.has(destaqueId) && pode(usuario, "equipe")) {
-        await c.query("UPDATE doces SET destaque = (id = ?)", [destaqueId]);
+      for (const [id, quantidade] of Object.entries(confirmar ?? {})) {
+        if (!deProntaEntrega.has(id) || id in (quantidades ?? {})) continue;
+        await c.query(
+          `INSERT IGNORE INTO estoque_dia (doce_id, data, quantidade, atualizado_em, atualizado_por) VALUES (?, ${HOJE_SQL}, ?, UTC_TIMESTAMP(), ?)`,
+          [id, inteiro(quantidade, 0, 9999, "quantidade"), usuario.nome.slice(0, 120)],
+        );
       }
     });
     updateTag(TAG_CARDAPIO);
     return { ok: true, mensagem: "Pronto! A vitrine já mostra as quantidades de hoje." };
+  } catch (erro) {
+    return falha(erro);
+  }
+}
+
+// Doce em destaque na vitrine (a estrela de O que tem hoje salva na hora).
+export async function salvarDestaque(doceId: string): Promise<Resultado> {
+  const { bloqueio } = await autorizar("equipe");
+  if (bloqueio) return bloqueio;
+  try {
+    const db = await banco();
+    const [linhas] = await db.query<RowDataPacket[]>("SELECT nome FROM doces WHERE id = ?", [String(doceId)]);
+    if (!linhas[0]) throw new Invalido("Esse doce não existe mais. Atualize a página.");
+    await db.query("UPDATE doces SET destaque = (id = ?)", [String(doceId)]);
+    updateTag(TAG_CARDAPIO);
+    return { ok: true, mensagem: `Destaque da vitrine: ${linhas[0].nome}.` };
   } catch (erro) {
     return falha(erro);
   }
@@ -169,8 +201,13 @@ function lerSabores(valor: FormDataEntryValue | null): { nome: string; precoCent
     const bruto: { nome?: unknown; precoCentavos?: unknown } = typeof item === "object" && item ? item : { nome: item };
     const nome = String(bruto.nome ?? "").trim().replace(/\s+/g, " ").slice(0, 80);
     if (!nome) continue;
-    if (sabores.some((s) => s.nome.toLowerCase() === nome.toLowerCase())) throw new Invalido(`O sabor "${nome}" aparece duas vezes.`);
-    const preco = bruto.precoCentavos == null || bruto.precoCentavos === "" ? null : inteiro(bruto.precoCentavos, 1, 10_000_000, `Preço de ${nome}`);
+    if (sabores.some((s) => s.nome.toLowerCase() === nome.toLowerCase())) {
+      throw new Invalido(`O sabor "${nome}" aparece duas vezes.`, `sabor-${sabores.length}`);
+    }
+    const preco =
+      bruto.precoCentavos == null || bruto.precoCentavos === ""
+        ? null
+        : inteiro(bruto.precoCentavos, 1, 10_000_000, `Preço de ${nome}`, `preco-sabor-${sabores.length}`);
     sabores.push({ nome, precoCentavos: preco });
   }
   return sabores;
@@ -182,9 +219,11 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
   if (bloqueio) return bloqueio;
   try {
     const idAtual = textoOpcional(dados.get("id"), 80);
-    const nome = textoObrigatorio(dados.get("nome"), 120, "Nome do doce");
-    const categoriaId = textoObrigatorio(dados.get("categoriaId"), 40, "Categoria");
-    const precoCentavos = inteiro(dados.get("precoCentavos"), 1, 10_000_000, "Preço");
+    const nome = textoObrigatorio(dados.get("nome"), 120, "Nome do doce", "nome");
+    const categoriaId = textoObrigatorio(dados.get("categoriaId"), 40, "Categoria", "categoria");
+    const precoCentavos = Number(dados.get("precoCentavos"));
+    if (!Number.isInteger(precoCentavos) || precoCentavos < 1) throw new Invalido("Coloque o preço do doce.", "preco");
+    if (precoCentavos > 10_000_000) throw new Invalido('Confira o campo "Preço".', "preco");
     const unidade = textoOpcional(dados.get("unidade"), 40) || "por unidade";
     const descricao = textoOpcional(dados.get("descricao"), 2000);
     const composicao = textoOpcional(dados.get("composicao"), 2000);
@@ -199,21 +238,25 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
     const contemGluten = alergenicos === null || alergenicos.includes("trigo");
     const contemLactose = alergenicos === null || alergenicos.includes("leite");
     const sobEncomenda = dados.get("sobEncomenda") === "1";
-    const prazoDias = sobEncomenda ? inteiro(dados.get("prazoDias"), 1, 60, "Prazo de preparo") : null;
-    const quantidade = sobEncomenda ? 0 : inteiro(dados.get("quantidade"), 0, 9999, "Quantidade hoje");
+    const prazoDias = sobEncomenda ? inteiro(dados.get("prazoDias"), 1, 60, "Prazo de preparo", "prazo") : null;
+    // A quantidade só vem quando a pessoa mexeu nela (ou num doce novo): salvar a ficha
+    // não regrava o que alguém salvou em O que tem hoje.
+    const quantidadeEnviada = dados.get("quantidade");
+    const quantidade =
+      sobEncomenda || quantidadeEnviada === null ? null : inteiro(quantidadeEnviada, 0, 9999, "Quantidade hoje", "quantidade");
     const ativo = dados.get("ativo") !== "0";
     const sabores = lerSabores(dados.get("sabores"));
     const campanhaIds = (JSON.parse(String(dados.get("campanhaIds") ?? "[]")) as unknown[]).map(String);
     const foto = dados.get("foto");
     const arquivo = foto instanceof File && foto.size > 0 ? foto : null;
     if (arquivo) {
-      if (!TIPOS_DE_FOTO[arquivo.type]) throw new Invalido("A foto precisa ser JPG, PNG ou WebP.");
-      if (arquivo.size > TAMANHO_MAXIMO_FOTO) throw new Invalido("A foto passou de 5 MB.");
+      if (!TIPOS_DE_FOTO[arquivo.type]) throw new Invalido("A foto precisa ser JPG, PNG ou WebP.", "foto");
+      if (arquivo.size > TAMANHO_MAXIMO_FOTO) throw new Invalido("A foto passou de 5 MB.", "foto");
     }
 
-    const id = await emTransacao(async (c) => {
+    const { id, estoque } = await emTransacao(async (c) => {
       const [categorias] = await c.query<RowDataPacket[]>("SELECT 1 FROM categorias WHERE id = ?", [categoriaId]);
-      if (categorias.length === 0) throw new Invalido("Escolha uma categoria válida.");
+      if (categorias.length === 0) throw new Invalido("Escolha uma categoria válida.", "categoria");
 
       // Mesma ordem das colunas no UPDATE e no INSERT abaixo.
       const campos = [
@@ -262,7 +305,13 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
         }
       }
 
-      if (!sobEncomenda) await gravarQuantidade(c, docId, quantidade, usuario);
+      // Doce novo sempre começa com a quantidade de hoje (mesmo 0).
+      if (quantidade !== null || (!idAtual && !sobEncomenda)) await gravarQuantidade(c, docId, quantidade ?? 0, usuario);
+      // Última quantidade salva, para o aviso dizer como o doce aparece.
+      const [ultima] = await c.query<RowDataPacket[]>(
+        "SELECT quantidade, data FROM estoque_dia WHERE doce_id = ? ORDER BY data DESC LIMIT 1",
+        [docId],
+      );
 
       if (arquivo) {
         const pasta = pastaDeFotos();
@@ -273,11 +322,21 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
         const [menor] = await c.query<RowDataPacket[]>("SELECT COALESCE(MIN(ordem), 1) - 1 AS ordem FROM fotos WHERE doce_id = ?", [docId]);
         await c.query("INSERT INTO fotos (doce_id, caminho, ordem) VALUES (?, ?, ?)", [docId, nomeArquivo, menor[0].ordem]);
       }
-      return docId;
+      return {
+        id: docId,
+        estoque: { quantidadeHoje: Number(ultima[0]?.quantidade ?? 0), dataQuantidade: (ultima[0]?.data as string | undefined) ?? null },
+      };
     });
 
     updateTag(TAG_CARDAPIO);
-    return { ok: true, mensagem: ativo ? "Ficha salva. Já aparece na vitrine." : "Ficha salva. O doce está fora da vitrine.", id };
+    const campanhas = await listarCampanhas();
+    const vinculadas = campanhas.filter((c) => campanhaIds.includes(c.id)).map((c) => c.id);
+    const mensagem = mensagemDoDoceSalvo(
+      { ativo, ondeAparece: onde, campanhaIds: vinculadas, sobEncomenda, prazoDias, ...estoque },
+      campanhas,
+      hojeNaLoja(),
+    );
+    return { ok: true, mensagem, id };
   } catch (erro) {
     return falha(erro);
   }
@@ -303,17 +362,20 @@ export async function salvarCampanha(dados: DadosCampanha): Promise<Resultado> {
   if (bloqueio) return bloqueio;
   try {
     if (!TIPOS_CAMPANHA.includes(dados.tipo)) throw new Invalido("Escolha a data da campanha.");
-    const nome = textoObrigatorio(dados.nome, 120, "Nome da campanha");
-    if (!DATA.test(dados.inicio) || !DATA.test(dados.fim)) throw new Invalido("Preencha o começo e o fim da campanha.");
-    if (dados.fim < dados.inicio) throw new Invalido("A campanha precisa terminar depois de começar.");
+    const nome = textoObrigatorio(dados.nome, 120, "Nome da campanha", "nome");
+    if (!DATA.test(dados.inicio)) throw new Invalido("Preencha o começo da campanha.", "inicio");
+    if (!DATA.test(dados.fim)) throw new Invalido("Preencha o fim da campanha.", "fim");
+    if (dados.fim < dados.inicio) throw new Invalido("A campanha precisa terminar depois de começar.", "fim");
     const limite = dados.limiteEncomenda ? String(dados.limiteEncomenda) : null;
-    if (limite && !DATA.test(limite)) throw new Invalido("Confira o último dia para encomendar.");
+    if (limite && !DATA.test(limite)) throw new Invalido("Confira o último dia para encomendar.", "limite");
     if (limite && (limite < dados.inicio || limite > dados.fim)) {
-      throw new Invalido("O último dia para encomendar precisa ficar entre o começo e o fim da campanha.");
+      throw new Invalido("O último dia para encomendar precisa ficar entre o começo e o fim da campanha.", "limite");
     }
     const cor = COR.test(dados.cor) ? dados.cor : "#3A1D13";
     const frase = String(dados.fraseBanner ?? "").trim();
-    if (frase.length > LIMITE_FRASE) throw new Invalido(`A frase do banner passou de ${LIMITE_FRASE} letras. Encurte para caber no banner.`);
+    if (frase.length > LIMITE_FRASE) {
+      throw new Invalido(`A frase do banner passou de ${LIMITE_FRASE} letras. Encurte para caber no banner.`, "frase");
+    }
     const docesIds = Array.isArray(dados.docesIds) ? dados.docesIds.map(String) : [];
 
     const id = await emTransacao(async (c) => {
@@ -384,13 +446,13 @@ export async function salvarLoja(dados: DadosDaLoja): Promise<Resultado> {
   if (bloqueio) return bloqueio;
   try {
     const whatsapp = normalizarWhatsApp(String(dados.whatsapp ?? ""));
-    if (!whatsapp) throw new Invalido("Confira o WhatsApp: escreva o DDD e o número, por exemplo (21) 98063-1673.");
+    if (!whatsapp) throw new Invalido("Confira o WhatsApp: escreva o DDD e o número, por exemplo (21) 98063-1673.", "whatsapp");
     const lista = Array.isArray(dados.horarios) ? dados.horarios : [];
     const horarios = COLUNAS_HORARIO.map((_, dia) => {
       const h = lista[dia];
       if (!h) return "";
       const lido = lerHorario(`${h.abre}-${h.fecha}`);
-      if (!lido) throw new Invalido(`Confira o horário de ${DIAS_DO_ERRO[dia]}: a loja precisa fechar depois de abrir.`);
+      if (!lido) throw new Invalido(`Confira o horário de ${DIAS_DO_ERRO[dia]}: a loja precisa fechar depois de abrir.`, `fecha-${dia}`);
       return escreverHorario(lido);
     });
     const textos = [dados.retirada, dados.entrega, dados.pagamento].map((t) => textoOpcional(t, 80));
@@ -452,14 +514,14 @@ export async function adicionarAcesso(dados: { nome: string; email: string; pape
   const { bloqueio } = await autorizar("admin");
   if (bloqueio) return bloqueio;
   try {
-    const nome = textoObrigatorio(dados.nome, 120, "Nome");
+    const nome = textoObrigatorio(dados.nome, 120, "Nome", "nome");
     const email = String(dados.email ?? "").trim().toLowerCase();
-    if (!EMAIL.test(email) || email.length > 190) throw new Invalido("Confira o e-mail.");
+    if (!EMAIL.test(email) || email.length > 190) throw new Invalido("Confira o e-mail.", "email");
     if (!PAPEIS.includes(dados.papel)) throw new Invalido("Escolha o que a pessoa pode fazer.");
     const papel = ehAdministracaoFixa(email) ? "admin" : dados.papel;
     const convite = await emTransacao(async (c) => {
       const [existe] = await c.query<RowDataPacket[]>("SELECT ativo FROM usuarios WHERE email = ? FOR UPDATE", [email]);
-      if (existe[0]?.ativo) throw new Invalido("Esse e-mail já tem acesso.");
+      if (existe[0]?.ativo) throw new Invalido("Esse e-mail já tem acesso.", "email");
       // Quem já teve acesso e foi removido volta com os dados novos.
       await c.query(
         `INSERT INTO usuarios (email, nome, papel) VALUES (?, ?, ?)
@@ -537,7 +599,7 @@ export async function salvarNome(nome: string): Promise<Resultado> {
   const { usuario, bloqueio } = await autorizar("estoque");
   if (bloqueio) return bloqueio;
   try {
-    const limpo = textoObrigatorio(nome, 120, "Seu nome");
+    const limpo = textoObrigatorio(nome, 120, "Seu nome", "nome");
     await (await banco()).query("UPDATE usuarios SET nome = ? WHERE id = ?", [limpo, usuario.id]);
     return { ok: true, mensagem: "Nome salvo." };
   } catch (erro) {
@@ -576,12 +638,12 @@ export async function trocarSenha(atual: string, nova: string): Promise<Resultad
     if (await muitasTentativas(usuario.email, ip)) throw new Invalido("Muitas tentativas. Espere 15 minutos e tente de novo.");
     if (!(await senhaConfere(String(atual ?? ""), (await senhaGuardada(usuario.id)).hash))) {
       await registrarErro(usuario.email, ip);
-      throw new Invalido("A senha atual não confere.");
+      throw new Invalido("A senha atual não confere.", "senha-atual");
     }
     const problema = problemaNaSenhaNova(String(nova ?? ""), usuario.email);
-    if (problema) throw new Invalido(problema);
-    if (nova === atual) throw new Invalido("A senha nova precisa ser diferente da atual.");
-    if (ehChaveDeEmergencia(nova)) throw new Invalido("Escolha outra senha.");
+    if (problema) throw new Invalido(problema, "senha-nova");
+    if (nova === atual) throw new Invalido("A senha nova precisa ser diferente da atual.", "senha-nova");
+    if (ehChaveDeEmergencia(nova)) throw new Invalido("Escolha outra senha.", "senha-nova");
     await gravarSenha(usuario, nova);
     return { ok: true, mensagem: "Senha trocada. Nos outros celulares, entre de novo com a senha nova." };
   } catch (erro) {

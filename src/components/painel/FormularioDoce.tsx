@@ -2,17 +2,41 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useCallback, useRef, useState, useTransition, type FormEvent } from "react";
 import type { Campanha, Categoria, Doce, OndeAparece, Selo } from "@/lib/tipos";
 import { useHoje } from "@/lib/hooks";
 import { TRACOS, type Traco } from "@/lib/loja";
-import { campanhasNoAr, estoqueDoDoce, formatarData, semGluten, seloDoDoce, situacaoCampanha, type SituacaoCampanha } from "@/lib/regras";
+import {
+  campanhasNoAr,
+  contagemDeHoje,
+  estoqueDoDoce,
+  formatarData,
+  formatarDiaMes,
+  formatarPreco,
+  semGluten,
+  seloDoDoce,
+  situacaoCampanha,
+  type SituacaoCampanha,
+} from "@/lib/regras";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
 import { CartaoDoce } from "../vitrine/CartaoDoce";
 import { COR_ESTOQUE, barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
 import { salvarDoce } from "@/app/painel/acoes";
-import { CabecalhoPainel, Chave, Contador, FaixaDemo, tentar, useAviso } from "./comum";
+import {
+  AvisoNaoSalvo,
+  CabecalhoPainel,
+  Chave,
+  Contador,
+  FaixaDemo,
+  avisarNaProximaTela,
+  tentar,
+  useAlteracoesPendentes,
+  useAviso,
+  useConfirmacao,
+  useErroDeCampo,
+  useReiniciarAoSair,
+} from "./comum";
 
 const SELOS: { valor: Selo; nome: string }[] = [
   { valor: "nenhum", nome: "Nenhum" },
@@ -71,14 +95,7 @@ interface LinhaSabor {
   preco: string;
 }
 
-export function FormularioDoce({
-  doce,
-  categorias,
-  campanhas,
-  hoje: hojeDoServidor,
-  tracos,
-  demo,
-}: {
+interface Props {
   doce: Doce | null;
   categorias: Categoria[];
   campanhas: Campanha[];
@@ -86,10 +103,23 @@ export function FormularioDoce({
   // Ingredientes da cozinha (Dados da loja), para a prévia do "Sem glúten".
   tracos: Traco[];
   demo: boolean;
-}) {
+}
+
+// O Next guarda a tela escondida ao navegar (Activity). Depois de "Sair sem salvar" ou de
+// criar o doce, o formulário volta ao estado inicial com uma key nova.
+export function FormularioDoce(props: Props) {
+  const [versao, setVersao] = useState(0);
+  const reiniciar = useCallback(() => setVersao((v) => v + 1), []);
+  return <Formulario key={versao} {...props} reiniciar={reiniciar} />;
+}
+
+function Formulario({ doce, categorias, campanhas, hoje: hojeDoServidor, tracos, demo, reiniciar }: Props & { reiniciar: () => void }) {
   const hoje = useHoje(hojeDoServidor);
   const router = useRouter();
-  const [aviso, , mostrarResultado] = useAviso();
+  const [aviso, mostrar, mostrarResultado] = useAviso();
+  const [confirmacao, perguntar] = useConfirmacao();
+  const erroCampo = useErroDeCampo();
+  const reiniciarAoSair = useReiniciarAoSair(reiniciar);
   const [salvando, iniciar] = useTransition();
   const [nome, setNome] = useState(doce?.nome ?? "");
   const [categoriaId, setCategoriaId] = useState(doce?.categoriaId ?? categorias[0]?.id ?? "");
@@ -110,9 +140,24 @@ export function FormularioDoce({
   const [sobEncomenda, setSobEncomenda] = useState(doce?.sobEncomenda ?? false);
   const [prazo, setPrazo] = useState(doce?.prazoDias ?? 2);
   const [quantidade, setQuantidade] = useState(doce?.quantidadeHoje ?? 0);
+  // Salvar a ficha só grava a quantidade se a pessoa mexeu nela (ou num doce novo).
+  const [mexeuQuantidade, setMexeuQuantidade] = useState(false);
   const [fotoNova, setFotoNova] = useState<{ url: string; blob: Blob } | null>(null);
+  const campoFoto = useRef<HTMLInputElement>(null);
   const [ativo, setAtivo] = useState(doce?.ativo ?? true);
   const [preparandoFoto, setPreparandoFoto] = useState(false);
+
+  // Retrato do formulário, para saber se há alterações não salvas.
+  const retratoCom = (lista: LinhaSabor[], saborPendente: string) =>
+    JSON.stringify([
+      nome, categoriaId, preco, unidade, descricao, lista.map((s) => [s.nome, s.preco]), saborPendente, alergenicos,
+      composicao, conservacao, selo, onde, [...campanhaIds].sort(), sobEncomenda, prazo, quantidade, ativo,
+    ]);
+  const retrato = retratoCom(sabores, novoSabor.trim());
+  const [retratoSalvo, setRetratoSalvo] = useState(retrato);
+  const sujo = retrato !== retratoSalvo || fotoNova !== null;
+  const precoCentavos = centavos(preco);
+  const temFoto = fotoNova !== null || (doce?.fotos.length ?? 0) > 0;
 
   const campanhasAtivas = campanhas.filter((c) => situacaoCampanha(c, hoje) !== "encerrada");
   const nomesEscolhidos = campanhas.filter((c) => campanhaIds.includes(c.id)).map((c) => c.nome);
@@ -172,18 +217,84 @@ export function FormularioDoce({
     setAlergenicos(novo.length > 0 ? novo : null);
   }
 
-  function salvar(e: FormEvent) {
-    e.preventDefault();
+  function trocarFoto(nova: { url: string; blob: Blob } | null) {
+    if (fotoNova) URL.revokeObjectURL(fotoNova.url);
+    setFotoNova(nova);
+    // Deixa escolher o mesmo arquivo de novo depois de "Desfazer".
+    if (!nova && campoFoto.current) campoFoto.current.value = "";
+  }
+
+  function erro(campo: string, texto: string): false {
+    erroCampo.marcar(campo, texto);
+    mostrar(texto, false);
+    return false;
+  }
+
+  // O servidor diz o campo pela posição do sabor; na tela, cada linha tem a sua chave.
+  function campoNaTela(campo: string, lista: LinhaSabor[]): string {
+    const sabor = /^(preco-)?sabor-(\d+)$/.exec(campo);
+    if (!sabor) return campo;
+    const linha = lista.filter((s) => s.nome.trim())[Number(sabor[2])];
+    return linha ? `${sabor[1] ?? ""}sabor-${linha.chave}` : "novo-sabor";
+  }
+
+  // Confere, pergunta o que precisa e salva. sair: a pessoa está saindo da tela ("Salvar e
+  // sair"); o aviso de salvo aparece na próxima. Devolve true quando salvou.
+  async function salvarFicha(sair: boolean): Promise<boolean> {
+    erroCampo.limpar();
+    // Sabor digitado e não adicionado também vai.
+    const pendente = novoSabor.trim();
+    const lista =
+      pendente && !sabores.some((s) => s.nome.trim().toLowerCase() === pendente.toLowerCase())
+        ? [...sabores, { chave: Math.max(-1, ...sabores.map((s) => s.chave)) + 1, nome: pendente, preco: "" }]
+        : sabores;
+    if (lista !== sabores || pendente) {
+      setSabores(lista);
+      setNovoSabor("");
+    }
+    const validos = lista.filter((s) => s.nome.trim());
+
+    if (!nome.trim()) return erro("nome", "Escreva o nome do doce.");
+    if (precoCentavos <= 0) return erro("preco", "Coloque o preço do doce.");
+    const repetido = validos.find((s, i) => validos.findIndex((x) => x.nome.trim().toLowerCase() === s.nome.trim().toLowerCase()) !== i);
+    if (repetido) return erro(`sabor-${repetido.chave}`, `O sabor "${repetido.nome.trim()}" aparece duas vezes.`);
+    const precoRuim = validos.find((s) => s.preco.trim() && centavos(s.preco) <= 0);
+    if (precoRuim) return erro(`preco-sabor-${precoRuim.chave}`, `Confira o preço de ${precoRuim.nome.trim()}, ou deixe vazio para usar o preço do doce.`);
+
+    if (
+      !doce &&
+      ativo &&
+      !fotoNova &&
+      !(await perguntar({
+        titulo: "Publicar sem foto?",
+        texto: "O doce aparece na vitrine com um desenho no lugar da foto. Dá para pôr a foto depois, em Editar doce.",
+        confirmar: "Publicar sem foto",
+      }))
+    ) {
+      return false;
+    }
+    if (
+      onde === "so_campanhas" &&
+      campanhaIds.length === 0 &&
+      !(await perguntar({
+        titulo: "Esse doce não vai aparecer",
+        texto: "Ele está em “Só em campanhas”, mas nenhuma campanha está marcada. Salvar mesmo assim?",
+        confirmar: "Salvar mesmo assim",
+      }))
+    ) {
+      return false;
+    }
+
     const dados = new FormData();
     dados.set("id", doce?.id ?? "");
     dados.set("nome", nome);
     dados.set("categoriaId", categoriaId);
-    dados.set("precoCentavos", String(centavos(preco)));
+    dados.set("precoCentavos", String(precoCentavos));
     dados.set("unidade", unidade);
     dados.set("descricao", descricao);
     dados.set(
       "sabores",
-      JSON.stringify(saboresValidos.map((s) => ({ nome: s.nome.trim(), precoCentavos: s.preco.trim() ? centavos(s.preco) : null }))),
+      JSON.stringify(validos.map((s) => ({ nome: s.nome.trim(), precoCentavos: s.preco.trim() ? centavos(s.preco) : null }))),
     );
     dados.set("alergenicos", JSON.stringify(alergenicos));
     dados.set("composicao", composicao);
@@ -193,21 +304,50 @@ export function FormularioDoce({
     dados.set("campanhaIds", JSON.stringify(campanhaIds));
     dados.set("sobEncomenda", sobEncomenda ? "1" : "0");
     dados.set("prazoDias", String(prazo));
-    dados.set("quantidade", String(quantidade));
+    if (!doce || mexeuQuantidade) dados.set("quantidade", String(quantidade));
     dados.set("ativo", ativo ? "1" : "0");
     if (fotoNova) dados.set("foto", fotoNova.blob, "foto.jpg");
-    const enviar = () =>
-      iniciar(async () => {
-        const resultado = await tentar(() => salvarDoce(dados));
-        mostrarResultado(resultado, enviar);
-        if (resultado.ok && resultado.id && !doce) router.replace(`/painel/doces/${resultado.id}`);
-      });
-    enviar();
+    // O retrato do que foi enviado (com o sabor pendente já na lista).
+    const enviado = retratoCom(lista, "");
+
+    return new Promise((pronto) => {
+      const enviar = () =>
+        iniciar(async () => {
+          const resultado = await tentar(() => salvarDoce(dados));
+          if (!resultado.ok) {
+            mostrarResultado(resultado, enviar);
+            if (resultado.campo) erroCampo.marcar(campoNaTela(resultado.campo, lista), resultado.mensagem);
+            return pronto(false);
+          }
+          setRetratoSalvo(enviado);
+          setMexeuQuantidade(false);
+          trocarFoto(null);
+          // Doce novo também troca de tela (vai para a ficha dele): o aviso vai junto.
+          if (sair || !doce) avisarNaProximaTela(resultado.mensagem);
+          else mostrarResultado(resultado);
+          if (!doce) {
+            // Da próxima vez, "Cadastrar novo doce" começa em branco.
+            reiniciarAoSair();
+            if (!sair && resultado.id) router.replace(`/painel/doces/${resultado.id}`);
+          }
+          pronto(true);
+        });
+      enviar();
+    });
   }
 
+  function salvar(e: FormEvent) {
+    e.preventDefault();
+    void salvarFicha(false);
+  }
+
+  const saida = useAlteracoesPendentes(sujo, { salvar: () => salvarFicha(true), descartar: reiniciarAoSair });
+
   return (
-    <form onSubmit={salvar} className="pb-[calc(7rem+env(safe-area-inset-bottom))]">
+    <form onSubmit={salvar} noValidate className="pb-[calc(8rem+env(safe-area-inset-bottom))]">
       {aviso}
+      {confirmacao}
+      {saida}
       <FaixaDemo demo={demo} />
       <CabecalhoPainel
         titulo={doce ? "Editar doce" : "Novo doce"}
@@ -229,32 +369,66 @@ export function FormularioDoce({
                 Principal
               </span>
             </div>
-            <label className="flex size-[104px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[18px] border-[1.5px] border-dashed border-dourado/40 bg-creme/[0.03] text-xs font-bold text-dourado">
+            <label
+              className={cx(
+                "flex size-[104px] cursor-pointer flex-col items-center justify-center gap-1.5 rounded-[18px] border-[1.5px] border-dashed border-dourado/40 bg-creme/[0.03] px-2 text-center text-xs font-bold text-dourado has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-dourado",
+                erroCampo.classe("foto"),
+              )}
+            >
               <IconeMais />
-              Adicionar foto
+              {temFoto ? "Trocar foto" : "Adicionar foto"}
               <input
+                id="foto"
+                ref={campoFoto}
                 type="file"
                 accept="image/*"
                 className="sr-only"
+                {...erroCampo.props("foto")}
                 onChange={async (e) => {
                   const arquivo = e.target.files?.[0];
                   if (!arquivo) return;
+                  erroCampo.limpar("foto");
                   setPreparandoFoto(true);
                   const blob = await reduzirFoto(arquivo);
-                  if (fotoNova) URL.revokeObjectURL(fotoNova.url);
-                  setFotoNova({ url: URL.createObjectURL(blob), blob });
+                  trocarFoto({ url: URL.createObjectURL(blob), blob });
                   setPreparandoFoto(false);
                 }}
               />
             </label>
           </div>
+          {fotoNova && (
+            <div className="flex items-center gap-2">
+              <span role="status" className="rounded-full bg-dourado/14 px-3 py-1.5 text-xs font-bold text-dourado">
+                Foto nova · toque em Salvar ficha
+              </span>
+              <button
+                type="button"
+                onClick={() => trocarFoto(null)}
+                className="h-11 px-2 text-[13px] font-semibold text-creme-200 underline underline-offset-4"
+              >
+                Desfazer
+              </button>
+            </div>
+          )}
+          {erroCampo.texto("foto")}
         </div>
 
         <div className="flex flex-col gap-2">
           <label htmlFor="nome" className={rotulo}>
             Nome do doce
           </label>
-          <input id="nome" required value={nome} onChange={(e) => setNome(e.target.value)} className={cx(campo, "h-12")} />
+          <input
+            id="nome"
+            required
+            value={nome}
+            onChange={(e) => {
+              setNome(e.target.value);
+              erroCampo.limpar("nome");
+            }}
+            {...erroCampo.props("nome")}
+            className={cx(campo, "h-12", erroCampo.classe("nome"))}
+          />
+          {erroCampo.texto("nome")}
         </div>
 
         <div className="grid grid-cols-2 gap-2.5">
@@ -262,17 +436,28 @@ export function FormularioDoce({
             <label htmlFor="preco" className={rotulo}>
               Preço
             </label>
-            <div className={cx(campo, "flex h-12 items-center gap-2")}>
+            <div className={cx(campo, "flex h-12 items-center gap-2 focus-within:outline-2 focus-within:outline-dourado", erroCampo.classe("preco"))}>
               <span className="text-creme-400">R$</span>
               <input
                 id="preco"
                 inputMode="decimal"
                 placeholder="0,00"
+                required
                 value={preco}
-                onChange={(e) => setPreco(e.target.value)}
+                onChange={(e) => {
+                  setPreco(e.target.value);
+                  erroCampo.limpar("preco");
+                }}
+                {...erroCampo.props("preco")}
+                aria-describedby={erroCampo.erro?.campo === "preco" ? "preco-erro" : "preco-previa"}
                 className="h-11 min-w-0 grow bg-transparent outline-none"
               />
             </div>
+            {erroCampo.texto("preco") ?? (
+              <span id="preco-previa" aria-live="polite" className="text-xs text-creme-200">
+                {precoCentavos > 0 ? `Vai aparecer: ${formatarPreco(precoCentavos)}` : "Coloque o preço do doce"}
+              </span>
+            )}
           </div>
           <div className="flex min-w-0 flex-col gap-2">
             <label htmlFor="unidade" className={rotulo}>
@@ -323,49 +508,68 @@ export function FormularioDoce({
           {sabores.length > 0 && (
             <ul className={cx(cartao, "flex flex-col overflow-hidden")}>
               {sabores.map((s, i) => (
-                <li key={s.chave} className="flex items-end gap-2 border-b border-dourado/8 p-2.5 last:border-b-0">
-                  <div className="flex min-w-0 grow flex-col gap-1">
-                    <label htmlFor={`sabor-${s.chave}`} className="text-xs font-semibold text-creme-400">
-                      Sabor ou tamanho {i + 1}
-                    </label>
-                    <input
-                      id={`sabor-${s.chave}`}
-                      value={s.nome}
-                      maxLength={80}
-                      onChange={(e) => mudarSabor(s.chave, { nome: e.target.value })}
-                      className={cx(campo, "h-11")}
-                    />
-                  </div>
-                  <div className="flex w-[118px] shrink-0 flex-col gap-1">
-                    <label htmlFor={`preco-sabor-${s.chave}`} className="text-xs font-semibold text-creme-400">
-                      Preço (opcional)
-                    </label>
-                    <div className={cx(campo, "flex h-11 items-center gap-1.5 px-2.5")}>
-                      <span className="text-sm text-creme-400">R$</span>
+                <li key={s.chave} className="flex flex-col gap-1.5 border-b border-dourado/8 p-2.5 last:border-b-0">
+                  <div className="flex items-end gap-2">
+                    <div className="flex min-w-0 grow flex-col gap-1">
+                      <label htmlFor={`sabor-${s.chave}`} className="text-xs font-semibold text-creme-400">
+                        Sabor ou tamanho {i + 1}
+                      </label>
                       <input
-                        id={`preco-sabor-${s.chave}`}
-                        inputMode="decimal"
-                        placeholder={preco || "0,00"}
-                        value={s.preco}
-                        onChange={(e) => mudarSabor(s.chave, { preco: e.target.value })}
-                        className="h-10 min-w-0 grow bg-transparent outline-none"
+                        id={`sabor-${s.chave}`}
+                        value={s.nome}
+                        maxLength={80}
+                        onChange={(e) => {
+                          mudarSabor(s.chave, { nome: e.target.value });
+                          erroCampo.limpar(`sabor-${s.chave}`);
+                        }}
+                        {...erroCampo.props(`sabor-${s.chave}`)}
+                        className={cx(campo, "h-11", erroCampo.classe(`sabor-${s.chave}`))}
                       />
                     </div>
+                    <div className="flex w-[118px] shrink-0 flex-col gap-1">
+                      <label htmlFor={`preco-sabor-${s.chave}`} className="text-xs font-semibold text-creme-400">
+                        Preço (opcional)
+                      </label>
+                      <div
+                        className={cx(
+                          campo,
+                          "flex h-11 items-center gap-1.5 px-2.5 focus-within:outline-2 focus-within:outline-dourado",
+                          erroCampo.classe(`preco-sabor-${s.chave}`),
+                        )}
+                      >
+                        <span className="text-sm text-creme-400">R$</span>
+                        <input
+                          id={`preco-sabor-${s.chave}`}
+                          inputMode="decimal"
+                          placeholder={preco || "0,00"}
+                          value={s.preco}
+                          onChange={(e) => {
+                            mudarSabor(s.chave, { preco: e.target.value });
+                            erroCampo.limpar(`preco-sabor-${s.chave}`);
+                          }}
+                          {...erroCampo.props(`preco-sabor-${s.chave}`)}
+                          className="h-10 min-w-0 grow bg-transparent outline-none"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      aria-label={`Remover ${s.nome || "este sabor"}`}
+                      onClick={() => setSabores(sabores.filter((x) => x.chave !== s.chave))}
+                      className="flex size-11 shrink-0 items-center justify-center text-lg text-creme-400"
+                    >
+                      ×
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    aria-label={`Remover ${s.nome || "este sabor"}`}
-                    onClick={() => setSabores(sabores.filter((x) => x.chave !== s.chave))}
-                    className="flex size-11 shrink-0 items-center justify-center text-lg text-creme-400"
-                  >
-                    ×
-                  </button>
+                  {erroCampo.texto(`sabor-${s.chave}`)}
+                  {erroCampo.texto(`preco-sabor-${s.chave}`)}
                 </li>
               ))}
             </ul>
           )}
           <div className="flex gap-2">
             <input
+              id="novo-sabor"
               aria-label="Novo sabor ou tamanho"
               placeholder="Ex.: Ninho com Nutella"
               value={novoSabor}
@@ -534,6 +738,7 @@ export function FormularioDoce({
               <span className="text-xs text-pessego">Sem quantidade: nunca fica esgotado</span>
             </div>
             <Contador
+              id="prazo"
               valor={prazo}
               minimo={1}
               maximo={30}
@@ -543,14 +748,26 @@ export function FormularioDoce({
             />
           </div>
         ) : (
-          <div className={cx(cartao, "flex items-center justify-between gap-3 py-3 pr-2.5 pl-4")}>
+          <div className={cx(cartao, "flex items-center justify-between gap-3 py-3 pr-2.5 pl-4", erroCampo.classe("quantidade"))}>
             <div className="flex min-w-0 flex-col gap-0.5">
               <span className="text-[15px] font-semibold">Quantidade hoje</span>
               <span className={cx("text-xs", COR_ESTOQUE[estoque.tom])}>
                 {estoque.disponivel ? "Aparece na vitrine" : "Aparece como esgotado"}
               </span>
+              {doce && !mexeuQuantidade && !contagemDeHoje(doce, hoje) && doce.dataQuantidade && (
+                <span className="text-xs text-creme-400">Última contagem: {formatarDiaMes(doce.dataQuantidade)}</span>
+              )}
             </div>
-            <Contador valor={quantidade} rotulo="quantidade de hoje" aoMudar={setQuantidade} />
+            <Contador
+              id="quantidade"
+              valor={quantidade}
+              maximo={9999}
+              rotulo="Quantidade de hoje"
+              aoMudar={(v) => {
+                setQuantidade(v);
+                setMexeuQuantidade(true);
+              }}
+            />
           </div>
         )}
 
@@ -577,7 +794,8 @@ export function FormularioDoce({
         </div>
       </div>
 
-      <div className={cx(barraFixa, "items-center")}>
+      <div className={cx(barraFixa, "flex-col gap-1.5")}>
+        <AvisoNaoSalvo sujo={sujo} />
         <button type="submit" disabled={salvando || preparandoFoto} className={cx(botaoPrimario, "disabled:opacity-60")}>
           {preparandoFoto ? "Preparando a foto…" : salvando ? "Salvando…" : "Salvar ficha"}
         </button>

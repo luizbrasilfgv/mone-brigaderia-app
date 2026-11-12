@@ -46,7 +46,18 @@ function situacaoAgora(): Situacao {
 }
 
 // entrarDeNovo: no iPhone, o app instalado não leva o login feito no Safari.
-export function InstalarApp({ variante, nome, entrarDeNovo }: { variante: "cartao" | "link"; nome: string; entrarDeNovo?: boolean }) {
+// variante "atalho": quadradinho da grade de atalhos do painel (classe vem de quem chama).
+export function InstalarApp({
+  variante,
+  nome,
+  entrarDeNovo,
+  classe,
+}: {
+  variante: "cartao" | "link" | "atalho";
+  nome: string;
+  entrarDeNovo?: boolean;
+  classe?: string;
+}) {
   const situacao = useSyncExternalStore(assinar, situacaoAgora, (): Situacao => "carregando");
   const [ajudaAberta, setAjudaAberta] = useState(false);
 
@@ -68,7 +79,15 @@ export function InstalarApp({ variante, nome, entrarDeNovo }: { variante: "carta
 
   return (
     <>
-      {variante === "cartao" ? (
+      {variante === "atalho" ? (
+        <button type="button" onClick={instalar} className={cx(classe, "text-left")}>
+          <IconeCelular tamanho={22} className="shrink-0 text-dourado" />
+          <span className="flex min-w-0 flex-col">
+            <span className="text-sm leading-tight font-bold">Instalar no celular</span>
+            <span className="truncate text-xs text-creme-400">Ícone na tela inicial</span>
+          </span>
+        </button>
+      ) : variante === "cartao" ? (
         <button type="button" onClick={instalar} className={cx(cartao, "flex items-center gap-3 py-3.5 pr-3 pl-4 text-left active:scale-[0.98]")}>
           <IconeCelular className="text-dourado" />
           <div className="flex min-w-0 grow flex-col gap-0.5">
