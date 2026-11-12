@@ -128,7 +128,7 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
     const idAtual = textoOpcional(dados.get("id"), 80);
     const nome = textoObrigatorio(dados.get("nome"), 120, "Nome do doce");
     const categoriaId = textoObrigatorio(dados.get("categoriaId"), 40, "Categoria");
-    const precoCentavos = inteiro(dados.get("precoCentavos"), 0, 10_000_000, "Preço");
+    const precoCentavos = inteiro(dados.get("precoCentavos"), 1, 10_000_000, "Preço");
     const unidade = textoOpcional(dados.get("unidade"), 40) || "por unidade";
     const descricao = textoOpcional(dados.get("descricao"), 2000);
     const composicao = textoOpcional(dados.get("composicao"), 2000);
@@ -184,9 +184,17 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
         );
       }
 
+      // Regrava os sabores sem perder o preço próprio de quem continua com o mesmo nome.
+      const [atuais] = await c.query<RowDataPacket[]>("SELECT nome, preco_centavos FROM sabores WHERE doce_id = ?", [docId]);
+      const precoAnterior = new Map(atuais.map((s) => [String(s.nome), s.preco_centavos as number | null]));
       await c.query("DELETE FROM sabores WHERE doce_id = ?", [docId]);
       for (const [i, sabor] of sabores.entries()) {
-        await c.query("INSERT INTO sabores (doce_id, nome, ordem) VALUES (?, ?, ?)", [docId, sabor, i]);
+        await c.query("INSERT INTO sabores (doce_id, nome, preco_centavos, ordem) VALUES (?, ?, ?, ?)", [
+          docId,
+          sabor,
+          precoAnterior.get(sabor) ?? null,
+          i,
+        ]);
       }
 
       await c.query("DELETE FROM campanha_doces WHERE doce_id = ?", [docId]);

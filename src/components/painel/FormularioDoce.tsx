@@ -26,8 +26,13 @@ const ROTULO_SITUACAO: Record<SituacaoCampanha, string> = {
   encerrada: "Encerrada",
 };
 
+// Lê preço escrito de qualquer jeito: "12,50", "12.50", "1.250,00" ou "9". O último
+// ponto ou vírgula seguido de 1 ou 2 dígitos são os centavos.
 function centavos(texto: string): number {
-  const valor = Number(texto.replace(/\./g, "").replace(",", "."));
+  const limpo = texto.replace(/[^\d.,]/g, "");
+  const partes = limpo.match(/^(.*?)[.,](\d{1,2})$/);
+  const reais = (partes ? partes[1] : limpo).replace(/[.,]/g, "") || "0";
+  const valor = Number(`${reais}.${partes ? partes[2].padEnd(2, "0") : "00"}`);
   return Number.isFinite(valor) ? Math.round(valor * 100) : 0;
 }
 
