@@ -76,7 +76,7 @@ export function Balcao({
     return (
       <main className="relative flex min-h-dvh flex-col items-center justify-center gap-7 overflow-hidden p-8 text-center">
         <div className="pointer-events-none absolute top-0 -left-32 size-[760px] rounded-full bg-[radial-gradient(closest-side,rgba(230,196,142,0.2),rgba(230,196,142,0))]" />
-        <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={120} height={120} className="relative rounded-full" priority />
+        <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={120} height={120} className="relative rounded-full" loading="eager" />
         <h1 className="relative font-display text-5xl leading-tight font-semibold md:text-6xl">{LOJA.nome}</h1>
         <p className="relative max-w-[560px] text-2xl leading-snug text-creme-200 md:text-3xl">
           Encomende pelo WhatsApp {formatarWhatsApp(loja.whatsapp)}

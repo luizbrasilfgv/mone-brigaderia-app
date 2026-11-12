@@ -27,7 +27,7 @@ const MOTIVOS: Record<string, string> = {
 export default function PaginaEntrar({ searchParams }: PageProps<"/entrar">) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-6 px-5 py-8">
-      <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={88} height={88} className="rounded-full" priority />
+      <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={88} height={88} className="rounded-full" loading="eager" />
       <div className="flex flex-col items-center gap-1 text-center">
         <h1 className="font-display text-3xl font-semibold">Painel da loja</h1>
         <p className="text-sm text-creme-400">{LOJA.nome}</p>
