@@ -51,8 +51,11 @@ export interface Doce {
   ondeAparece: OndeAparece;
   destaque: boolean;
   ativo: boolean;
-  // Vem de estoque_dia (data = hoje). Ignorado quando sobEncomenda.
+  // Última quantidade salva em estoque_dia (pode ser de outro dia). Ignorado quando sobEncomenda.
   quantidadeHoje: number;
+  // Dia dessa quantidade (AAAA-MM-DD). null nos dados de exemplo ou sem nenhuma
+  // contagem: vale como contagem de hoje.
+  dataQuantidade: string | null;
   sabores: Sabor[];
   // A primeira foto é a principal.
   fotos: string[];

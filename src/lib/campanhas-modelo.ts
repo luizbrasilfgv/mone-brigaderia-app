@@ -1,4 +1,4 @@
-import type { TipoCampanha } from "./tipos";
+import type { Campanha, TipoCampanha } from "./tipos";
 import { dataISO, somarDias } from "./regras";
 
 // Datas prontas para criar campanhas. As datas móveis (Páscoa, Dia das Mães,
@@ -86,6 +86,13 @@ export function proximoEvento(tipo: TipoCampanha, hoje: string): string | null {
   const esteAno = dataDoEvento(tipo, ano);
   if (!esteAno) return null;
   return esteAno >= hoje ? esteAno : dataDoEvento(tipo, ano + 1);
+}
+
+// Campanha deste tipo que ainda não acabou (no ar, pausada, agendada ou rascunho):
+// é a da próxima data, então o modelo abre ela em vez de criar outra igual.
+export function campanhaDoProximoEvento(tipo: TipoCampanha, campanhas: Campanha[], hoje: string): Campanha | null {
+  if (tipo === "outra") return null;
+  return campanhas.filter((c) => c.tipo === tipo && c.fim >= hoje).sort((a, b) => a.inicio.localeCompare(b.inicio))[0] ?? null;
 }
 
 export interface Sugestao {

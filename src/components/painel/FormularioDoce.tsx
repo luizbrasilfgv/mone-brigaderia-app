@@ -81,14 +81,16 @@ export function FormularioDoce({
   doce,
   categorias,
   campanhas,
+  hoje: hojeDoServidor,
   demo,
 }: {
   doce: Doce | null;
   categorias: Categoria[];
   campanhas: Campanha[];
+  hoje: string;
   demo: boolean;
 }) {
-  const hoje = useHoje();
+  const hoje = useHoje(hojeDoServidor);
   const router = useRouter();
   const [aviso, , mostrarResultado] = useAviso();
   const [salvando, iniciar] = useTransition();
@@ -113,7 +115,7 @@ export function FormularioDoce({
   const [ativo, setAtivo] = useState(doce?.ativo ?? true);
   const [preparandoFoto, setPreparandoFoto] = useState(false);
 
-  const campanhasAtivas = campanhas.filter((c) => !hoje || situacaoCampanha(c, hoje) !== "encerrada");
+  const campanhasAtivas = campanhas.filter((c) => situacaoCampanha(c, hoje) !== "encerrada");
   const nomesEscolhidos = campanhas.filter((c) => campanhaIds.includes(c.id)).map((c) => c.nome);
   const semCampanha = onde === "so_campanhas" && nomesEscolhidos.length === 0;
   const resumoCampanhas =
@@ -144,12 +146,13 @@ export function FormularioDoce({
     destaque: doce?.destaque ?? false,
     ativo,
     quantidadeHoje: quantidade,
+    dataQuantidade: hoje,
     sabores: sabores.map((s, i) => ({ id: String(i), nome: s })),
     fotos: fotoNova ? [] : (doce?.fotos ?? []),
     ilustracao: doce?.ilustracao ?? null,
     campanhaIds,
   };
-  const estoque = estoqueDoDoce(rascunho);
+  const estoque = estoqueDoDoce(rascunho, hoje);
   const seloTexto = SELOS.find((s) => s.valor === selo && s.valor !== "nenhum")?.nome;
 
   function adicionarSabor() {
@@ -414,7 +417,7 @@ export function FormularioDoce({
           </div>
           <div className={cx(cartao, "flex flex-col overflow-hidden")}>
             {campanhasAtivas.map((c) => {
-              const situacao = hoje ? situacaoCampanha(c, hoje) : null;
+              const situacao = situacaoCampanha(c, hoje);
               return (
                 <label key={c.id} className="flex min-h-14 cursor-pointer items-center gap-3 border-b border-dourado/8 py-2 pr-3.5">
                   <span className="w-[5px] self-stretch" style={{ background: c.cor }} />
@@ -422,7 +425,7 @@ export function FormularioDoce({
                     <span className="text-sm font-semibold">{c.nome}</span>
                     <span className={cx("text-[11px]", situacao === "no_ar" ? "text-menta" : "text-creme-400")}>
                       {formatarData(c.inicio)} a {formatarData(c.fim)}
-                      {situacao && ` · ${ROTULO_SITUACAO[situacao]}`}
+                      {` · ${ROTULO_SITUACAO[situacao]}`}
                     </span>
                   </span>
                   <input

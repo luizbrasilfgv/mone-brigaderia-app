@@ -5,7 +5,8 @@ import { notFound } from "next/navigation";
 import { FormularioCampanha } from "@/components/painel/FormularioCampanha";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
-import { listarTodosDoces, obterCampanha } from "@/lib/dados";
+import { hojeNaLoja } from "@/lib/horarios";
+import { listarCampanhas, listarTodosDoces } from "@/lib/dados";
 
 export const metadata: Metadata = { title: "Editar campanha" };
 
@@ -21,7 +22,8 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   await connection();
   await exigirAcesso("equipe");
   const { id } = await params;
-  const [campanha, doces] = await Promise.all([obterCampanha(id), listarTodosDoces()]);
+  const [campanhas, doces] = await Promise.all([listarCampanhas(), listarTodosDoces()]);
+  const campanha = campanhas.find((c) => c.id === id);
   if (!campanha) notFound();
   return (
     <FormularioCampanha
@@ -29,6 +31,8 @@ async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
       campanha={campanha}
       tipoInicial={campanha.tipo}
       doces={doces}
+      campanhas={campanhas}
+      hoje={hojeNaLoja()}
       demo={!bancoConfigurado()}
     />
   );

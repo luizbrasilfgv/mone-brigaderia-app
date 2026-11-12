@@ -23,7 +23,7 @@ const PASSOS: Passo[] = [
   {
     titulo: "Todo dia: o que tem hoje",
     texto:
-      "Ajuste a quantidade de cada doce com − e + e toque em Salvar o dia. Com zero, o doce aparece como esgotado; com 3 ou menos, como “Só restam”.",
+      "Ajuste a quantidade de cada doce com − e + e toque em Salvar o dia. Com zero, o doce aparece como esgotado; com 3 ou menos, como “Últimas unidades”. Salve todo dia: sem isso, a vitrine pede para quem compra confirmar no WhatsApp.",
     icone: <IconeCaixa tamanho={40} />,
     minimo: "estoque",
   },
@@ -47,6 +47,13 @@ const PASSOS: Passo[] = [
       "Natal, Páscoa, Dia das Mães… Escolha a data pronta, os doces e a cor do banner. A campanha entra e sai da vitrine sozinha nas datas escolhidas.",
     icone: <IconeCalendario tamanho={40} />,
     minimo: "equipe",
+  },
+  {
+    titulo: "Dados da loja",
+    texto:
+      "WhatsApp que recebe os pedidos, horário de cada dia, retirada, entrega, pagamento e ingredientes da cozinha. A vitrine mostra “Aberto agora” e o “Como funciona” com esses dados.",
+    icone: <IconeLoja tamanho={40} />,
+    minimo: "admin",
   },
   {
     titulo: "Acessos",

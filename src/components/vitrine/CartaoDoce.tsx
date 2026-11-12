@@ -9,12 +9,18 @@ export function CartaoDoce({
   doce,
   estoque,
   selo,
+  semGluten,
+  dicaEsgotado,
   favorito,
   aoFavoritar,
 }: {
   doce: Doce;
   estoque: Estoque;
   selo: string | null;
+  // "Sem glúten" só quando o doce não leva glúten e a cozinha não usa trigo.
+  semGluten: boolean;
+  // Embaixo de "Esgotado": "Peça para amanhã" (ou "para outro dia", se amanhã a loja fecha).
+  dicaEsgotado: string;
   favorito: boolean;
   aoFavoritar: () => void;
 }) {
@@ -26,8 +32,9 @@ export function CartaoDoce({
             <ImagemDoce doce={doce} tamanhos="(max-width: 448px) 45vw, 200px" />
           </div>
           {!estoque.disponivel && (
-            <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cacau-900 px-3 py-1.5 text-xs font-bold whitespace-nowrap">
-              Esgotado
+            <span className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center rounded-2xl bg-cacau-900 px-3 py-1.5 text-center whitespace-nowrap">
+              <span className="text-xs font-bold">Esgotado</span>
+              <span className="text-[11px] font-semibold text-dourado">{dicaEsgotado}</span>
             </span>
           )}
         </div>
@@ -37,7 +44,7 @@ export function CartaoDoce({
             <span className="size-1.5 rounded-full bg-current" />
             {estoque.texto}
           </span>
-          {!doce.contemGluten && (
+          {semGluten && (
             <span className="self-start rounded-full border border-dourado/40 px-2 py-0.5 text-[10px] font-bold text-dourado">
               Sem glúten
             </span>

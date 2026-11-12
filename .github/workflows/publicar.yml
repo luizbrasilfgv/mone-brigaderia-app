@@ -34,11 +34,9 @@ jobs:
       - name: Verificar o código
         run: npm run lint
 
+      # O WhatsApp e os dados da loja ficam no banco (Painel › Dados da loja), não aqui.
       - name: Compilar
         run: npm run build
-        env:
-          # Vai dentro do app (aparece no navegador), por isso entra na hora de compilar.
-          NEXT_PUBLIC_WHATSAPP_NUMERO: ${{ vars.WHATSAPP_NUMERO }}
 
       # O FTP da hospedagem derruba envios longos, então vai um pacote só. No servidor,
       # deploy/app.js desempacota a versão nova em versoes/<id> quando o app reinicia.

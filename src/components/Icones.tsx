@@ -183,3 +183,18 @@ export const IconeCopiar = (p: Props) => (
     <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
   </Base>
 );
+
+export const IconeLocal = (p: Props) => (
+  <Base {...p}>
+    <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z" />
+    <circle cx="12" cy="10" r="2.5" />
+  </Base>
+);
+
+export const IconeDinheiro = (p: Props) => (
+  <Base {...p}>
+    <rect x="2.5" y="6" width="19" height="12" rx="2" />
+    <circle cx="12" cy="12" r="2.5" />
+    <path d="M6 9.5v5M18 9.5v5" />
+  </Base>
+);

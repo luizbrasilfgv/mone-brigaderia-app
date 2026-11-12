@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useState } from "react";
 import type { Campanha, Doce } from "@/lib/tipos";
 import { useHoje } from "@/lib/hooks";
-import { MODELOS, proximoEvento } from "@/lib/campanhas-modelo";
+import { MODELOS, campanhaDoProximoEvento, proximoEvento } from "@/lib/campanhas-modelo";
 import { formatarData, formatarDiaMes, situacaoCampanha, type SituacaoCampanha } from "@/lib/regras";
 import { IconeMais } from "../Icones";
 import { cx, rotulo } from "../ui";
 import { pausarCampanha } from "@/app/painel/acoes";
-import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso } from "./comum";
+import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
 
 const ETIQUETA: Partial<Record<SituacaoCampanha, { texto: string; classe: string }>> = {
   agendada: { texto: "Agendada", classe: "border-menta/40 text-menta" },
@@ -43,12 +43,21 @@ function LinhaCampanha({ campanha, situacao, apagada }: { campanha: Campanha; si
   );
 }
 
-export function ListaCampanhas({ campanhas, doces, demo }: { campanhas: Campanha[]; doces: Doce[]; demo: boolean }) {
-  const hoje = useHoje();
+export function ListaCampanhas({
+  campanhas,
+  doces,
+  hoje: hojeDoServidor,
+  demo,
+}: {
+  campanhas: Campanha[];
+  doces: Doce[];
+  hoje: string;
+  demo: boolean;
+}) {
+  const hoje = useHoje(hojeDoServidor);
   const [aviso, , mostrarResultado] = useAviso();
+  const [confirmacao, perguntar] = useConfirmacao();
   const [pausadas, setPausadas] = useState<Record<string, boolean>>({});
-
-  if (!hoje) return <CabecalhoPainel titulo="Campanhas" subtitulo="Datas especiais que aparecem na vitrine" voltar="/painel" />;
 
   const comPausa = campanhas.map((c) => ({ ...c, pausada: pausadas[c.id] ?? c.pausada }));
   const situacao = (c: Campanha) => situacaoCampanha(c, hoje);
@@ -59,6 +68,7 @@ export function ListaCampanhas({ campanhas, doces, demo }: { campanhas: Campanha
   return (
     <div className="pb-8">
       {aviso}
+      {confirmacao}
       <FaixaDemo demo={demo} />
       <CabecalhoPainel titulo="Campanhas" subtitulo="Datas especiais que aparecem na vitrine" voltar="/painel" />
 
@@ -90,6 +100,17 @@ export function ListaCampanhas({ campanhas, doces, demo }: { campanhas: Campanha
                       ligada={noAr}
                       rotulo={`Campanha ${c.nome} no ar`}
                       aoMudar={async function mudar() {
+                        // Tirar do ar em plena campanha pede confirmação; voltar, não.
+                        if (
+                          noAr &&
+                          !(await perguntar({
+                            titulo: `Tirar a campanha ${c.nome} da vitrine agora?`,
+                            texto: "O banner e os doces só desta campanha saem da vitrine na hora. Você pode voltar com ela quando quiser.",
+                            confirmar: "Tirar da vitrine",
+                          }))
+                        ) {
+                          return;
+                        }
                         setPausadas((p) => ({ ...p, [c.id]: noAr }));
                         const resultado = await tentar(() => pausarCampanha(c.id, noAr));
                         mostrarResultado(resultado, () => void mudar());
@@ -123,16 +144,22 @@ export function ListaCampanhas({ campanhas, doces, demo }: { campanhas: Campanha
           <div className="grid grid-cols-2 gap-2">
             {MODELOS.map((m) => {
               const evento = proximoEvento(m.tipo, hoje);
+              // Já existe campanha deste tipo para a próxima data: abre ela em vez de criar outra.
+              const existente = campanhaDoProximoEvento(m.tipo, comPausa, hoje);
               return (
                 <Link
                   key={m.tipo}
-                  href={`/painel/campanhas/nova/${m.tipo}`}
+                  href={existente ? `/painel/campanhas/${existente.id}` : `/painel/campanhas/nova/${m.tipo}`}
                   className="flex min-h-14 items-center gap-2.5 rounded-2xl border border-dourado/12 bg-cacau-900 px-3 py-2.5"
                 >
                   <span className="size-3 shrink-0 rounded-full ring-2 ring-creme/25" style={{ background: m.cor }} />
                   <span className="flex min-w-0 flex-col">
                     <span className="text-sm leading-tight font-semibold">{m.nome.replace(" Mone", "")}</span>
-                    {evento && <span className="text-[11px] text-creme-400">{formatarData(evento)}</span>}
+                    {existente ? (
+                      <span className="text-[11px] font-bold text-menta">Já criada · abrir</span>
+                    ) : (
+                      evento && <span className="text-[11px] text-creme-400">{formatarData(evento)}</span>
+                    )}
                   </span>
                 </Link>
               );

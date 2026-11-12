@@ -6,7 +6,8 @@ import { FormularioCampanha } from "@/components/painel/FormularioCampanha";
 import { TIPOS_CAMPANHA } from "@/lib/campanhas-modelo";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
-import { listarTodosDoces } from "@/lib/dados";
+import { hojeNaLoja } from "@/lib/horarios";
+import { listarCampanhas, listarTodosDoces } from "@/lib/dados";
 import type { TipoCampanha } from "@/lib/tipos";
 
 export const metadata: Metadata = { title: "Nova campanha" };
@@ -28,8 +29,15 @@ async function Conteudo({ params }: { params: Promise<{ tipo: string }> }) {
   if (!TIPOS_CAMPANHA.includes(tipo as TipoCampanha)) notFound();
   await connection();
   await exigirAcesso("equipe");
-  const doces = await listarTodosDoces();
+  const [doces, campanhas] = await Promise.all([listarTodosDoces(), listarCampanhas()]);
   return (
-    <FormularioCampanha campanha={null} tipoInicial={tipo as TipoCampanha} doces={doces} demo={!bancoConfigurado()} />
+    <FormularioCampanha
+      campanha={null}
+      tipoInicial={tipo as TipoCampanha}
+      doces={doces}
+      campanhas={campanhas}
+      hoje={hojeNaLoja()}
+      demo={!bancoConfigurado()}
+    />
   );
 }

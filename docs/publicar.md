@@ -46,7 +46,6 @@ Só o dono do repositório consegue. Em **Settings › Secrets and variables ›
 | Nome | Para que serve | Padrão |
 | --- | --- | --- |
 | `ADMIN_EMAILS` | e-mails da Administração fixa (qualquer e-mail), separados por vírgula: podem usar a chave de emergência e não dá para removê-los em Acessos | `luizbrasil.rj@gmail.com` |
-| `WHATSAPP_NUMERO` | WhatsApp da loja com 55 + DDD, só números | abre o WhatsApp sem contato |
 | `SITE_URL` | endereço do site | `https://monebrigaderia.com.br` |
 | `PASTA_DO_APP` | pasta do app no servidor | `app` |
 | `UPLOAD_DIR` | pasta das fotos enviadas pelo painel | `/home/<usuário>/mone-fotos` |
@@ -62,6 +61,7 @@ Depois da primeira publicação, no cPanel, em **Setup Node.js App**, clique em 
 
 - `https://monebrigaderia.com.br`: vitrine.
 - `https://monebrigaderia.com.br/entrar`: entre com um e-mail de `ADMIN_EMAILS` e a `PAINEL_SENHA` (a chave de emergência). O painel pede para você criar a sua senha; daí em diante, use a sua senha. Depois, em **Acessos**, adicione as outras pessoas: o app cria uma senha provisória para cada uma (vale 7 dias), que você manda pelo botão "Mandar convite pelo WhatsApp". No primeiro acesso, cada pessoa cria a própria senha. Ninguém precisa saber a `PAINEL_SENHA`.
+- Em **Painel › Dados da loja** (só a Administração): confira o WhatsApp que recebe os pedidos (vem com (21) 98063-1673), o horário de cada dia, retirada, entrega, pagamento e os ingredientes da cozinha. Nada disso fica nos Secrets: muda na hora, sem publicar de novo.
 - Na primeira publicação com senha individual, todo mundo sai do painel uma vez (a sessão mudou de formato) e quem já estava em Acessos só entra depois de receber uma senha provisória.
 - HTTPS: se o navegador reclamar, rode **SSL/TLS Status › Run AutoSSL** no cPanel.
 

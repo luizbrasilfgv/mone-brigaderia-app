@@ -2,7 +2,8 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { FichaDoce } from "@/components/ficha/FichaDoce";
-import { obterDoce } from "@/lib/dados";
+import { listarCampanhas, obterDoce, obterLoja } from "@/lib/dados";
+import { minutoAtual } from "@/lib/horarios";
 
 export default function PaginaDoce({ params }: PageProps<"/doce/[id]">) {
   return (
@@ -14,8 +15,10 @@ export default function PaginaDoce({ params }: PageProps<"/doce/[id]">) {
 
 async function Conteudo({ params }: { params: Promise<{ id: string }> }) {
   await connection();
+  const agora = minutoAtual();
   const { id } = await params;
-  const doce = await obterDoce(id);
+  const [doce, campanhas, loja] = await Promise.all([obterDoce(id), listarCampanhas(), obterLoja()]);
   if (!doce || !doce.ativo) notFound();
-  return <FichaDoce doce={doce} />;
+  // Doce "só em campanhas" fora de época continua abrindo: a ficha diz quando ele volta.
+  return <FichaDoce doce={doce} campanhas={campanhas} loja={loja} agora={agora} />;
 }

@@ -37,6 +37,7 @@ Abra http://localhost:3000.
 | `/painel/campanhas` | Campanhas |
 | `/painel/acessos` | Quem pode entrar no painel, o que cada pessoa pode fazer e senha provisória |
 | `/painel/conta` | Minha conta: nome, trocar senha e sair |
+| `/painel/loja` | Dados da loja (só Administração): WhatsApp, horário de cada dia, retirada, entrega, pagamento e ingredientes da cozinha |
 | `/painel/criar-senha` | Criar a própria senha no primeiro acesso |
 | `/balcao` | Tela para TV ou tablet na loja |
 
@@ -54,7 +55,8 @@ Outros comandos: `npm run build` (versão de produção), `npm run lint` (verifi
 | `src/components/` | Partes das telas: vitrine, ficha, painel, balcão |
 | `src/lib/dados.ts` | Leitura dos dados (MySQL ou exemplos), com cache |
 | `src/lib/banco.ts` | Conexão com o MySQL; cria as tabelas num banco vazio |
-| `src/lib/regras.ts` | Regras de negócio: estoque, selos, campanhas no ar, mensagem do WhatsApp |
+| `src/lib/regras.ts` | Regras de negócio: estoque, selos, campanhas no ar e prazo de encomenda, mensagem do WhatsApp |
+| `src/lib/loja.ts` e `src/lib/horarios.ts` | Dados da loja (WhatsApp, textos, traços) e horário: "Aberto agora", "Atendimento: …" e "hoje" no horário de Brasília |
 | `src/lib/campanhas-modelo.ts` | Datas prontas das campanhas (Páscoa, Dia das Mães e Dia dos Pais calculados por ano) |
 | `banco/` | Tabelas (`schema.sql`) e dados de exemplo (`dados-exemplo.sql`) |
 | `deploy/app.js` e `.github/workflows/publicar.yml` | Publicação automática na hospedagem |

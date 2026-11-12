@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { EstoqueDoDia } from "@/components/painel/EstoqueDoDia";
 import { nomesDaAdministracao, pode, type Usuario } from "@/lib/auth";
 import { bancoConfigurado } from "@/lib/banco";
-import { listarCampanhas, listarTodosDoces } from "@/lib/dados";
+import { listarCampanhas, listarTodosDoces, obterLoja, ultimoSalvamentoDoEstoque } from "@/lib/dados";
+import { hojeNaLoja } from "@/lib/horarios";
 import { exigirAcesso, paraTela } from "@/lib/painel";
 import type { Papel } from "@/lib/papeis";
 
@@ -38,15 +39,20 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/painel">["
   await connection();
   const usuario = await exigirAcesso("estoque");
   const { aviso, area } = await searchParams;
-  const [doces, campanhas, semPermissao] = await Promise.all([
+  const [doces, campanhas, loja, salvamento, semPermissao] = await Promise.all([
     listarTodosDoces(),
     listarCampanhas(),
+    obterLoja(),
+    ultimoSalvamentoDoEstoque(),
     aviso === "sem-permissao" ? explicarSemPermissao(usuario, area) : null,
   ]);
   return (
     <EstoqueDoDia
       doces={doces}
       campanhas={campanhas}
+      horarios={loja.horarios}
+      salvamento={salvamento}
+      hoje={hojeNaLoja()}
       pessoa={paraTela(usuario)}
       demo={!bancoConfigurado()}
       semPermissao={semPermissao}

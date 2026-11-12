@@ -6,13 +6,15 @@
 - Banco MySQL: o app cria as tabelas e carrega os exemplos sozinho num banco vazio (`banco/`).
 - Login com e-mail e senha individual (senha provisória pelo WhatsApp, troca no primeiro acesso, Minha conta); só entra quem está em Acessos. Papéis: Administração, Equipe e Estoque.
 - Guia "Como usar" no primeiro acesso.
+- Dados da loja no painel (WhatsApp, horário de cada dia, retirada, entrega, pagamento, ingredientes da cozinha), "Aberto agora" e "Como funciona" na vitrine.
+- Vitrine honesta: faixas "Tem hoje / Últimas unidades / Esgotado", aviso quando a quantidade não é de hoje e lembrete no painel; esgotado e doce fora de época com saída; campanhas com prazo de encomenda de verdade.
 - Painel grava de verdade: quantidades do dia, destaque, fichas dos doces (com foto reduzida no celular antes de enviar), doces fora da vitrine, campanhas e pausa de campanha.
 - Publicação automática pelo GitHub a cada push no `main` (docs/publicar.md).
 
 ## Para colocar no ar
 
 1. Criar o app Node.js no cPanel e cadastrar os Secrets no GitHub, com um valor novo para a `PAINEL_SENHA` (a chave de emergência): [docs/publicar.md](publicar.md).
-2. Confirmar o DDD do WhatsApp da loja e cadastrar a variável `WHATSAPP_NUMERO`.
+2. Em **Painel › Dados da loja**, conferir o WhatsApp (já vem (21) 98063-1673) e preencher o horário de cada dia, retirada, entrega, pagamento e os ingredientes da cozinha (a palha leva biscoito: marcar trigo).
 3. Ativar o HTTPS (AutoSSL no cPanel).
 
 ## Antes de divulgar

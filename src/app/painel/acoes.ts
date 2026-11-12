@@ -22,7 +22,9 @@ import {
 import { destinoSeguro } from "@/lib/painel";
 import { nomeDoPapel } from "@/lib/papeis";
 import { gerarSenhaProvisoria, problemaNaSenhaNova, resumirSenha, senhaConfere } from "@/lib/senhas";
-import { TAG_CAMPANHAS, TAG_CARDAPIO } from "@/lib/dados";
+import { COLUNAS_HORARIO, TAG_CAMPANHAS, TAG_CARDAPIO, TAG_LOJA } from "@/lib/dados";
+import { escreverHorario, lerHorario } from "@/lib/horarios";
+import { ehTraco, normalizarWhatsApp } from "@/lib/loja";
 import { TAMANHO_MAXIMO_FOTO, TIPOS_DE_FOTO, pastaDeFotos } from "@/lib/fotos";
 import { TIPOS_CAMPANHA } from "@/lib/campanhas-modelo";
 import { slugificar } from "@/lib/texto";
@@ -123,6 +125,15 @@ async function idLivre(c: PoolConnection, tabela: "doces" | "campanhas", base: s
   }
 }
 
+// Grava a quantidade de hoje de um doce, com a hora e quem salvou.
+async function gravarQuantidade(c: PoolConnection, doceId: string, quantidade: number, usuario: Usuario): Promise<void> {
+  await c.query(
+    `INSERT INTO estoque_dia (doce_id, data, quantidade, atualizado_em, atualizado_por) VALUES (?, ${HOJE_SQL}, ?, UTC_TIMESTAMP(), ?)
+     ON DUPLICATE KEY UPDATE quantidade = VALUES(quantidade), atualizado_em = VALUES(atualizado_em), atualizado_por = VALUES(atualizado_por)`,
+    [doceId, quantidade, usuario.nome.slice(0, 120)],
+  );
+}
+
 // Quantidades do dia e doce em destaque.
 export async function salvarEstoque(quantidades: Record<string, number>, destaqueId: string | null): Promise<Resultado> {
   const { usuario, bloqueio } = await autorizar("estoque");
@@ -134,10 +145,7 @@ export async function salvarEstoque(quantidades: Record<string, number>, destaqu
       for (const [id, quantidade] of Object.entries(quantidades)) {
         if (!existentes.has(id) || existentes.get(id)) continue;
         const q = inteiro(quantidade, 0, 9999, "quantidade");
-        await c.query(
-          `INSERT INTO estoque_dia (doce_id, data, quantidade) VALUES (?, ${HOJE_SQL}, ?) ON DUPLICATE KEY UPDATE quantidade = VALUES(quantidade)`,
-          [id, q],
-        );
+        await gravarQuantidade(c, id, q, usuario);
       }
       // Escolher o destaque da vitrine é para Equipe e Administração.
       if (destaqueId && existentes.has(destaqueId) && pode(usuario, "equipe")) {
@@ -153,7 +161,7 @@ export async function salvarEstoque(quantidades: Record<string, number>, destaqu
 
 // Cria ou atualiza a ficha de um doce. Recebe FormData por causa da foto.
 export async function salvarDoce(dados: FormData): Promise<Resultado> {
-  const { bloqueio } = await autorizar("equipe");
+  const { usuario, bloqueio } = await autorizar("equipe");
   if (bloqueio) return bloqueio;
   try {
     const idAtual = textoOpcional(dados.get("id"), 80);
@@ -236,12 +244,7 @@ export async function salvarDoce(dados: FormData): Promise<Resultado> {
         }
       }
 
-      if (!sobEncomenda) {
-        await c.query(
-          `INSERT INTO estoque_dia (doce_id, data, quantidade) VALUES (?, ${HOJE_SQL}, ?) ON DUPLICATE KEY UPDATE quantidade = VALUES(quantidade)`,
-          [docId, quantidade],
-        );
-      }
+      if (!sobEncomenda) await gravarQuantidade(c, docId, quantidade, usuario);
 
       if (arquivo) {
         const pasta = pastaDeFotos();
@@ -274,6 +277,9 @@ export interface DadosCampanha {
   docesIds: string[];
 }
 
+// A frase cabe em duas linhas curtas no banner.
+const LIMITE_FRASE = 60;
+
 export async function salvarCampanha(dados: DadosCampanha): Promise<Resultado> {
   const { bloqueio } = await autorizar("equipe");
   if (bloqueio) return bloqueio;
@@ -282,9 +288,14 @@ export async function salvarCampanha(dados: DadosCampanha): Promise<Resultado> {
     const nome = textoObrigatorio(dados.nome, 120, "Nome da campanha");
     if (!DATA.test(dados.inicio) || !DATA.test(dados.fim)) throw new Invalido("Preencha o começo e o fim da campanha.");
     if (dados.fim < dados.inicio) throw new Invalido("A campanha precisa terminar depois de começar.");
-    const limite = dados.limiteEncomenda && DATA.test(dados.limiteEncomenda) ? dados.limiteEncomenda : null;
+    const limite = dados.limiteEncomenda ? String(dados.limiteEncomenda) : null;
+    if (limite && !DATA.test(limite)) throw new Invalido("Confira o último dia para encomendar.");
+    if (limite && (limite < dados.inicio || limite > dados.fim)) {
+      throw new Invalido("O último dia para encomendar precisa ficar entre o começo e o fim da campanha.");
+    }
     const cor = COR.test(dados.cor) ? dados.cor : "#3A1D13";
-    const frase = textoOpcional(dados.fraseBanner, 255);
+    const frase = String(dados.fraseBanner ?? "").trim();
+    if (frase.length > LIMITE_FRASE) throw new Invalido(`A frase do banner passou de ${LIMITE_FRASE} letras. Encurte para caber no banner.`);
     const docesIds = Array.isArray(dados.docesIds) ? dados.docesIds.map(String) : [];
 
     const id = await emTransacao(async (c) => {
@@ -330,6 +341,52 @@ export async function pausarCampanha(id: string, pausada: boolean): Promise<Resu
     await db.query("UPDATE campanhas SET pausada = ? WHERE id = ?", [pausada, id]);
     updateTag(TAG_CAMPANHAS);
     return { ok: true, mensagem: pausada ? "Campanha pausada: saiu da vitrine." : "Campanha de volta na vitrine." };
+  } catch (erro) {
+    return falha(erro);
+  }
+}
+
+// --- Dados da loja ---
+
+export interface DadosDaLoja {
+  whatsapp: string;
+  // De domingo a sábado; null = fechado.
+  horarios: ({ abre: string; fecha: string } | null)[];
+  retirada: string;
+  entrega: string;
+  pagamento: string;
+  tracos: string[];
+}
+
+const DIAS_DO_ERRO = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+
+// WhatsApp, horário de cada dia e textos que aparecem para quem compra.
+export async function salvarLoja(dados: DadosDaLoja): Promise<Resultado> {
+  const { bloqueio } = await autorizar("admin");
+  if (bloqueio) return bloqueio;
+  try {
+    const whatsapp = normalizarWhatsApp(String(dados.whatsapp ?? ""));
+    if (!whatsapp) throw new Invalido("Confira o WhatsApp: escreva o DDD e o número, por exemplo (21) 98063-1673.");
+    const lista = Array.isArray(dados.horarios) ? dados.horarios : [];
+    const horarios = COLUNAS_HORARIO.map((_, dia) => {
+      const h = lista[dia];
+      if (!h) return "";
+      const lido = lerHorario(`${h.abre}-${h.fecha}`);
+      if (!lido) throw new Invalido(`Confira o horário de ${DIAS_DO_ERRO[dia]}: a loja precisa fechar depois de abrir.`);
+      return escreverHorario(lido);
+    });
+    const textos = [dados.retirada, dados.entrega, dados.pagamento].map((t) => textoOpcional(t, 80));
+    const tracos = (Array.isArray(dados.tracos) ? dados.tracos : []).filter(ehTraco);
+    const db = await banco();
+    await db.query(
+      `INSERT INTO loja (id, whatsapp, ${COLUNAS_HORARIO.join(", ")}, retirada, entrega, pagamento, tracos)
+       VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE whatsapp = VALUES(whatsapp), ${COLUNAS_HORARIO.map((c) => `${c} = VALUES(${c})`).join(", ")},
+         retirada = VALUES(retirada), entrega = VALUES(entrega), pagamento = VALUES(pagamento), tracos = VALUES(tracos)`,
+      [whatsapp, ...horarios, ...textos, [...new Set(tracos)].join(",")],
+    );
+    updateTag(TAG_LOJA);
+    return { ok: true, mensagem: "Dados salvos. A vitrine e os links do WhatsApp já usam os dados novos." };
   } catch (erro) {
     return falha(erro);
   }

@@ -5,34 +5,40 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import type { Campanha, Doce, TipoCampanha } from "@/lib/tipos";
 import { useHoje } from "@/lib/hooks";
-import { CORES_BANNER, TIPOS_CAMPANHA, sugestaoDeCampanha } from "@/lib/campanhas-modelo";
-import { NOMES_CAMPANHA, formatarData } from "@/lib/regras";
+import { CORES_BANNER, TIPOS_CAMPANHA, campanhaDoProximoEvento, sugestaoDeCampanha } from "@/lib/campanhas-modelo";
+import { NOMES_CAMPANHA, encomendaAberta, formatarData, nomeCurtoDaCampanha, nomeDoTipoDeCampanha } from "@/lib/regras";
+import { BannerCampanha, botaoBanner } from "../BannerCampanha";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
 import { botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
 import { salvarCampanha } from "@/app/painel/acoes";
-import { CabecalhoPainel, FaixaDemo, tentar, useAviso } from "./comum";
+import { CabecalhoPainel, FaixaAviso, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
 
-interface Props {
+// A frase cabe em duas linhas curtas no banner (o servidor confere o mesmo limite).
+const LIMITE_FRASE = 60;
+
+export function FormularioCampanha({
+  campanha,
+  tipoInicial,
+  doces,
+  campanhas,
+  hoje: hojeDoServidor,
+  demo,
+}: {
   campanha: Campanha | null;
   tipoInicial: TipoCampanha;
   doces: Doce[];
+  campanhas: Campanha[];
+  // As datas sugeridas partem de hoje, calculado no servidor.
+  hoje: string;
   demo: boolean;
-}
-
-// As datas sugeridas dependem de hoje, que só se conhece no navegador.
-export function FormularioCampanha(props: Props) {
-  const hoje = useHoje();
-  if (!hoje) {
-    return <CabecalhoPainel titulo="Campanha" subtitulo="Só aparece na vitrine dentro do período" voltar="/painel/campanhas" />;
-  }
-  return <Formulario {...props} hoje={hoje} />;
-}
-
-function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje: string }) {
+}) {
+  const hoje = useHoje(hojeDoServidor);
   const router = useRouter();
   const [aviso, , mostrarResultado] = useAviso();
+  const [confirmacao, perguntar] = useConfirmacao();
   const [salvando, iniciar] = useTransition();
+  const [mudandoTipo, setMudandoTipo] = useState(false);
   const sugestaoInicial = campanha ? null : sugestaoDeCampanha(tipoInicial, hoje);
   const [tipo, setTipo] = useState<TipoCampanha>(campanha?.tipo ?? tipoInicial);
   const [nome, setNome] = useState(campanha?.nome ?? sugestaoInicial?.nome ?? "");
@@ -45,19 +51,39 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
     campanha ? doces.filter((d) => d.campanhaIds.includes(campanha.id)).map((d) => d.id) : [],
   );
 
-  function escolherTipo(novo: TipoCampanha) {
+  // Mudar o tipo muda só o tipo; os textos e as datas do modelo só entram se a pessoa quiser.
+  async function escolherTipo(novo: TipoCampanha) {
+    setMudandoTipo(false);
+    if (novo === tipo) return;
     setTipo(novo);
     const s = sugestaoDeCampanha(novo, hoje);
-    setNome(s?.nome ?? "");
-    setInicio(s?.inicio ?? "");
-    setFim(s?.fim ?? "");
-    setLimite(s?.limiteEncomenda ?? "");
-    setFrase(s?.fraseBanner ?? "");
-    setCor(s?.cor ?? "#3A1D13");
+    if (!s) return;
+    const usar = await perguntar({
+      titulo: `Usar textos e datas do modelo de ${NOMES_CAMPANHA[novo]}?`,
+      texto: "Nome, datas, frase e cor passam a ser os do modelo. Os doces marcados continuam. Se não, só o tipo muda.",
+      confirmar: "Usar o modelo",
+    });
+    if (!usar) return;
+    setNome(s.nome);
+    setInicio(s.inicio);
+    setFim(s.fim);
+    setLimite(s.limiteEncomenda);
+    setFrase(s.fraseBanner);
+    setCor(s.cor);
   }
 
-  function salvar(e: FormEvent) {
+  async function salvar(e: FormEvent) {
     e.preventDefault();
+    if (
+      docesIds.length === 0 &&
+      !(await perguntar({
+        titulo: "Nenhum doce marcado",
+        texto: "A campanha vai aparecer na vitrine sem doces. Salvar mesmo assim?",
+        confirmar: "Salvar mesmo assim",
+      }))
+    ) {
+      return;
+    }
     const dados = {
       id: campanha?.id ?? null,
       tipo,
@@ -78,12 +104,26 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
     enviar();
   }
 
-  const nomeDoTipo = tipo === "outra" ? "Campanha" : `Campanha de ${NOMES_CAMPANHA[tipo]}`;
   const docePrevia = doces.find((d) => docesIds.includes(d.id));
+  // Já existe campanha deste tipo para a próxima data (ex.: abriu o modelo pelo endereço).
+  const repetida = campanha ? null : campanhaDoProximoEvento(tipo, campanhas, hoje);
+  const rascunho: Campanha = {
+    id: campanha?.id ?? "nova",
+    tipo,
+    nome: nome || "Nome da campanha",
+    inicio,
+    fim,
+    limiteEncomenda: limite || null,
+    fraseBanner: frase || "Frase do banner",
+    cor,
+    pausada: false,
+    rascunho: false,
+  };
 
   return (
     <form onSubmit={salvar} className="pb-28">
       {aviso}
+      {confirmacao}
       <FaixaDemo demo={demo} />
       <CabecalhoPainel
         titulo={campanha ? "Editar campanha" : "Nova campanha"}
@@ -92,21 +132,42 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
       />
 
       <div className="flex flex-col gap-5 px-5 pt-3.5 pb-7">
-        <div role="group" aria-label="Data da campanha" className="flex flex-col gap-2.5">
-          <span className={rotulo}>Data</span>
-          <div className="flex flex-wrap gap-2">
-            {TIPOS_CAMPANHA.map((t) => (
-              <button
-                key={t}
-                type="button"
-                aria-pressed={tipo === t}
-                onClick={() => escolherTipo(t)}
-                className={cx("h-11 rounded-full px-3.5 text-[13px]", escolha(tipo === t))}
-              >
-                {t === "outra" ? "Outra" : NOMES_CAMPANHA[t]}
-              </button>
-            ))}
+        {repetida && (
+          <FaixaAviso>
+            Já existe a campanha <strong>{repetida.nome}</strong> ({formatarData(repetida.inicio)} a {formatarData(repetida.fim)}).{" "}
+            <Link href={`/painel/campanhas/${repetida.id}`} className="font-bold underline underline-offset-2">
+              Abrir essa campanha
+            </Link>
+          </FaixaAviso>
+        )}
+
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[15px] font-bold text-dourado">{nomeDoTipoDeCampanha(tipo)}</span>
+            <button
+              type="button"
+              aria-expanded={mudandoTipo}
+              onClick={() => setMudandoTipo(!mudandoTipo)}
+              className="flex h-11 shrink-0 items-center px-1 text-[13px] font-semibold text-creme-400 underline underline-offset-4"
+            >
+              {mudandoTipo ? "Deixar como está" : "Mudar tipo"}
+            </button>
           </div>
+          {mudandoTipo && (
+            <div role="group" aria-label="Tipo da campanha" className="flex flex-wrap gap-2">
+              {TIPOS_CAMPANHA.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={tipo === t}
+                  onClick={() => void escolherTipo(t)}
+                  className={cx("h-11 rounded-full px-3.5 text-[13px]", escolha(tipo === t))}
+                >
+                  {t === "outra" ? "Outra" : NOMES_CAMPANHA[t]}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
@@ -161,6 +222,7 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
             id="limite"
             type="date"
             value={limite}
+            min={inicio || undefined}
             max={fim || undefined}
             onChange={(e) => setLimite(e.target.value)}
             className={cx(campo, "h-12 px-3 [color-scheme:dark]")}
@@ -168,17 +230,27 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
         </div>
 
         <div className="flex flex-col gap-2">
-          <label htmlFor="frase" className={rotulo}>
-            Frase do banner
-          </label>
+          <div className="flex items-baseline justify-between gap-3">
+            <label htmlFor="frase" className={rotulo}>
+              Frase do banner
+            </label>
+            <span className={cx("text-xs", frase.length >= LIMITE_FRASE ? "text-pessego" : "text-creme-400")}>
+              {frase.length}/{LIMITE_FRASE}
+            </span>
+          </div>
           <textarea
             id="frase"
             rows={2}
-            placeholder="Ex.: Encomende até 20/12"
+            maxLength={LIMITE_FRASE}
+            placeholder="Ex.: Caixas e brigadeiros para a ceia"
             value={frase}
             onChange={(e) => setFrase(e.target.value)}
+            aria-describedby="frase-ajuda"
             className={cx(campo, "resize-none py-3 leading-normal")}
           />
+          <span id="frase-ajuda" className="text-xs text-creme-400">
+            O prazo para encomendar aparece sozinho embaixo da frase.
+          </span>
         </div>
 
         <div role="group" aria-label="Cor do banner" className="flex flex-col gap-2.5">
@@ -251,22 +323,12 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
 
         <div className="flex flex-col gap-2.5">
           <span className={rotulo}>Como aparece na vitrine</span>
-          <div className="relative h-[150px] overflow-hidden rounded-[28px] border border-dourado/25 transition-colors" style={{ background: cor }}>
-            <div className="absolute -top-12 -right-10 size-[220px] rounded-full bg-[radial-gradient(closest-side,rgba(240,207,152,0.3),rgba(240,207,152,0))]" />
-            {docePrevia && (
-              <div className="fundo-vitrine absolute top-5 right-4 w-[108px] -rotate-4 overflow-hidden rounded-[22px] border-[3px] border-pessego">
-                <ImagemDoce doce={docePrevia} tamanhos="108px" />
-              </div>
-            )}
-            <div className="absolute top-4 bottom-4 left-[18px] flex w-[200px] flex-col gap-1">
-              <span className="text-[11px] font-bold tracking-[0.14em] text-[#F0CF98] uppercase">{nomeDoTipo}</span>
-              <span className="font-display text-[22px] leading-tight font-semibold text-[#FFF4E6]">{nome || "Nome da campanha"}</span>
-              <span className="text-xs leading-snug text-[#F6DCCB]">{frase || "Frase do banner"}</span>
-              <span className="mt-auto inline-flex h-9 items-center self-start rounded-full bg-pessego px-3.5 text-xs font-bold text-cacau-900">
-                Ver doces da campanha
-              </span>
-            </div>
-          </div>
+          <BannerCampanha
+            campanha={rascunho}
+            prazo={encomendaAberta(rascunho, hoje)}
+            doce={docePrevia}
+            botao={docesIds.length > 0 && <span className={botaoBanner}>Ver doces de {nomeCurtoDaCampanha(rascunho)}</span>}
+          />
           <span className="text-xs text-creme-400">
             {inicio && fim
               ? `No ar de ${formatarData(inicio)} a ${formatarData(fim)}${limite ? `. Encomendas até ${formatarData(limite)}.` : "."}`

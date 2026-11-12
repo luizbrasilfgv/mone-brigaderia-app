@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense } from "react";
+import { obterLoja } from "@/lib/dados";
 import { LOJA } from "@/lib/loja";
 import { PedirSenhaNova } from "./PedirSenhaNova";
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
   appleWebApp: { capable: true, title: "Painel Mone", statusBarStyle: "black-translucent" },
 };
 
-// Quem esquece a senha pede uma senha nova para a administração, pelo WhatsApp.
+// Quem esquece a senha pede uma senha nova para a administração, pelo WhatsApp da loja.
 export default function PaginaEsqueci({ searchParams }: PageProps<"/entrar/esqueci">) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-6 px-5 py-8">
@@ -34,5 +35,7 @@ export default function PaginaEsqueci({ searchParams }: PageProps<"/entrar/esque
 
 async function Formulario({ searchParams }: { searchParams: PageProps<"/entrar/esqueci">["searchParams"] }) {
   const { email } = await searchParams;
-  return <PedirSenhaNova emailInicial={typeof email === "string" ? email.slice(0, 190) : ""} />;
+  // Depois do searchParams: o número é lido na hora da visita, não na compilação.
+  const loja = await obterLoja();
+  return <PedirSenhaNova emailInicial={typeof email === "string" ? email.slice(0, 190) : ""} whatsapp={loja.whatsapp} />;
 }

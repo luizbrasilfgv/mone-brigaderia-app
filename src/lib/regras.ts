@@ -1,4 +1,5 @@
 import type { Campanha, Doce, Sabor, TipoCampanha } from "./tipos";
+import { abreNoDia, type Horarios } from "./horarios";
 
 // Regras de negócio descritas em docs/funcionalidades.md.
 
@@ -47,6 +48,16 @@ export const NOMES_CAMPANHA: Record<TipoCampanha, string> = {
   outra: "Campanha",
 };
 
+// "Campanha de Natal" (ou só "Campanha", para outra data).
+export function nomeDoTipoDeCampanha(tipo: TipoCampanha): string {
+  return tipo === "outra" ? "Campanha" : `Campanha de ${NOMES_CAMPANHA[tipo]}`;
+}
+
+// Nome curto para chips e botões: "Natal", ou o nome da campanha para outra data.
+export function nomeCurtoDaCampanha(c: Pick<Campanha, "tipo" | "nome">): string {
+  return c.tipo === "outra" ? c.nome : NOMES_CAMPANHA[c.tipo];
+}
+
 export type SituacaoCampanha = "no_ar" | "pausada" | "agendada" | "rascunho" | "encerrada";
 
 export function situacaoCampanha(c: Campanha, hoje: string): SituacaoCampanha {
@@ -67,31 +78,49 @@ export function doceApareceNaVitrine(doce: Doce, idsNoAr: Set<string>): boolean 
   return doce.campanhaIds.some((id) => idsNoAr.has(id));
 }
 
-export type TomEstoque = "ok" | "pouco" | "esgotado" | "encomenda";
+export type TomEstoque = "ok" | "pouco" | "esgotado" | "encomenda" | "confirmar";
 
 export interface Estoque {
   tom: TomEstoque;
   texto: string;
   disponivel: boolean;
+  // A quantidade foi salva hoje. Se não foi, a vitrine não afirma nada sobre hoje.
+  deHoje: boolean;
 }
 
-export function estoqueDoDoce(doce: Doce): Estoque {
+// A quantidade que a vitrine conhece é de hoje? (null = dados de exemplo: vale como hoje.)
+export function contagemDeHoje(doce: Doce, hoje: string): boolean {
+  return doce.dataQuantidade === null || doce.dataQuantidade === hoje;
+}
+
+// O que quem compra vê: faixas, nunca o número exato (o número fica só no painel).
+export function estoqueDoDoce(doce: Doce, hoje: string): Estoque {
   if (doce.sobEncomenda) {
     const prazo = doce.prazoDias ?? 1;
-    return { tom: "encomenda", texto: `Sob encomenda · ${prazo} ${prazo === 1 ? "dia" : "dias"}`, disponivel: true };
+    return { tom: "encomenda", texto: `Sob encomenda · ${prazo} ${prazo === 1 ? "dia" : "dias"}`, disponivel: true, deHoje: true };
+  }
+  if (!contagemDeHoje(doce, hoje)) {
+    return { tom: "confirmar", texto: "Pronta entrega · confirme no WhatsApp", disponivel: true, deHoje: false };
   }
   const q = doce.quantidadeHoje;
-  if (q <= 0) return { tom: "esgotado", texto: "Esgotado", disponivel: false };
-  if (q <= 3) return { tom: "pouco", texto: `Só restam ${q}`, disponivel: true };
-  return { tom: "ok", texto: `${q} disponíveis hoje`, disponivel: true };
+  if (q <= 0) return { tom: "esgotado", texto: "Esgotado", disponivel: false, deHoje: true };
+  if (q <= 3) return { tom: "pouco", texto: "Últimas unidades", disponivel: true, deHoje: true };
+  return { tom: "ok", texto: "Tem hoje", disponivel: true, deHoje: true };
 }
 
-// Selo que a vitrine mostra: o escolhido pela dona, ou "Últimas unidades" pelo estoque,
-// ou o nome da campanha para doces que só existem nela.
-export function seloDoDoce(doce: Doce, noAr: Campanha[]): string | null {
+// O que o painel mostra, com o número.
+export function estoqueNoPainel(quantidade: number): { tom: TomEstoque; texto: string } {
+  if (quantidade <= 0) return { tom: "esgotado", texto: "Esgotado" };
+  if (quantidade <= 3) return { tom: "pouco", texto: `Só restam ${quantidade}` };
+  return { tom: "ok", texto: `${quantidade} disponíveis hoje` };
+}
+
+// Selo que a vitrine mostra: o escolhido pela dona, ou "Últimas unidades" pelo estoque
+// de hoje, ou o nome da campanha para doces que só existem nela.
+export function seloDoDoce(doce: Doce, noAr: Campanha[], hoje: string): string | null {
   if (doce.selo === "mais_vendido") return "Mais vendido";
   if (doce.selo === "novo") return "Novo";
-  if (!doce.sobEncomenda && doce.quantidadeHoje > 0 && doce.quantidadeHoje <= 3) return "Últimas unidades";
+  if (estoqueDoDoce(doce, hoje).tom === "pouco") return "Últimas unidades";
   if (doce.ondeAparece === "so_campanhas") {
     const campanha = noAr.find((c) => doce.campanhaIds.includes(c.id));
     if (campanha) return NOMES_CAMPANHA[campanha.tipo];
@@ -99,17 +128,120 @@ export function seloDoDoce(doce: Doce, noAr: Campanha[]): string | null {
   return null;
 }
 
+// Quantas unidades a ficha deixa pedir de uma vez.
+export const LIMITE_SEM_CONTAGEM = 20;
+export const LIMITE_ENCOMENDA = 99;
+
+export function limiteDoPedido(doce: Doce, hoje: string): number {
+  if (doce.sobEncomenda) return LIMITE_ENCOMENDA;
+  if (!contagemDeHoje(doce, hoje)) return LIMITE_SEM_CONTAGEM;
+  return Math.max(doce.quantidadeHoje, 1);
+}
+
 export function precoDoSabor(doce: Doce, sabor: Sabor | undefined): number {
   return sabor?.precoCentavos ?? doce.precoCentavos;
 }
 
-// Primeira data que a cliente pode escolher para um doce sob encomenda.
-export function datasDeEncomenda(prazoDias: number, hoje: string, quantas = 3): string[] {
-  return Array.from({ length: quantas }, (_, i) => somarDias(hoje, prazoDias + i));
+// Primeiro dia em que um doce sob encomenda fica pronto: hoje mais o prazo,
+// avançando até um dia em que a loja abre.
+export function prontoAPartirDe(prazoDias: number, hoje: string, horarios: Horarios): string {
+  let dia = somarDias(hoje, prazoDias);
+  for (let i = 0; i < 7 && !abreNoDia(horarios, dia); i++) dia = somarDias(dia, 1);
+  return dia;
+}
+
+// Datas que quem compra pode escolher para um doce sob encomenda: só dias em que a
+// loja abre e, em doce de campanha, até o fim da campanha.
+export function datasDeEncomenda(prazoDias: number, hoje: string, horarios: Horarios, ate?: string | null, quantas = 3): string[] {
+  const datas: string[] = [];
+  for (let dia = prontoAPartirDe(prazoDias, hoje, horarios); datas.length < quantas; dia = somarDias(dia, 1)) {
+    if (ate && dia > ate) break;
+    if (abreNoDia(horarios, dia)) datas.push(dia);
+  }
+  return datas;
+}
+
+export interface PrazoDaCampanha {
+  // Ainda dá para encomendar (sem último dia, vale até o fim da campanha).
+  aberta: boolean;
+  // Segunda linha do banner. null = campanha sem último dia para encomendar.
+  texto: string | null;
+  // Faltam 5 dias ou menos.
+  urgente: boolean;
+}
+
+// Prazo de encomenda da campanha, a partir do "último dia para encomendar".
+export function encomendaAberta(campanha: Campanha, hoje: string, temProntaEntrega = false): PrazoDaCampanha {
+  const limite = campanha.limiteEncomenda;
+  if (!limite) return { aberta: true, texto: null, urgente: false };
+  if (hoje > limite) {
+    return {
+      aberta: false,
+      texto: temProntaEntrega ? "Encomendas encerradas · ainda tem pronta entrega" : "Encomendas encerradas",
+      urgente: false,
+    };
+  }
+  const dias = diasEntre(hoje, limite);
+  if (dias === 0) return { aberta: true, texto: "Último dia para encomendar", urgente: true };
+  if (dias === 1) return { aberta: true, texto: "Falta 1 dia para encomendar", urgente: true };
+  if (dias <= 5) return { aberta: true, texto: `Faltam ${dias} dias para encomendar`, urgente: true };
+  return { aberta: true, texto: `Encomende até ${formatarDiaMes(limite)}`, urgente: false };
+}
+
+function diasEntre(de: string, ate: string): number {
+  const [a1, m1, d1] = de.split("-").map(Number);
+  const [a2, m2, d2] = ate.split("-").map(Number);
+  return Math.round((Date.UTC(a2, m2 - 1, d2) - Date.UTC(a1, m1 - 1, d1)) / 86_400_000);
+}
+
+// Campanha que manda num doce "só em campanhas": a que está no ar (a de prazo mais
+// longo, se forem várias). Doce do ano todo não segue o prazo de campanha nenhuma.
+export function campanhaDoDoce(doce: Doce, noAr: Campanha[]): Campanha | null {
+  if (doce.ondeAparece !== "so_campanhas") return null;
+  const dele = noAr.filter((c) => doce.campanhaIds.includes(c.id));
+  return dele.sort((a, b) => (b.limiteEncomenda ?? b.fim).localeCompare(a.limiteEncomenda ?? a.fim))[0] ?? null;
+}
+
+// "no Natal", "na Páscoa", "no Dia das Mães"
+export function naCampanha(campanha: Campanha): string {
+  if (campanha.tipo === "outra") return `em ${campanha.nome}`;
+  return `${campanha.tipo === "pascoa" ? "na" : "no"} ${NOMES_CAMPANHA[campanha.tipo]}`;
+}
+
+// "para o Natal", "para a Páscoa"
+export function paraCampanha(campanha: Campanha): string {
+  if (campanha.tipo === "outra") return `para ${campanha.nome}`;
+  return `para ${campanha.tipo === "pascoa" ? "a" : "o"} ${NOMES_CAMPANHA[campanha.tipo]}`;
+}
+
+// Doce "só em campanhas" sem campanha no ar: diz quando ele volta (a próxima agendada,
+// senão a última que ele teve).
+export function voltaDoDoce(doce: Doce, campanhas: Campanha[], hoje: string): string {
+  const dele = campanhas.filter((c) => doce.campanhaIds.includes(c.id) && !c.rascunho);
+  const proxima = dele.filter((c) => situacaoCampanha(c, hoje) === "agendada").sort((a, b) => a.inicio.localeCompare(b.inicio))[0];
+  if (proxima) return `Este doce volta ${naCampanha(proxima)}, a partir de ${formatarDiaMes(proxima.inicio)}.`;
+  const ultima = dele.sort((a, b) => b.fim.localeCompare(a.fim))[0];
+  return ultima ? `Este doce volta ${naCampanha(ultima)}.` : "Este doce volta numa próxima campanha.";
 }
 
 export function mensagemGeral(nomeLoja: string): string {
   return `Olá, ${nomeLoja}! Vi a vitrine no app e quero fazer uma encomenda.`;
+}
+
+// "a Palha italiana", "o Bolo de pote"; sem artigo quando não dá para saber ("Brownie").
+function comArtigo(nome: string): string {
+  const fim = nome.split(" ")[0].slice(-1).toLowerCase();
+  return fim === "a" || fim === "o" ? `${fim} ${nome}` : nome;
+}
+
+// Doce de pronta entrega que esgotou hoje.
+export function mensagemOutroDia(nomeLoja: string, doce: Doce): string {
+  return `Olá, ${nomeLoja}! Vi que ${comArtigo(doce.nome)} esgotou hoje. Consigo encomendar para: `;
+}
+
+// Doce de campanha com as encomendas encerradas ou sem tempo de ficar pronto.
+export function mensagemEncerrada(nomeLoja: string, campanha: Campanha, doce: Doce): string {
+  return `Olá, ${nomeLoja}! Vi que as encomendas ${campanha.tipo === "outra" ? `de ${campanha.nome}` : `de ${NOMES_CAMPANHA[campanha.tipo]}`} encerraram. Ainda consigo pedir ${doce.nome}?`;
 }
 
 export function mensagemDoDoce(opcoes: {

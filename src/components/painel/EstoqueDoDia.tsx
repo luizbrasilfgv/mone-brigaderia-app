@@ -4,16 +4,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState, useSyncExternalStore, useTransition } from "react";
 import type { Campanha, Doce } from "@/lib/tipos";
+import type { Salvamento } from "@/lib/dados";
 import type { PessoaNoPainel } from "@/lib/painel";
 import { LOJA } from "@/lib/loja";
+import { abreNoDia, type Horarios } from "@/lib/horarios";
 import { useHoje } from "@/lib/hooks";
 import { nomeDoPapel, pode } from "@/lib/papeis";
-import { campanhasNoAr, estoqueDoDoce, formatarDiaMes, formatarPreco } from "@/lib/regras";
+import { campanhasNoAr, estoqueDoDoce, estoqueNoPainel, formatarDiaMes, formatarPreco, somarDias } from "@/lib/regras";
 import { marcarTutorialVisto, salvarEstoque } from "@/app/painel/acoes";
+import { sair } from "@/app/entrar/acoes";
 import { ImagemDoce } from "../ImagemDoce";
-import { IconeAjuda, IconeCalendario, IconeEstrela, IconeMais, IconePessoas, IconeRelogio, IconeSeta } from "../Icones";
+import { IconeAjuda, IconeCalendario, IconeCheck, IconeEstrela, IconeLoja, IconeMais, IconePessoas, IconeRelogio, IconeSeta } from "../Icones";
 import { COR_ESTOQUE, botaoPrimario, cartao, cx } from "../ui";
-import { Contador, FaixaAviso, FaixaDemo, tentar, useAviso } from "./comum";
+import { Contador, FaixaAviso, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
 import { Tutorial } from "./Tutorial";
 import { InstalarApp } from "../InstalarApp";
 
@@ -45,19 +48,28 @@ function Iniciais({ nome }: { nome: string }) {
 export function EstoqueDoDia({
   doces,
   campanhas,
+  horarios,
+  salvamento,
+  hoje: hojeDoServidor,
   pessoa,
   demo,
   semPermissao,
 }: {
   doces: Doce[];
   campanhas: Campanha[];
+  horarios: Horarios;
+  // Última vez que alguém salvou as quantidades (null no modo demonstração).
+  salvamento: Salvamento | null;
+  hoje: string;
   pessoa: PessoaNoPainel;
   demo: boolean;
   // Explicação de quem tentou abrir uma parte do painel que o papel não permite.
   semPermissao: string | null;
 }) {
-  const hoje = useHoje();
+  const hoje = useHoje(hojeDoServidor);
   const [avisoTopo, , mostrarResultado] = useAviso();
+  const [confirmacao, perguntar] = useConfirmacao();
+  const [saindo, iniciarSaida] = useTransition();
   const [avisoFechado, setAvisoFechado] = useState(false);
   const aviso = avisoFechado ? null : semPermissao;
   const [salvando, iniciar] = useTransition();
@@ -84,19 +96,38 @@ export function EstoqueDoDia({
   }, [demo, pessoa.tutorialVisto]);
 
   const editaDoces = pode(pessoa, "equipe");
-  const comQuantidade = doces.map((d) => ({ ...d, quantidadeHoje: quantidades[d.id] ?? 0 }));
+  // As quantidades da tela são as que vão ser salvas para hoje.
+  const comQuantidade = doces.map((d) => ({ ...d, quantidadeHoje: quantidades[d.id] ?? 0, dataQuantidade: hoje }));
   const ativos = comQuantidade.filter((d) => d.ativo);
-  const naVitrine = ativos.filter((d) => estoqueDoDoce(d).disponivel).length;
+  const naVitrine = ativos.filter((d) => estoqueDoDoce(d, hoje).disponivel).length;
   const esgotados = ativos.length - naVitrine;
   const unidades = ativos.filter((d) => !d.sobEncomenda).reduce((t, d) => t + d.quantidadeHoje, 0);
   const destaque = doces.find((d) => d.id === destaqueId);
-  const campanha = hoje ? campanhasNoAr(campanhas, hoje)[0] : undefined;
+  const campanha = campanhasNoAr(campanhas, hoje)[0];
   // Quem cuida só do estoque vê só os doces que têm quantidade.
   const lista = editaDoces ? comQuantidade : comQuantidade.filter((d) => d.ativo && !d.sobEncomenda);
+
+  // Lembrete: a vitrine está mostrando a quantidade de outro dia (só em dia de atendimento).
+  const prontaEntrega = doces.filter((d) => d.ativo && !d.sobEncomenda);
+  const datasAntigas = prontaEntrega.map((d) => d.dataQuantidade).filter((data): data is string => data !== null && data < hoje);
+  const ultimaData = datasAntigas.sort().at(-1);
+  const lembrete = !demo && ultimaData && abreNoDia(horarios, hoje) ? ultimaData : null;
+  const salvoHoje = salvamento?.data === hoje ? salvamento : null;
+
+  // "Está igual a ontem": salva para hoje as mesmas quantidades do último dia salvo.
+  function igualAoUltimoDia() {
+    const ultimas = Object.fromEntries(prontaEntrega.map((d) => [d.id, d.quantidadeHoje]));
+    setQuantidades((q) => ({ ...q, ...ultimas }));
+    iniciar(async () => {
+      const resultado = await tentar(() => salvarEstoque(ultimas, null));
+      mostrarResultado(resultado, igualAoUltimoDia);
+    });
+  }
 
   return (
     <div className="pb-8">
       {avisoTopo}
+      {confirmacao}
       <FaixaDemo demo={demo} />
       <Tutorial papel={pessoa.papel} aberto={tutorialAberto} aoFechar={fecharTutorial} />
 
@@ -117,13 +148,16 @@ export function EstoqueDoDia({
         <div className="flex items-center gap-1 rounded-2xl border border-dourado/10 bg-cacau-900 py-1 pr-1 pl-1">
           <Link
             href="/painel/conta"
-            aria-label={`Minha conta: ${pessoa.nome}, ${nomeDoPapel(pessoa.papel)}`}
+            aria-label={`Minha conta e sair: ${pessoa.nome}, ${nomeDoPapel(pessoa.papel)}`}
             className="flex min-h-11 min-w-0 grow items-center gap-2.5 rounded-xl py-0.5 pr-1 pl-1.5 active:scale-[0.98]"
           >
             <Iniciais nome={pessoa.nome} />
             <div className="flex min-w-0 grow flex-col">
-              <span className="truncate text-[13px] font-semibold">{pessoa.nome}</span>
-              <span className="text-[11px] text-creme-400">{nomeDoPapel(pessoa.papel)}</span>
+              <span className="flex min-w-0 items-baseline gap-1.5">
+                <span className="truncate text-[13px] font-semibold">{pessoa.nome}</span>
+                <span className="shrink-0 text-[11px] text-creme-400">{nomeDoPapel(pessoa.papel)}</span>
+              </span>
+              <span className="truncate text-[11px] font-semibold text-dourado">Minha conta e sair</span>
             </div>
             <IconeSeta tamanho={16} className="shrink-0 text-creme-400" />
           </Link>
@@ -150,6 +184,21 @@ export function EstoqueDoDia({
       </header>
 
       <div className="flex flex-col gap-4 px-5 pt-3.5">
+        {lembrete && (
+          <div role="status" className="flex flex-col gap-3 rounded-2xl border border-pessego/40 bg-pessego/12 p-4 text-pessego">
+            <p className="text-sm leading-relaxed">
+              <strong>Você ainda não salvou hoje.</strong> A vitrine está mostrando o que tinha em {formatarDiaMes(lembrete)}.
+            </p>
+            <button
+              type="button"
+              disabled={salvando}
+              onClick={igualAoUltimoDia}
+              className="flex h-11 items-center justify-center rounded-full bg-pessego px-5 text-sm font-bold text-cacau-950 disabled:opacity-60"
+            >
+              {lembrete === somarDias(hoje, -1) ? "Está igual a ontem" : `Está igual ao dia ${formatarDiaMes(lembrete)}`}
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-2.5">
           <div className={cx(cartao, "flex flex-col gap-1 p-4")}>
             <span className="text-xs text-creme-400">Doces na vitrine</span>
@@ -194,6 +243,20 @@ export function EstoqueDoDia({
 
         {pode(pessoa, "admin") && (
           <Link
+            href="/painel/loja"
+            className={cx(cartao, "flex items-center gap-3 py-3.5 pr-3 pl-4 active:scale-[0.98]")}
+          >
+            <IconeLoja className="text-dourado" />
+            <div className="flex min-w-0 grow flex-col gap-0.5">
+              <span className="text-xs text-creme-400">Dados da loja</span>
+              <span className="text-[15px] font-bold">WhatsApp, horário e retirada</span>
+            </div>
+            <IconeSeta tamanho={20} className="text-creme-400" />
+          </Link>
+        )}
+
+        {pode(pessoa, "admin") && (
+          <Link
             href="/painel/acessos"
             className={cx(cartao, "flex items-center gap-3 py-3.5 pr-3 pl-4 active:scale-[0.98]")}
           >
@@ -221,11 +284,18 @@ export function EstoqueDoDia({
             Informe quantas unidades tem de cada doce. Chegou a zero, ele aparece como esgotado.
             {editaDoces && " Doce sob encomenda não tem quantidade. Toque no doce para editar a ficha."}
           </p>
+          {salvoHoje && (
+            <p className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-menta">
+              <IconeCheck tamanho={16} />
+              Salvo hoje às {salvoHoje.hora}
+              {salvoHoje.por && ` por ${salvoHoje.por}`}
+            </p>
+          )}
         </div>
 
         <ul className="flex flex-col gap-2">
           {lista.map((doce) => {
-            const estoque = estoqueDoDoce(doce);
+            const estoque = doce.sobEncomenda ? estoqueDoDoce(doce, hoje) : estoqueNoPainel(doce.quantidadeHoje);
             const ehDestaque = doce.id === destaqueId;
             const identificacao = (
               <>
@@ -304,6 +374,24 @@ export function EstoqueDoDia({
         >
           {salvando ? "Salvando…" : "Salvar o dia"}
         </button>
+
+        {!demo && (
+          <button
+            type="button"
+            disabled={saindo}
+            onClick={async () => {
+              const sim = await perguntar({
+                titulo: "Sair do painel neste celular?",
+                texto: "Para entrar de novo, você vai precisar do seu e-mail e da sua senha.",
+                confirmar: "Sair",
+              });
+              if (sim) iniciarSaida(() => sair());
+            }}
+            className="mt-4 flex h-12 items-center justify-center rounded-full border border-dourado/30 text-[15px] font-bold text-dourado disabled:opacity-50"
+          >
+            {saindo ? "Saindo…" : "Sair do painel"}
+          </button>
+        )}
       </div>
     </div>
   );

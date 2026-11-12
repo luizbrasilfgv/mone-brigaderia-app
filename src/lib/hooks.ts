@@ -1,14 +1,28 @@
 "use client";
 
 import { useCallback, useSyncExternalStore } from "react";
-import { dataISO } from "./regras";
+import { hojeNaLoja, minutoAtual } from "./horarios";
 
-const semAssinatura = () => () => {};
+// Confere o relógio de tempos em tempos e quando a tela volta a aparecer.
+function assinarRelogio(aviso: () => void) {
+  const timer = setInterval(aviso, 20_000);
+  document.addEventListener("visibilitychange", aviso);
+  return () => {
+    clearInterval(timer);
+    document.removeEventListener("visibilitychange", aviso);
+  };
+}
 
-// Data de hoje (AAAA-MM-DD) no aparelho da cliente. No servidor é null: a página é
-// gerada antes da visita, então o que depende do dia só aparece no navegador.
-export function useHoje(): string | null {
-  return useSyncExternalStore(semAssinatura, () => dataISO(new Date()), () => null);
+// "Agora" (arredondado no minuto). O servidor calcula na hora da visita e passa para a
+// tela; ao montar, o navegador usa o mesmo valor (sem quebrar a hidratação) e depois
+// segue o próprio relógio, para "Aberto agora" e a virada do dia com a página aberta.
+export function useAgora(agoraDoServidor: number): number {
+  return useSyncExternalStore(assinarRelogio, () => minutoAtual(), () => agoraDoServidor);
+}
+
+// Data de hoje (AAAA-MM-DD) no horário de Brasília, do mesmo jeito que useAgora.
+export function useHoje(hojeDoServidor: string): string {
+  return useSyncExternalStore(assinarRelogio, () => hojeNaLoja(), () => hojeDoServidor);
 }
 
 const CHAVE_FAVORITOS = "mone:favoritos";

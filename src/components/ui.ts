@@ -33,6 +33,7 @@ export const COR_ESTOQUE = {
   pouco: "text-rosa",
   esgotado: "text-creme-400",
   encomenda: "text-pessego",
+  confirmar: "text-creme-200",
 } as const;
 
 export const COR_SELO: Record<string, string> = {

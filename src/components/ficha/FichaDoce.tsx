@@ -3,10 +3,27 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useState, type ReactNode } from "react";
-import type { Doce } from "@/lib/tipos";
-import { LOJA } from "@/lib/loja";
-import { useFavoritos, useHoje } from "@/lib/hooks";
-import { datasDeEncomenda, estoqueDoDoce, formatarPreco, mensagemDoDoce, precoDoSabor, rotuloData } from "@/lib/regras";
+import type { Campanha, Doce } from "@/lib/tipos";
+import { LOJA, type DadosLoja } from "@/lib/loja";
+import { hojeNaLoja, situacaoDaLoja, temHorario } from "@/lib/horarios";
+import { useAgora, useFavoritos } from "@/lib/hooks";
+import {
+  campanhaDoDoce,
+  campanhasNoAr,
+  datasDeEncomenda,
+  encomendaAberta,
+  estoqueDoDoce,
+  formatarDiaMes,
+  formatarPreco,
+  limiteDoPedido,
+  mensagemDoDoce,
+  mensagemEncerrada,
+  mensagemOutroDia,
+  paraCampanha,
+  precoDoSabor,
+  rotuloData,
+  voltaDoDoce,
+} from "@/lib/regras";
 import { FolhaWhatsApp } from "../FolhaWhatsApp";
 import { IlustracaoDoce } from "../IlustracaoDoce";
 import {
@@ -20,18 +37,21 @@ import {
   IconeRelogio,
   IconeVoltar,
 } from "../Icones";
-import { botaoWhatsApp, cx, escolha, rotulo } from "../ui";
+import { botaoPrimario, botaoWhatsApp, cx, escolha, rotulo } from "../ui";
 
-function Alergenico({ contem, nome }: { contem: boolean; nome: string }) {
+// "Contém glúten", "Sem glúten" ou, quando o doce não leva mas a cozinha usa o
+// ingrediente, "Pode conter glúten".
+function Alergenico({ contem, pode, nome }: { contem: boolean; pode: boolean; nome: string }) {
+  const alerta = contem || pode;
   return (
     <span
       className={cx(
         "inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-[13px] font-semibold",
-        contem ? "border-rosa/45 text-rosa" : "border-dourado/45 text-dourado",
+        alerta ? "border-rosa/45 text-rosa" : "border-dourado/45 text-dourado",
       )}
     >
-      {contem ? <IconeAlerta tamanho={16} /> : <IconeCheck tamanho={16} />}
-      {contem ? `Contém ${nome}` : `Sem ${nome}`}
+      {alerta ? <IconeAlerta tamanho={16} /> : <IconeCheck tamanho={16} />}
+      {contem ? `Contém ${nome}` : pode ? `Pode conter ${nome}` : `Sem ${nome}`}
     </span>
   );
 }
@@ -45,28 +65,75 @@ function Info({ icone, texto }: { icone: ReactNode; texto: string }) {
   );
 }
 
-export function FichaDoce({ doce }: { doce: Doce }) {
-  const hoje = useHoje();
+// Aviso no meio da ficha quando não dá para pedir do jeito normal.
+function Faixa({ titulo, texto }: { titulo: string; texto?: string }) {
+  return (
+    <div role="status" className="flex items-start gap-2.5 rounded-2xl border border-pessego/40 bg-pessego/12 px-4 py-3 text-pessego">
+      <IconeRelogio tamanho={20} className="mt-0.5 shrink-0" />
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[15px] font-bold">{titulo}</span>
+        {texto && <span className="text-[13px] leading-snug">{texto}</span>}
+      </div>
+    </div>
+  );
+}
+
+// "e" antes do último: "leite, trigo e ovo"
+function juntar(itens: string[]): string {
+  return itens.length <= 1 ? (itens[0] ?? "") : `${itens.slice(0, -1).join(", ")} e ${itens.at(-1)}`;
+}
+
+type Folha = "pedido" | "outro-dia" | "encerrada";
+
+export function FichaDoce({
+  doce,
+  campanhas,
+  loja,
+  agora: agoraDoServidor,
+}: {
+  doce: Doce;
+  campanhas: Campanha[];
+  loja: DadosLoja;
+  // Momento da visita, calculado no servidor (minutoAtual).
+  agora: number;
+}) {
+  const agora = useAgora(agoraDoServidor);
+  const hoje = hojeNaLoja(agora);
   const { ids: favoritos, alternar } = useFavoritos();
   const [saborId, setSaborId] = useState(doce.sabores[0]?.id);
   const [quantidade, setQuantidade] = useState(1);
   const [data, setData] = useState<string | null>(null);
-  const [zapAberto, setZapAberto] = useState(false);
-  const fecharZap = useCallback(() => setZapAberto(false), []);
+  const [folha, setFolha] = useState<Folha | null>(null);
+  const fecharFolha = useCallback(() => setFolha(null), []);
+
+  const noAr = campanhasNoAr(campanhas, hoje);
+  // Doce "só em campanhas" sem campanha no ar: link antigo, fora de época.
+  const foraDeEpoca = doce.ondeAparece === "so_campanhas" && !noAr.some((c) => doce.campanhaIds.includes(c.id));
+  const campanha = campanhaDoDoce(doce, noAr);
+  const prazoCampanha = campanha && doce.sobEncomenda ? encomendaAberta(campanha, hoje) : null;
 
   const sabor = doce.sabores.find((s) => s.id === saborId);
   const preco = precoDoSabor(doce, sabor);
-  const estoque = estoqueDoDoce(doce);
-  const maximo = doce.sobEncomenda ? 99 : Math.max(doce.quantidadeHoje, 1);
+  const estoque = estoqueDoDoce(doce, hoje);
+  const maximo = limiteDoPedido(doce, hoje);
+  const qtd = Math.min(quantidade, maximo);
   const prazo = doce.prazoDias ?? 1;
-  const datas = hoje && doce.sobEncomenda ? datasDeEncomenda(prazo, hoje) : [];
+  const datas = doce.sobEncomenda ? datasDeEncomenda(prazo, hoje, loja.horarios, campanha?.fim) : [];
+  // Doce de campanha que não fica pronto antes de a campanha acabar.
+  const semTempo = Boolean(campanha && doce.sobEncomenda && prazoCampanha?.aberta && datas.length === 0);
+  const encerrada = Boolean(prazoCampanha && !prazoCampanha.aberta);
   // Sem escolha, vale a primeira data possível.
-  const dataEscolhida = data === "outra" ? null : (data ?? datas[0] ?? null);
+  const dataEscolhida = data === "outra" ? null : data && datas.includes(data) ? data : (datas[0] ?? null);
   const favorito = favoritos.has(doce.id);
   const foto = doce.fotos[0];
+  const podePedir = !foraDeEpoca && !encerrada && !semTempo && estoque.disponivel;
+  const noLimite = podePedir && qtd >= maximo;
+  // "Pedir 6 · R$ 54,00", "Encomendar · R$ 120,00"
+  const textoDoBotao = `${doce.sobEncomenda ? "Encomendar" : "Pedir"}${qtd > 1 ? ` ${qtd}` : ""} · ${formatarPreco(preco * qtd)}`;
+  const tracos = loja.tracos.filter((t) => !(t === "trigo" && doce.contemGluten) && !(t === "leite" && doce.contemLactose));
 
   return (
-    <div className="mx-auto min-h-dvh max-w-md pb-28">
+    <div className={cx("mx-auto min-h-dvh max-w-md", noLimite ? "pb-36" : "pb-28")}>
       <div className="relative">
         <div className="fundo-vitrine relative flex h-[400px] items-center justify-center overflow-hidden">
           {foto ? (
@@ -98,42 +165,48 @@ export function FichaDoce({ doce }: { doce: Doce }) {
       </div>
 
       <div className="relative -mt-7 flex flex-col gap-5 rounded-t-[30px] bg-cacau-950 px-5 pt-6 pb-7">
-        <div className="flex flex-wrap gap-2">
-          {doce.sobEncomenda ? (
-            <>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-pessego px-2.5 py-1 text-[11px] font-bold text-cacau-900">
-                <IconeRelogio tamanho={13} strokeWidth={2.2} />
-                Sob encomenda
-              </span>
-              <span className="rounded-full border border-pessego/40 px-2.5 py-1 text-[11px] font-bold text-pessego">
-                Fica pronto em {prazo} {prazo === 1 ? "dia" : "dias"}
-              </span>
-            </>
-          ) : (
-            <>
-              {doce.selo === "mais_vendido" && (
-                <span className="rounded-full bg-dourado px-2.5 py-1 text-[11px] font-bold text-cacau-900">Mais vendido</span>
-              )}
-              {doce.selo === "novo" && (
-                <span className="rounded-full bg-creme px-2.5 py-1 text-[11px] font-bold text-cacau-900">Novo</span>
-              )}
-              {estoque.disponivel && (
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-menta/12 px-2.5 py-1 text-[11px] font-bold text-menta">
-                  <span className="size-1.5 animate-pulsa rounded-full bg-menta" />
-                  Feito hoje
+        {!foraDeEpoca && (
+          <div className="flex flex-wrap gap-2">
+            {doce.sobEncomenda ? (
+              <>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-pessego px-2.5 py-1 text-[11px] font-bold text-cacau-900">
+                  <IconeRelogio tamanho={13} strokeWidth={2.2} />
+                  Sob encomenda
                 </span>
-              )}
-              <span
-                className={cx(
-                  "rounded-full border px-2.5 py-1 text-[11px] font-bold",
-                  estoque.disponivel ? "border-dourado/35 text-dourado" : "border-creme-400/45 text-creme-400",
+                <span className="rounded-full border border-pessego/40 px-2.5 py-1 text-[11px] font-bold text-pessego">
+                  Fica pronto em {prazo} {prazo === 1 ? "dia" : "dias"}
+                </span>
+              </>
+            ) : (
+              <>
+                {doce.selo === "mais_vendido" && (
+                  <span className="rounded-full bg-dourado px-2.5 py-1 text-[11px] font-bold text-cacau-900">Mais vendido</span>
                 )}
-              >
-                {estoque.texto}
-              </span>
-            </>
-          )}
-        </div>
+                {doce.selo === "novo" && (
+                  <span className="rounded-full bg-creme px-2.5 py-1 text-[11px] font-bold text-cacau-900">Novo</span>
+                )}
+                {estoque.disponivel && estoque.deHoje && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-menta/12 px-2.5 py-1 text-[11px] font-bold text-menta">
+                    <span className="size-1.5 animate-pulsa rounded-full bg-menta" />
+                    Pronta entrega
+                  </span>
+                )}
+                <span
+                  className={cx(
+                    "rounded-full border px-2.5 py-1 text-[11px] font-bold",
+                    !estoque.disponivel
+                      ? "border-creme-400/45 text-creme-400"
+                      : estoque.deHoje
+                        ? "border-dourado/35 text-dourado"
+                        : "border-creme-200/40 text-creme-200",
+                  )}
+                >
+                  {estoque.texto}
+                </span>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-2">
           <h1 className="font-display text-[32px] leading-[1.05] font-semibold">{doce.nome}</h1>
@@ -145,7 +218,21 @@ export function FichaDoce({ doce }: { doce: Doce }) {
           <span className="text-[13px] text-creme-400">{doce.unidade}</span>
         </div>
 
-        {doce.sabores.length > 1 && (
+        {foraDeEpoca && <Faixa titulo={voltaDoDoce(doce, campanhas, hoje)} texto="Enquanto isso, veja o que tem hoje na vitrine." />}
+        {encerrada && campanha && (
+          <Faixa
+            titulo="Encomendas encerradas"
+            texto={`O último dia para encomendar foi ${formatarDiaMes(campanha.limiteEncomenda!)}. Pergunte no WhatsApp se ainda dá.`}
+          />
+        )}
+        {semTempo && campanha && (
+          <Faixa
+            titulo={`Não dá mais tempo ${paraCampanha(campanha)}`}
+            texto={`Este doce leva ${prazo} ${prazo === 1 ? "dia" : "dias"}. Pergunte no WhatsApp se ainda dá.`}
+          />
+        )}
+
+        {podePedir && doce.sabores.length > 1 && (
           <div role="group" aria-label="Sabor" className="flex flex-col gap-2.5">
             <span className={rotulo}>Sabor</span>
             <div className="flex flex-wrap gap-2">
@@ -164,7 +251,7 @@ export function FichaDoce({ doce }: { doce: Doce }) {
           </div>
         )}
 
-        {doce.sobEncomenda && datas.length > 0 && (
+        {podePedir && doce.sobEncomenda && datas.length > 0 && (
           <div role="group" aria-label="Para quando" className="flex flex-col gap-2.5">
             <span className={rotulo}>Para quando?</span>
             <div className="flex flex-wrap gap-2">
@@ -189,31 +276,38 @@ export function FichaDoce({ doce }: { doce: Doce }) {
               </button>
             </div>
             <span className="text-xs text-creme-400">
-              A primeira data já respeita o prazo de {prazo} {prazo === 1 ? "dia" : "dias"}.
+              A primeira data já respeita o prazo de {prazo} {prazo === 1 ? "dia" : "dias"}
+              {temHorario(loja.horarios) ? " e os dias em que a loja abre." : "."}
             </span>
+            {prazoCampanha?.urgente && <span className="text-xs font-bold text-pessego">{prazoCampanha.texto}</span>}
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-2.5">
-          {doce.sobEncomenda ? (
-            <>
-              <Info icone={<IconeRelogio />} texto="Feito na hora do pedido" />
-              <Info icone={<IconeCaixa />} texto={`Pronto em ${prazo} ${prazo === 1 ? "dia" : "dias"}`} />
-            </>
-          ) : (
-            <>
-              <Info icone={<IconeRelogio />} texto="Feito no dia" />
-              <Info icone={<IconeCaixa />} texto={estoque.texto} />
-            </>
-          )}
-        </div>
+        {!foraDeEpoca && (
+          <div className="grid grid-cols-2 gap-2.5">
+            {doce.sobEncomenda ? (
+              <>
+                <Info icone={<IconeRelogio />} texto="Feito na hora do pedido" />
+                <Info icone={<IconeCaixa />} texto={`Pronto em ${prazo} ${prazo === 1 ? "dia" : "dias"}`} />
+              </>
+            ) : (
+              <>
+                <Info icone={<IconeRelogio />} texto="Pronto para levar" />
+                <Info icone={<IconeCaixa />} texto={estoque.deHoje ? estoque.texto : "Confirme no WhatsApp se tem hoje"} />
+              </>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-col gap-2.5">
           <h2 className={rotulo}>Alergênicos</h2>
           <div className="flex flex-wrap gap-2">
-            <Alergenico contem={doce.contemGluten} nome="glúten" />
-            <Alergenico contem={doce.contemLactose} nome="lactose" />
+            <Alergenico contem={doce.contemGluten} pode={loja.tracos.includes("trigo")} nome="glúten" />
+            <Alergenico contem={doce.contemLactose} pode={loja.tracos.includes("leite")} nome="lactose" />
           </div>
+          {tracos.length > 0 && (
+            <p className="text-[13px] leading-snug text-creme-200">Pode conter traços de {juntar(tracos)}: a cozinha usa esses ingredientes.</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
@@ -227,53 +321,96 @@ export function FichaDoce({ doce }: { doce: Doce }) {
         </div>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex h-24 max-w-md items-center gap-3 border-t border-dourado/14 bg-cacau-950/88 px-5 pt-3.5 pb-6 backdrop-blur-lg">
-        <div className="flex h-[52px] items-center rounded-full border border-dourado/22">
-          <button
-            type="button"
-            aria-label="Diminuir quantidade"
-            onClick={() => setQuantidade((q) => Math.max(1, q - 1))}
-            className="flex size-11 items-center justify-center rounded-full active:scale-95"
-          >
-            <IconeMenos tamanho={18} />
-          </button>
-          <span aria-live="polite" className="min-w-[22px] text-center text-base font-bold">
-            {quantidade}
-          </span>
-          <button
-            type="button"
-            aria-label="Aumentar quantidade"
-            onClick={() => setQuantidade((q) => Math.min(maximo, q + 1))}
-            className="flex size-11 items-center justify-center rounded-full active:scale-95"
-          >
-            <IconeMais tamanho={18} />
-          </button>
-        </div>
-        {estoque.disponivel ? (
-          <button
-            type="button"
-            onClick={() => setZapAberto(true)}
-            className={`${botaoWhatsApp} h-[52px] grow text-[15px]`}
-          >
-            <IconeConversa tamanho={20} strokeWidth={2} />
-            {doce.sobEncomenda ? "Encomendar" : "Pedir no WhatsApp"}
-          </button>
-        ) : (
-          <span className="flex h-[52px] grow items-center justify-center rounded-full bg-cacau-800 text-[15px] font-bold text-creme-400">
-            Esgotado hoje
-          </span>
+      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto flex max-w-md flex-col gap-2 border-t border-dourado/14 bg-cacau-950/88 px-5 pt-3.5 pb-6 backdrop-blur-lg">
+        {noLimite && (
+          <p role="status" className="text-center text-xs font-semibold text-pessego">
+            Para mais unidades, combine no WhatsApp.
+          </p>
         )}
+        <div className="flex h-[52px] items-center gap-3">
+          {foraDeEpoca ? (
+            <Link href="/" className={cx(botaoPrimario, "h-[52px] text-[15px]")}>
+              Ver o que tem hoje
+            </Link>
+          ) : encerrada || semTempo || !estoque.disponivel ? (
+            <button
+              type="button"
+              onClick={() => setFolha(estoque.disponivel ? "encerrada" : "outro-dia")}
+              className="flex h-[52px] grow items-center justify-center gap-2 rounded-full border-[1.5px] border-dourado text-[15px] font-bold text-dourado active:scale-[0.97]"
+            >
+              <IconeConversa tamanho={20} strokeWidth={2} />
+              {estoque.disponivel ? "Perguntar no WhatsApp" : "Esgotou hoje · Pedir para outro dia"}
+            </button>
+          ) : (
+            <>
+              <div className="flex h-[52px] shrink-0 items-center rounded-full border border-dourado/22 pl-3.5">
+                <span aria-hidden="true" className="text-xs font-semibold text-creme-400">
+                  Qtd.
+                </span>
+                <button
+                  type="button"
+                  aria-label="Diminuir quantidade"
+                  onClick={() => setQuantidade(Math.max(1, qtd - 1))}
+                  className="flex size-11 items-center justify-center rounded-full active:scale-95"
+                >
+                  <IconeMenos tamanho={18} />
+                </button>
+                <span aria-live="polite" aria-atomic="true" className="min-w-[22px] text-center text-base font-bold">
+                  <span className="sr-only">Quantidade: </span>
+                  {qtd}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Aumentar quantidade"
+                  aria-disabled={noLimite}
+                  onClick={() => setQuantidade(Math.min(maximo, qtd + 1))}
+                  className={cx("flex size-11 items-center justify-center rounded-full active:scale-95", noLimite && "opacity-40")}
+                >
+                  <IconeMais tamanho={18} />
+                </button>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFolha("pedido")}
+                className={cx(
+                  botaoWhatsApp,
+                  "h-[52px] min-w-0 grow px-3 whitespace-nowrap",
+                  textoDoBotao.length > 24 ? "text-[13px]" : "text-[15px]",
+                )}
+              >
+                {/* Em celular estreito, texto comprido perde o ícone para caber. */}
+                {textoDoBotao.length <= 18 && <IconeConversa tamanho={20} strokeWidth={2} className="shrink-0" />}
+                {textoDoBotao}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <FolhaWhatsApp
-        aberta={zapAberto}
-        aoFechar={fecharZap}
-        mensagem={mensagemDoDoce({ nomeLoja: LOJA.nome, doce, sabor, quantidade, data: dataEscolhida })}
-        explicacao={
-          doce.sobEncomenda
-            ? "A conversa abre com a encomenda e a data já escritas. É só tocar em enviar."
-            : "A conversa abre com o pedido já escrito. É só tocar em enviar."
-        }
+        aberta={folha !== null}
+        aoFechar={fecharFolha}
+        loja={loja}
+        situacao={situacaoDaLoja(loja.horarios, agora)}
+        {...(folha === "outro-dia"
+          ? {
+              titulo: "Pedir para outro dia",
+              mensagem: mensagemOutroDia(LOJA.nome, doce),
+              explicacao: "Escreva no fim da mensagem o dia que você quer. A Mone responde se consegue fazer.",
+            }
+          : folha === "encerrada" && campanha
+            ? {
+                titulo: "Perguntar no WhatsApp",
+                mensagem: mensagemEncerrada(LOJA.nome, campanha, doce),
+                explicacao: "A conversa abre com a pergunta pronta. A Mone responde se ainda consegue fazer.",
+              }
+            : {
+                mensagem: mensagemDoDoce({ nomeLoja: LOJA.nome, doce, sabor, quantidade: qtd, data: dataEscolhida }),
+                explicacao: doce.sobEncomenda
+                  ? "A conversa abre com a encomenda e a data já escritas. A Mone responde confirmando o pedido e o total, e vocês combinam a retirada ou a entrega."
+                  : "A conversa abre com o pedido já escrito. A Mone responde confirmando o pedido e o total, e vocês combinam a retirada ou a entrega.",
+                dica: "Quer outro sabor ou mais doces? É só escrever na conversa.",
+              })}
       />
     </div>
   );

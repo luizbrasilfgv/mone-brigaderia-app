@@ -74,6 +74,10 @@ Uma linha por doce e por dia guarda o histórico do que foi produzido. Vale a li
 | doce_id | texto | chave junto com `data` |
 | data | data | |
 | quantidade | inteiro | 0 = esgotado |
+| atualizado_em | data e hora (UTC), opcional | quando foi salva ("Salvo hoje às 9:12") |
+| atualizado_por | texto | nome de quem salvou |
+
+A vitrine compara a `data` da linha mais recente com hoje: se não for de hoje, mostra "Pronta entrega · confirme no WhatsApp", sem número. As duas colunas novas entram pela migração `banco/migracoes/005-hora-do-estoque.sql`.
 
 ### campanhas
 
@@ -116,6 +120,19 @@ Quem pode entrar no painel. Cada pessoa entra com o próprio e-mail e a própria
 | ativo | booleano | remover o acesso grava 0 (o histórico fica) |
 | tutorial_visto | booleano | o guia "Como usar" não abre mais sozinho |
 | ultimo_acesso | data e hora | atualizado no máximo uma vez por dia |
+
+### loja
+
+Uma linha só (`id = 1`), editada em **Painel › Dados da loja**. Criada pela migração `banco/migracoes/004-dados-da-loja.sql` com os padrões. Sem banco, o app usa os mesmos padrões (`src/lib/loja.ts`).
+
+| Coluna | Tipo | Observação |
+| --- | --- | --- |
+| id | inteiro | sempre 1 |
+| whatsapp | texto | 55 + DDD + número, só dígitos (padrão `5521980631673`) |
+| horario_dom … horario_sab | texto | `09:00-18:00`; vazio = fechado. Todos vazios = a vitrine não mostra horário |
+| retirada, entrega, pagamento | texto | só informam; vazio = não aparece |
+| tracos | texto | ingredientes da cozinha separados por vírgula: leite, trigo, ovo, castanhas, amendoim, soja |
+| atualizado_em | data e hora | |
 
 ### tentativas_login
 

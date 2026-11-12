@@ -8,21 +8,24 @@ Preços, sabores, quantidades e textos que aparecem no mockup são exemplos. Só
 
 ### Vitrine (cliente)
 
-- Banner da campanha ativa no topo (exemplo: "Natal Mone · Encomendas até 20/12"), com botão que filtra os doces da campanha.
+- No topo, "Aberto agora · até 18h" ou "Fechado · abre amanhã às 9h", pelo horário de cada dia em Dados da loja (horário de Brasília). Sem horário cadastrado, não aparece.
+- Banner da campanha ativa (o mesmo componente da prévia do painel): a frase e, embaixo, o prazo ("Encomende até 20/12", "Faltam 3 dias para encomendar", "Encomendas encerradas"), com botão que filtra os doces da campanha. Campanha sem doce na vitrine não ganha chip nem botão.
 - Destaque da semana (carro-chefe).
 - Categorias em chips: Todos, campanha ativa, Brigadeiros, Palhas, Bolos de pote, Caixas e kits.
-- Duas seções: **Itens fresquinhos** (prontos hoje) e **Sob encomenda** (feitos com prazo).
-- Cartão de cada doce: foto, nome, preço, situação do estoque, etiqueta "Sem glúten" quando for o caso, selo (Novo, Mais vendido, Últimas unidades, campanha) e botão de favorito.
+- Duas seções: **Pronta entrega hoje** ("Pronta entrega" quando a quantidade não foi salva hoje) e **Sob encomenda** (feitos com prazo).
+- Cartão de cada doce: foto, nome, preço, situação do estoque, etiqueta "Sem glúten" quando for o caso (e a cozinha não usa trigo), selo (Novo, Mais vendido, Últimas unidades, campanha) e botão de favorito. Esgotado mostra "Peça para amanhã".
+- **Como funciona** no rodapé: retirada, entrega, pagamento e horário (só o que estiver preenchido em Dados da loja), o botão "Falar com a Mone no WhatsApp" e o número com DDD, que abre a conversa.
 - Aba Favoritos.
 - Botão **Encomendar** que abre o WhatsApp com uma mensagem pronta.
 
 ### Ficha do doce (cliente)
 
 - Fotos, nome, descrição, preço, sabores.
-- Alergênicos: contém ou não glúten, contém ou não lactose.
+- Alergênicos: contém ou não glúten, contém ou não lactose ("Pode conter" quando a cozinha usa trigo ou leite) e "Pode conter traços de…" com os ingredientes da cozinha.
 - Composição e conservação.
-- Quantidade disponível hoje.
-- Botão **Pedir no WhatsApp**: a mensagem já vai com doce, sabor, quantidade e valor. Para doce sob encomenda, vai também a data escolhida.
+- Situação do estoque em faixas, sem o número.
+- Quantidade com o rótulo "Qtd." e o botão com o total (**Pedir 6 · R$ 54,00**): a mensagem já vai com doce, sabor, quantidade e valor. Para doce sob encomenda, vai também a data escolhida (só dias em que a loja abre). No limite do dia: "Para mais unidades, combine no WhatsApp". A folha do WhatsApp mostra a mensagem, o "Como funciona" e, com a loja fechada, quando ela abre.
+- Sem beco sem saída: esgotado vira **Esgotou hoje · Pedir para outro dia**; doce só de campanha fora de época diz quando volta e leva para "Ver o que tem hoje"; doce de campanha com as encomendas encerradas (ou sem tempo de ficar pronto) oferece "Perguntar no WhatsApp".
 
 ### Painel da dona
 
@@ -45,28 +48,35 @@ Entrada em `/entrar` com o e-mail e a senha de cada pessoa. Só entra quem estiv
 | Estoque | Só as quantidades do dia |
 
 
-- **O que tem hoje:** quantidade de cada doce no dia, com − e +. Escolha do destaque da vitrine. Totais de doces na vitrine, esgotados e unidades.
+- **O que tem hoje:** quantidade de cada doce no dia, com − e +. Escolha do destaque da vitrine. Totais de doces na vitrine, esgotados e unidades. Em dia de atendimento, se ninguém salvou hoje, a faixa "Você ainda não salvou hoje" com o botão "Está igual a ontem" (salva as mesmas quantidades num toque). Depois de salvar: "Salvo hoje às 9:12 por Ana".
+- **Dados da loja** (só Administração): WhatsApp que recebe os pedidos (vale para todos os botões de WhatsApp do app), horário de cada dia (fechado, ou abre e fecha), retirada, entrega, pagamento e ingredientes usados na cozinha. Fica no banco e muda na hora, sem publicar de novo.
 - **Ficha do doce:** fotos, nome, preço, descrição, sabores, glúten e lactose (sim ou não), composição, conservação, selo, campanhas, sob encomenda com prazo de preparo, quantidade de hoje e se o doce está na vitrine. Mostra uma prévia de como o doce aparece na vitrine.
 - **Campanhas:** lista das campanhas no ar, próximas e encerradas. Criar e editar campanha:
-  - datas prontas: Natal, Páscoa, Dia das Mães, Dia dos Namorados, Dia do Chocolate, Dia dos Pais, ou outra data qualquer;
-  - nome, início, fim, último dia para encomendar, frase do banner, cor do banner;
-  - doces da campanha: doces do cardápio ou doces criados só para a campanha;
-  - prévia do banner.
+  - datas prontas: Natal, Páscoa, Dia das Mães, Dia dos Namorados, Dia do Chocolate, Dia dos Pais, ou outra data qualquer. Se já existe campanha do tipo para a próxima data, o modelo vira "Já criada · abrir";
+  - o tipo fica fixo no formulário; "Mudar tipo" muda só o tipo e pergunta se quer usar os textos e as datas do modelo;
+  - nome, início, fim, último dia para encomendar (entre o começo e o fim), frase do banner (até 60 letras), cor do banner;
+  - doces da campanha: doces do cardápio ou doces criados só para a campanha. Salvar sem nenhum doce pede confirmação;
+  - prévia do banner, igual à da vitrine;
+  - pausar uma campanha no ar pede confirmação.
 
 ### Extra: modo balcão
 
-Tela para TV ou tablet na loja que mostra os doces em sequência, com QR Code para a cliente pedir pelo celular.
+Tela para TV ou tablet na loja que mostra os doces em sequência, com QR Code para quem compra pedir pelo celular (aponta para o endereço público, `SITE_URL`, com o endereço escrito embaixo). Atualiza sozinha a cada 3 minutos. Sem doce disponível, mostra a logo, o QR e "Encomende pelo WhatsApp (21) 98063-1673".
 
 ## Regras de negócio
 
 | Situação | O que a vitrine mostra |
 | --- | --- |
-| Quantidade 0 | "Esgotado", cartão apagado |
-| Quantidade de 1 a 3 | "Só restam N" e selo "Últimas unidades" automático |
-| Quantidade acima de 3 | "N disponíveis hoje" |
+| Quantidade de hoje 0 | "Esgotado", cartão apagado, "Peça para amanhã" |
+| Quantidade de hoje de 1 a 3 | "Últimas unidades" (faixa e selo automático) |
+| Quantidade de hoje acima de 3 | "Tem hoje" |
+| Quantidade salva em outro dia | "Pronta entrega · confirme no WhatsApp", sem número (a ficha deixa pedir até 20) |
 | Sob encomenda | "Sob encomenda · N dias". Não tem quantidade e nunca fica esgotado |
 
-- **Sob encomenda:** a primeira data que a cliente pode escolher é hoje mais o prazo de preparo.
+O número exato só aparece no painel.
+
+- **Sob encomenda:** a primeira data que quem compra pode escolher é hoje mais o prazo de preparo, pulando os dias em que a loja não abre.
+- **Prazo da campanha:** depois do último dia para encomendar, os doces sob encomenda só da campanha não aceitam mais pedido. As datas de encomenda não passam do fim da campanha.
 - **Campanha:** fica no ar entre a data de início e a de fim, a menos que a dona pause.
 - **Doce e campanhas:** um doce pode estar em várias campanhas. Na ficha, a dona escolhe se ele aparece "o ano todo" ou "só em campanhas". Um doce "só em campanhas" só aparece na vitrine enquanto alguma das campanhas dele estiver no ar.
 - **WhatsApp:** a encomenda abre uma conversa com o número da loja e a mensagem preenchida. Nada é gravado no app na fase 1.
