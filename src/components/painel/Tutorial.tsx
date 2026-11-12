@@ -86,7 +86,7 @@ const PASSOS: Passo[] = [
       "Quem compra monta a sacola na vitrine e manda o pedido com número, itens e total. Responda em cima da mensagem confirmando o número e o total, e combine retirada ou entrega, dia, horário e pagamento. A quantidade do dia não baixa sozinha: depois de confirmar, ajuste em O que tem hoje ou toque em Esgotou. Respostas prontas: veja o guia.",
     icone: <IconeConversa tamanho={40} />,
     minimo: "equipe",
-    link: { href: "/guia", rotulo: "Abrir o guia da loja" },
+    link: { href: "/guia#respostas", rotulo: "Ver as respostas prontas" },
   },
 ];
 
@@ -161,6 +161,11 @@ export function Tutorial({ papel, aberto, aoFechar }: { papel: Papel; aberto: bo
             {ultimo ? "Começar" : "Próximo"}
           </button>
         </div>
+        {ultimo && (
+          <Link href="/guia" onClick={fechar} className="-mt-2 inline-flex min-h-11 items-center text-sm font-bold text-dourado underline underline-offset-4">
+            Ver o guia completo
+          </Link>
+        )}
       </div>
     </div>
   );

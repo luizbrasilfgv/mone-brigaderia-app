@@ -1,10 +1,17 @@
 import { Fragment } from "react";
 import { cx } from "../ui";
 
-// O recibo como aparece no WhatsApp: balão pêssego e *texto* em negrito.
-export function BalaoDoPedido({ mensagem, className }: { mensagem: string; className?: string }) {
+// O recibo como aparece no WhatsApp: balão pêssego (de quem envia) ou creme (de quem
+// recebe, no guia da loja) e *texto* em negrito.
+export function BalaoDoPedido({ mensagem, recebido, className }: { mensagem: string; recebido?: boolean; className?: string }) {
   return (
-    <p className={cx("rounded-[18px] rounded-br-[4px] bg-pessego px-3.5 py-3 text-sm leading-normal break-words whitespace-pre-wrap text-cacau-900", className)}>
+    <p
+      className={cx(
+        "rounded-[18px] px-3.5 py-3 text-sm leading-normal break-words whitespace-pre-wrap text-cacau-900",
+        recebido ? "rounded-bl-[4px] bg-creme" : "rounded-br-[4px] bg-pessego",
+        className,
+      )}
+    >
       {mensagem.split("\n").map((linha, i) => (
         <Fragment key={i}>
           {i > 0 && <br />}
