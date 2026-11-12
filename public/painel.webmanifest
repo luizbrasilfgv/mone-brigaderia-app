@@ -1,0 +1,30 @@
+{
+  "id": "/painel",
+  "name": "Painel Mone Brigaderia",
+  "short_name": "Painel Mone",
+  "description": "Painel da loja: o que tem hoje, doces, campanhas e acessos.",
+  "lang": "pt-BR",
+  "start_url": "/painel",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#1c0d08",
+  "theme_color": "#1c0d08",
+  "icons": [
+    {
+      "src": "/icones/icone-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icones/icone-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icones/icone-mascara-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

@@ -1,16 +1,22 @@
-// Gera banco/dados-exemplo.sql a partir de src/lib/dados-exemplo.ts.
-// Uso: npm run banco:exemplo
+// Gera banco/dados-iniciais.sql: o que um banco novo recebe na primeira vez.
+// Vão as categorias e só os doces reais da loja (por enquanto, a palha italiana
+// com a foto de verdade). Os outros doces de src/lib/dados-exemplo.ts servem só
+// para o modo demonstração, sem banco.
+// Uso: npm run banco:iniciais
 
 import { writeFileSync } from "node:fs";
-import { campanhas, categorias, doces } from "../src/lib/dados-exemplo.ts";
+import { categorias, doces as todosOsDoces } from "../src/lib/dados-exemplo.ts";
+
+const DOCES_REAIS = ["palha-italiana"];
+const doces = todosOsDoces.filter((d) => DOCES_REAIS.includes(d.id));
 
 const texto = (v: string | null | undefined) => (v == null ? "NULL" : `'${v.replace(/\\/g, "\\\\").replace(/'/g, "''")}'`);
 const numero = (v: number | null | undefined) => (v == null ? "NULL" : String(Math.trunc(v)));
 const bool = (v: boolean) => (v ? "1" : "0");
 
 const linhas: string[] = [
-  "-- Dados de exemplo do mockup (gerado por scripts/gerar-dados-exemplo-sql.ts; não edite à mão).",
-  "-- O app carrega estes dados sozinho num banco vazio. Preços e textos são exemplos para a dona revisar.",
+  "-- Dados iniciais (gerado por scripts/gerar-dados-iniciais-sql.ts; não edite à mão).",
+  "-- O app carrega estes dados sozinho num banco vazio: as categorias e a palha italiana.",
   "",
 ];
 
@@ -58,28 +64,5 @@ doces.forEach((d, i) => {
   }
 });
 
-for (const c of campanhas) {
-  linhas.push(
-    `INSERT INTO campanhas (id, tipo, nome, inicio, fim, limite_encomenda, frase_banner, cor, pausada, rascunho) VALUES (${[
-      texto(c.id),
-      texto(c.tipo),
-      texto(c.nome),
-      texto(c.inicio),
-      texto(c.fim),
-      texto(c.limiteEncomenda),
-      texto(c.fraseBanner),
-      texto(c.cor),
-      bool(c.pausada),
-      bool(c.rascunho),
-    ].join(", ")});`,
-  );
-}
-
-for (const d of doces) {
-  for (const id of d.campanhaIds) {
-    linhas.push(`INSERT INTO campanha_doces (campanha_id, doce_id) VALUES (${texto(id)}, ${texto(d.id)});`);
-  }
-}
-
-writeFileSync(new URL("../banco/dados-exemplo.sql", import.meta.url), linhas.join("\n") + "\n");
-console.log(`banco/dados-exemplo.sql: ${linhas.length - 3} comandos`);
+writeFileSync(new URL("../banco/dados-iniciais.sql", import.meta.url), linhas.join("\n") + "\n");
+console.log(`banco/dados-iniciais.sql: ${linhas.length - 3} comandos`);

@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS campanha_doces (
   CONSTRAINT fk_cd_doce FOREIGN KEY (doce_id) REFERENCES doces (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Quem pode entrar no painel (login com Google). papel: admin (tudo, inclusive
+-- Quem pode entrar no painel (e-mail + senha da loja, ou Google se configurado). papel: admin (tudo, inclusive
 -- acessos), equipe (doces, campanhas e quantidades) ou estoque (só quantidades).
 CREATE TABLE IF NOT EXISTS usuarios (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -96,4 +96,10 @@ CREATE TABLE IF NOT EXISTS usuarios (
   criado_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ultimo_acesso TIMESTAMP NULL,
   UNIQUE KEY usuarios_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ajustes de dados já aplicados (arquivos de banco/migracoes). Cada um roda uma vez só.
+CREATE TABLE IF NOT EXISTS migracoes (
+  nome VARCHAR(190) NOT NULL PRIMARY KEY,
+  aplicada_em TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

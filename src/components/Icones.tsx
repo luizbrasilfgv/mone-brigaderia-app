@@ -140,3 +140,18 @@ export const IconeLixo = (p: Props) => (
     <path d="M6 7l1 13h10l1-13" />
   </Base>
 );
+
+export const IconeCelular = (p: Props) => (
+  <Base {...p}>
+    <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+    <path d="M10.5 18.5h3" />
+  </Base>
+);
+
+export const IconeCompartilhar = (p: Props) => (
+  <Base {...p}>
+    <path d="M12 15V3" />
+    <path d="m7.5 7.5 4.5-4.5 4.5 4.5" />
+    <path d="M7 11H5.5v10h13V11H17" />
+  </Base>
+);

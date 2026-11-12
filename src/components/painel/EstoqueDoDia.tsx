@@ -16,6 +16,7 @@ import { IconeAjuda, IconeCalendario, IconeEstrela, IconeMais, IconePessoas, Ico
 import { COR_ESTOQUE, botaoPrimario, cartao, cx } from "../ui";
 import { Contador, FaixaDemo, useAviso } from "./comum";
 import { Tutorial } from "./Tutorial";
+import { InstalarApp } from "../InstalarApp";
 
 // No modo demonstração não há conta: lembra no navegador que o guia já foi visto.
 const CHAVE_TUTORIAL = "mone:tutorial-visto";
@@ -189,6 +190,8 @@ export function EstoqueDoDia({
             <IconeSeta tamanho={20} className="text-creme-400" />
           </Link>
         )}
+
+        <InstalarApp variante="cartao" nome="o painel" />
 
         {editaDoces && (
           <Link href="/painel/doces/novo" className={cx(botaoPrimario, "h-[52px] text-[15px]")}>

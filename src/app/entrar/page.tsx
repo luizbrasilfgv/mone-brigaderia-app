@@ -9,7 +9,12 @@ import { googleConfigurado, senhaConfigurada, usuarioAtual } from "@/lib/auth";
 import { LOJA } from "@/lib/loja";
 import { FormularioSenha } from "./FormularioSenha";
 
-export const metadata: Metadata = { title: "Entrar no painel" };
+export const metadata: Metadata = {
+  title: "Entrar no painel",
+  // Quem instala o app a partir daqui ganha o app do painel, não o da vitrine.
+  manifest: "/painel.webmanifest",
+  appleWebApp: { capable: true, title: "Painel Mone", statusBarStyle: "black-translucent" },
+};
 
 const ERROS: Record<string, string> = {
   "sem-acesso": "Esse e-mail do Google não tem acesso ao painel. Peça para a administradora adicionar você em Acessos.",

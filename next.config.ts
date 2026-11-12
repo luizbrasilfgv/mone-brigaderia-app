@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // Leva junto os arquivos que o app usa para criar as tabelas num banco vazio.
   outputFileTracingIncludes: {
-    "/**": ["./banco/*.sql"],
+    "/**": ["./banco/**/*.sql"],
   },
   // Ler a pasta banco/ a partir de process.cwd() faz o rastreador puxar o projeto
   // inteiro; o servidor não precisa do código-fonte, da documentação nem do mockup.

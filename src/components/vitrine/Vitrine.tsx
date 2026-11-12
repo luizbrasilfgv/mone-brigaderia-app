@@ -17,6 +17,7 @@ import {
   seloDoDoce,
 } from "@/lib/regras";
 import { FolhaWhatsApp } from "../FolhaWhatsApp";
+import { InstalarApp } from "../InstalarApp";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeCasa, IconeConversa, IconeCoracao } from "../Icones";
 import { cx } from "../ui";
@@ -82,7 +83,8 @@ export function Vitrine({
   const chips = [
     { id: "todos", nome: "Todos" },
     ...noAr.map((c) => ({ id: `campanha:${c.id}`, nome: nomeCurto(c) })),
-    ...categorias.map((c) => ({ id: c.id, nome: c.nome })),
+    // Só as categorias que têm algum doce na vitrine agora.
+    ...categorias.filter((c) => visiveis.some((d) => d.categoriaId === c.id)).map((c) => ({ id: c.id, nome: c.nome })),
   ];
 
   const banner = noAr[0];
@@ -196,6 +198,12 @@ export function Vitrine({
         </>
       )}
 
+      {!soFavoritos && visiveis.length === 0 && (
+        <p className="mx-5 mt-4 rounded-[20px] border border-dashed border-dourado/28 p-6 text-center text-sm leading-relaxed text-creme-200">
+          Os doces de hoje ainda vão aparecer aqui. Enquanto isso, chame a gente no WhatsApp para encomendar.
+        </p>
+      )}
+
       {secoes.map((secao) => (
         <section key={secao.titulo} aria-label={secao.titulo}>
           <div className="flex items-baseline justify-between gap-3 px-5 pt-[18px] pb-3">
@@ -223,7 +231,8 @@ export function Vitrine({
       ))}
 
       {/* Entrada discreta para a equipe: painel, guia "Como usar" e Acessos. */}
-      <footer className="flex justify-center px-5 pt-10">
+      <footer className="flex flex-wrap items-center justify-center gap-x-2 px-5 pt-10">
+        <InstalarApp variante="link" nome="a Mone Brigaderia" />
         <Link href="/entrar" className="inline-flex min-h-11 items-center px-3 text-xs text-creme-400 underline underline-offset-4">
           Área da loja
         </Link>

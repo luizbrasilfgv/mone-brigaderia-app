@@ -9,7 +9,7 @@ const manrope = Manrope({ variable: "--font-manrope", subsets: ["latin"] });
 export const metadata: Metadata = {
   title: { default: LOJA.nome, template: `%s · ${LOJA.nome}` },
   description: "Brigadeiros, palha italiana e bolos de pote. Veja o que tem hoje e encomende pelo WhatsApp.",
-  appleWebApp: { title: "Mone", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "Mone", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "banco:exemplo": "node scripts/gerar-dados-exemplo-sql.ts"
+    "banco:iniciais": "node scripts/gerar-dados-iniciais-sql.ts"
   },
   "dependencies": {
     "mysql2": "^3.24.6",

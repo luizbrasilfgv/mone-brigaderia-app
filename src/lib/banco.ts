@@ -1,5 +1,5 @@
 import "server-only";
-import { readFile } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import mysql from "mysql2/promise";
 
@@ -28,7 +28,8 @@ export function configuracaoDoBanco(): mysql.PoolOptions {
 }
 
 // Ao iniciar: cria as tabelas que faltam (schema.sql só usa CREATE TABLE IF NOT
-// EXISTS) e, se o banco estiver vazio, carrega os doces de exemplo.
+// EXISTS), carrega os dados iniciais se o banco estiver vazio e aplica, uma vez
+// só, os ajustes de banco/migracoes (em ordem de nome).
 async function prepararBanco(): Promise<void> {
   const conexao = await mysql.createConnection({ ...configuracaoDoBanco(), multipleStatements: true });
   try {
@@ -36,8 +37,16 @@ async function prepararBanco(): Promise<void> {
     await conexao.query(await readFile(path.join(pasta, "schema.sql"), "utf8"));
     const [linhas] = await conexao.query("SELECT COUNT(*) AS total FROM categorias");
     if ((linhas as { total: number }[])[0].total === 0) {
-      await conexao.query(await readFile(path.join(pasta, "dados-exemplo.sql"), "utf8"));
-      console.log("[banco] dados de exemplo carregados");
+      await conexao.query(await readFile(path.join(pasta, "dados-iniciais.sql"), "utf8"));
+      console.log("[banco] dados iniciais carregados");
+    }
+    const migracoes = (await readdir(path.join(pasta, "migracoes"))).filter((nome) => nome.endsWith(".sql")).sort();
+    for (const nome of migracoes) {
+      const [feita] = await conexao.query("SELECT 1 FROM migracoes WHERE nome = ?", [nome]);
+      if ((feita as unknown[]).length > 0) continue;
+      await conexao.query(await readFile(path.join(pasta, "migracoes", nome), "utf8"));
+      await conexao.query("INSERT IGNORE INTO migracoes (nome) VALUES (?)", [nome]);
+      console.log(`[banco] ajuste aplicado: ${nome}`);
     }
   } finally {
     await conexao.end();
