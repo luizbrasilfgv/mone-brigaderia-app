@@ -322,7 +322,7 @@ export async function adicionarAcesso(email: string, papel: Papel): Promise<Resu
       "INSERT INTO usuarios (email, papel) VALUES (?, ?) ON DUPLICATE KEY UPDATE papel = VALUES(papel), ativo = 1",
       [limpo, papel],
     );
-    return { ok: true, mensagem: `Pronto! Peça para a pessoa entrar no painel com o Google usando ${limpo}.` };
+    return { ok: true, mensagem: `Pronto! Agora ${limpo} entra em Área da loja com esse e-mail e a senha da loja.` };
   } catch (erro) {
     return falha(erro);
   }

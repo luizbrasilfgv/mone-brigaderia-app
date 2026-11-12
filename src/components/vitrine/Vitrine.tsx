@@ -222,6 +222,13 @@ export function Vitrine({
         </section>
       ))}
 
+      {/* Entrada discreta para a equipe: painel, guia "Como usar" e Acessos. */}
+      <footer className="flex justify-center px-5 pt-10">
+        <Link href="/entrar" className="inline-flex min-h-11 items-center px-3 text-xs text-creme-400 underline underline-offset-4">
+          Área da loja
+        </Link>
+      </footer>
+
       <nav
         aria-label="Navegação principal"
         className="fixed inset-x-4 bottom-[18px] z-40 mx-auto grid h-[68px] max-w-[calc(28rem-2rem)] grid-cols-3 items-center rounded-[26px] border border-dourado/16 bg-cacau-900/72 shadow-2xl backdrop-blur-lg"

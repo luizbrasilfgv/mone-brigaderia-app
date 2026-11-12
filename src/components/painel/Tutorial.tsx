@@ -51,7 +51,7 @@ const PASSOS: Passo[] = [
   {
     titulo: "Acessos",
     texto:
-      "Libere o painel para quem trabalha com você pelo e-mail do Google e escolha o que cada pessoa pode fazer. Dá para tirar o acesso a qualquer momento.",
+      "Libere o painel para quem trabalha com você pelo e-mail e escolha o que cada pessoa pode fazer. Dá para tirar o acesso a qualquer momento.",
     icone: <IconePessoas tamanho={40} />,
     minimo: "admin",
   },

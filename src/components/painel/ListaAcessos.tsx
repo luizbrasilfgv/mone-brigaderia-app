@@ -42,14 +42,14 @@ export function ListaAcessos({ acessos, meuId, demo }: { acessos: Acesso[]; meuI
 
       <div className="flex flex-col gap-[22px] px-5 pt-3.5">
         <p className="text-[13px] leading-relaxed text-creme-200">
-          Cada pessoa entra com a própria conta do Google. Adicione o e-mail dela aqui e escolha o que ela pode fazer.
+          Adicione o e-mail da pessoa e escolha o que ela pode fazer. Ela entra em Área da loja com esse e-mail e a senha da loja.
         </p>
 
         <form onSubmit={adicionar} className={cx(cartao, "flex flex-col gap-3.5 p-4")}>
           <h2 className="font-display text-xl font-semibold">Adicionar pessoa</h2>
           <div className="flex flex-col gap-2">
             <label htmlFor="email" className={rotulo}>
-              E-mail do Google
+              E-mail
             </label>
             <input
               id="email"
