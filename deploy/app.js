@@ -107,12 +107,38 @@ function prepararVersao() {
   return destino;
 }
 
+// Copia tudo o que o app escreve (inclusive os erros) para registro.log, ao lado
+// deste arquivo: a hospedagem não guarda esses registros num lugar fácil de ver.
+function gravarRegistro() {
+  const arquivo = path.join(raiz, "registro.log");
+  try {
+    if (fs.statSync(arquivo).size > 5 * 1024 * 1024) fs.renameSync(arquivo, `${arquivo}.1`);
+  } catch {}
+  const saida = fs.createWriteStream(arquivo, { flags: "a" });
+  saida.on("error", () => {});
+  for (const fluxo of [process.stdout, process.stderr]) {
+    const original = fluxo.write.bind(fluxo);
+    fluxo.write = (pedaco, ...resto) => {
+      saida.write(pedaco);
+      return original(pedaco, ...resto);
+    };
+  }
+  console.log(`\n[app] iniciando em ${new Date().toISOString()}`);
+}
+
+gravarRegistro();
 carregarEnv();
 process.env.NODE_ENV = "production";
 // Hospedagens costumam definir HOSTNAME com o nome da máquina; o Next.js usaria
 // isso como endereço de escuta. A hospedagem (Passenger) cuida do resto.
 process.env.HOSTNAME = "0.0.0.0";
 
-const versao = prepararVersao();
-process.chdir(versao);
-require(path.join(versao, "server.js"));
+try {
+  const versao = prepararVersao();
+  process.env.MONE_VERSAO = path.basename(versao);
+  process.chdir(versao);
+  require(path.join(versao, "server.js"));
+} catch (erro) {
+  console.error("[app] não conseguiu iniciar:", erro);
+  throw erro;
+}

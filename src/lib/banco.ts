@@ -13,7 +13,7 @@ export function bancoConfigurado(): boolean {
 type Global = typeof globalThis & { __monePool?: mysql.Pool; __monePronto?: Promise<void> };
 const g = globalThis as Global;
 
-function config(): mysql.PoolOptions {
+export function configuracaoDoBanco(): mysql.PoolOptions {
   return {
     host: process.env.MYSQL_HOST || "localhost",
     port: Number(process.env.MYSQL_PORT || 3306),
@@ -30,7 +30,7 @@ function config(): mysql.PoolOptions {
 // Ao iniciar: cria as tabelas que faltam (schema.sql só usa CREATE TABLE IF NOT
 // EXISTS) e, se o banco estiver vazio, carrega os doces de exemplo.
 async function prepararBanco(): Promise<void> {
-  const conexao = await mysql.createConnection({ ...config(), multipleStatements: true });
+  const conexao = await mysql.createConnection({ ...configuracaoDoBanco(), multipleStatements: true });
   try {
     const pasta = path.join(process.cwd(), "banco");
     await conexao.query(await readFile(path.join(pasta, "schema.sql"), "utf8"));
@@ -52,7 +52,7 @@ export async function banco(): Promise<mysql.Pool> {
     });
   }
   await g.__monePronto;
-  g.__monePool ??= mysql.createPool(config());
+  g.__monePool ??= mysql.createPool(configuracaoDoBanco());
   return g.__monePool;
 }
 
