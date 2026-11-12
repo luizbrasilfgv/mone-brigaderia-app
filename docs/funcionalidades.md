@@ -54,21 +54,30 @@ Este documento descreve o que o app faz **hoje**, por tipo de usuário, e as reg
 ### Instalar e balcão
 
 - **Instalar o app**: a vitrine e o painel podem ser instalados no celular (PWA). No Android, o botão abre a instalação do Chrome; no iPhone, mostra o passo a passo do Safari. Some quando já está instalado. O painel instalado se chama "Painel Mone" e abre direto em `/painel`.
-- **Modo balcão** (`/balcao`): tela para TV ou tablet na loja que mostra os doces em sequência, com QR Code para o endereço público (`SITE_URL/?origem=balcao`) e o endereço escrito. Atualiza sozinha a cada 3 minutos. Sem doce disponível, mostra a logo, o QR e o WhatsApp.
+- **Modo balcão** (`/balcao`): tela para TV ou tablet na loja que mostra os doces em sequência, com QR Code para o endereço público (`SITE_URL/?origem=balcao`) e o endereço escrito. Atualiza sozinha a cada 3 minutos. Sem doce disponível, mostra a logo, o QR e o WhatsApp. Abre pelo Menu do painel (Tela do balcão, na mesma janela) e tem um botão pequeno "Painel", no canto de cima, para voltar.
+- **Sem digitar endereço**: o app instalado não tem barra de endereço (e, no iPhone, nem botão Voltar), então tudo tem caminho dentro do app. A tela de entrar tem "Ver a vitrine"; o guia tem Vitrine e Painel no topo e no fim; a página não encontrada leva à vitrine e, para quem entrou, ao painel; a página de erro tem "Tentar de novo", a vitrine e o painel. Só `/saude` (técnica) fica só por endereço.
 
 ## Todos do painel
 
 - **Entrar** (`/entrar`) com o e-mail e a senha de cada pessoa. Só entra quem a Administração cadastrou em Acessos. Campos com 16 px (sem zoom no iPhone), botão "Mostrar" e o e-mail que fica no erro.
-- **Primeiro acesso**: a senha provisória (palavra + 4 números, vale 7 dias) leva a **Crie sua senha** (`/painel/criar-senha`, pelo menos 8 letras ou números, sem exigir maiúscula ou símbolo). Só depois abre o painel e o guia **Como usar**.
-- **Como usar**: guia em passos que abre sozinho no primeiro acesso e depois pelo botão "Como usar". Mostra só o que o papel permite. No último passo, "Ver o guia completo" (`/guia`); no passo dos pedidos, "Ver as respostas prontas" (`/guia#respostas`).
-- **Guia da loja** (`/guia`): página pública, fora do Google, com o passo a passo de tudo (com prints reais), as 4 respostas prontas do WhatsApp com botão Copiar, as etiquetas sugeridas e como criar respostas rápidas no WhatsApp Business. Atalho no painel.
-- **Minha conta** (`/painel/conta`, tocando no próprio nome no alto do painel): nome, trocar senha (os outros aparelhos saem), sair deste celular e sair de todos os aparelhos.
+- **Menu** (em todas as telas do painel): botão "Menu" (três linhas + rótulo, 44 px) sempre no canto de cima, à direita, ao lado do Voltar. Abre uma folha (`<dialog>`: Esc fecha, o foco fica dentro e o fundo fica inerte) com as partes em quadrados, agrupadas e só com o que o papel permite:
+  - **Dia a dia**: O que tem hoje · Cadastrar novo doce (Equipe) · Campanhas (Equipe).
+  - **Loja**: Dados da loja (Administração) · Acessos (Administração) · Tela do balcão.
+  - **Ajuda**: Como usar · Guia da loja · Instalar no celular (some quando já instalado).
+  - **Conta**: Minha conta · Ver vitrine · Sair (pergunta "Sair do painel neste celular?").
+  - A tela atual fica marcada (`aria-current="page"`; nas telas de campanha, Campanhas). Tocar nela só fecha o Menu. Com alterações não salvas, os itens do Menu passam pela pergunta **Sair sem salvar?** e o Sair avisa que o que mudou se perde.
+  - Em **Crie sua senha**, o Menu tem só o mínimo: Guia da loja, Ver vitrine e Sair.
+- **Primeiro acesso**: a senha provisória (palavra + 4 números, vale 7 dias) leva a **Crie sua senha** (`/painel/criar-senha`, pelo menos 8 letras ou números, sem exigir maiúscula ou símbolo). Só depois abre o painel e o guia **Como usar**. O convite pelo WhatsApp leva o link para entrar e ensina Menu › Instalar no celular.
+- **Como usar**: guia em passos que abre sozinho no primeiro acesso e depois pelo botão "Como usar" da tela inicial ou por Menu › Como usar (de outra tela, o Menu leva ao início com `?como-usar=1`, que abre o guia e sai do endereço). Mostra só o que o papel permite; um dos passos apresenta o Menu. No último passo, "Ver o guia completo" (`/guia`); no passo dos pedidos, "Ver as respostas prontas" (`/guia#respostas`).
+- **Guia da loja** (`/guia`): página pública, fora do Google, com o passo a passo de tudo (com prints reais), as 4 respostas prontas do WhatsApp com botão Copiar, as etiquetas sugeridas e como criar respostas rápidas no WhatsApp Business. Os passos citam o Menu ("Menu › Acessos"). No painel, Menu › Guia da loja e o atalho da tela inicial.
+- **Minha conta** (`/painel/conta`, por Menu › Minha conta ou tocando no próprio nome no alto da tela inicial): nome, trocar senha (os outros aparelhos saem), sair deste celular e sair de todos os aparelhos.
 - **Esqueci a senha** (`/entrar/esqueci`): abre o WhatsApp da loja com o pedido de senha nova pronto; a Administração gera uma provisória em Acessos.
 - **Sessão**: dura 30 dias e se renova quando faltam menos de 7. Quem usa o painel pelo menos uma vez por mês continua conectado. Quando a sessão termina, a tela de entrar explica e, depois de entrar, volta para a página em que a pessoa estava.
 - **Sem permissão**: quem abre uma parte que o papel não permite volta ao início do painel com uma faixa explicando e dizendo com quem falar.
 - **Avisos**: sucesso em verde (some sozinho); erro em rosa, que fica até fechar e traz o que fazer ("Tentar de novo" quando a internet cai, "Entrar de novo" quando a sessão termina). Erro de um campo deixa a borda rosa, escreve o problema embaixo e a tela rola até lá.
-- **Alterações não salvas**: em O que tem hoje, Novo/Editar doce e Nova/Editar campanha, a barra mostra "• alterações não salvas"; Voltar ou qualquer link do app pergunta **Sair sem salvar?** ([Salvar e sair] [Sair sem salvar], o X continua editando); recarregar ou fechar a aba faz o navegador perguntar.
-- **Sair do painel**: botão no fim da tela inicial, com confirmação.
+- **Alterações não salvas**: em O que tem hoje, Novo/Editar doce e Nova/Editar campanha, a barra mostra "• alterações não salvas"; Voltar, os itens do Menu ou qualquer link do app pergunta **Sair sem salvar?** ([Salvar e sair] [Sair sem salvar], o X continua editando); recarregar ou fechar a aba faz o navegador perguntar.
+- **Sair do painel**: botão no fim da tela inicial e Menu › Sair, com confirmação.
+- **Tela inicial**: além do Menu, continuam os atalhos (Campanhas, Acessos, Dados da loja, Guia da loja, Ver vitrine, Instalar no celular, conforme o papel), "Cadastrar novo doce", o nome com "Minha conta e sair", "Como usar" e "Sair do painel".
 
 ## Estoque (e todos os outros papéis)
 

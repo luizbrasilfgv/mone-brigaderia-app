@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { MinhaConta } from "@/components/painel/MinhaConta";
+import { PessoaDoPainel } from "@/components/painel/Menu";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
 
@@ -18,5 +19,10 @@ export default function PaginaConta() {
 async function Conteudo() {
   await connection();
   const usuario = await exigirAcesso("estoque");
-  return <MinhaConta nome={usuario.nomeProprio} email={usuario.email} papel={usuario.papel} demo={!bancoConfigurado()} />;
+  const demo = !bancoConfigurado();
+  return (
+    <PessoaDoPainel nome={usuario.nome} papel={usuario.papel} demo={demo}>
+      <MinhaConta nome={usuario.nomeProprio} email={usuario.email} papel={usuario.papel} demo={demo} />
+    </PessoaDoPainel>
+  );
 }

@@ -3,9 +3,12 @@ import { connection } from "next/server";
 import { Suspense } from "react";
 import { IconeConversa } from "@/components/Icones";
 import { botaoWhatsApp, cx } from "@/components/ui";
+import { usuarioAtual } from "@/lib/auth";
 import { obterLoja } from "@/lib/dados";
 import { LOJA, linkWhatsApp } from "@/lib/loja";
 
+// No app instalado não há barra de endereço nem (no iPhone) botão Voltar: esta página
+// sempre leva de volta à vitrine e, para quem entrou no painel, ao painel.
 export default function NaoEncontrado() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-4 px-5 text-center">
@@ -16,10 +19,25 @@ export default function NaoEncontrado() {
           Ver a vitrine
         </Link>
         <Suspense>
+          <VoltarAoPainel />
+        </Suspense>
+        <Suspense>
           <FalarNoWhatsApp />
         </Suspense>
       </div>
     </main>
+  );
+}
+
+// Só para quem está com o painel aberto neste celular.
+async function VoltarAoPainel() {
+  await connection();
+  const usuario = await usuarioAtual().catch(() => null);
+  if (!usuario) return null;
+  return (
+    <Link href="/painel" className="flex h-12 items-center justify-center rounded-full border border-dourado/40 px-6 font-bold text-dourado">
+      Voltar ao painel
+    </Link>
   );
 }
 

@@ -1,10 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import type { Resultado } from "@/app/painel/acoes";
-import { IconeAlerta, IconeCheck, IconeFechar, IconeMais, IconeMenos, IconeVoltar } from "../Icones";
+import { IconeAlerta, IconeCheck, IconeFechar, IconeMais, IconeMenos } from "../Icones";
 import { botaoPrimario, botaoRedondo, cx } from "../ui";
 
 export interface AcaoDoAviso {
@@ -275,10 +274,17 @@ export function useConfirmacao(): [ReactNode, (pergunta: Pergunta) => Promise<bo
   return [elemento, perguntar];
 }
 
+// Telas à vista com alterações não salvas (o Sair do Menu avisa que elas se perdem).
+let telasComAlteracoes = 0;
+export function haAlteracoesPendentes(): boolean {
+  return telasComAlteracoes > 0;
+}
+
 // Alterações que ainda não foram salvas (Novo/Editar doce, Nova/Editar campanha e O que
-// tem hoje). Ao tocar em Voltar ou em qualquer link do app, pergunta "Sair sem salvar?";
-// ao recarregar ou fechar a aba, quem pergunta é o navegador. salvar() devolve true quando
-// salvou: aí a tela segue para onde a pessoa ia. descartar() desfaz o que mudou.
+// tem hoje). Ao tocar em Voltar ou em qualquer link do app (também os do Menu), pergunta
+// "Sair sem salvar?"; ao recarregar ou fechar a aba, quem pergunta é o navegador. salvar()
+// devolve true quando salvou: aí a tela segue para onde a pessoa ia. descartar() desfaz o
+// que mudou.
 export function useAlteracoesPendentes(
   sujo: boolean,
   { salvar, descartar }: { salvar: () => Promise<boolean>; descartar?: () => void },
@@ -304,11 +310,16 @@ export function useAlteracoesPendentes(
       if (url.pathname === window.location.pathname && url.search === window.location.search) return;
       e.preventDefault();
       e.stopPropagation();
+      // Link de dentro de uma folha aberta (o Menu): a folha fecha antes da pergunta.
+      const folha = link.closest("dialog");
+      if (folha?.open) folha.close();
       setDestino(url.pathname + url.search + url.hash);
     };
+    telasComAlteracoes++;
     window.addEventListener("beforeunload", antesDeSair);
     window.addEventListener("click", aoTocar, true);
     return () => {
+      telasComAlteracoes--;
       window.removeEventListener("beforeunload", antesDeSair);
       window.removeEventListener("click", aoTocar, true);
     };
@@ -428,33 +439,6 @@ export function FaixaDemo({ demo }: { demo: boolean }) {
     <p className="bg-pessego px-5 py-2 text-center text-xs font-semibold text-cacau-900">
       Painel em modo demonstração: as alterações não ficam salvas.
     </p>
-  );
-}
-
-export function CabecalhoPainel({
-  titulo,
-  subtitulo,
-  voltar,
-  acao,
-}: {
-  titulo: string;
-  subtitulo: string;
-  voltar?: string;
-  acao?: ReactNode;
-}) {
-  return (
-    <header className="flex items-center gap-3 px-5 pt-[18px] pb-1.5">
-      {voltar && (
-        <Link href={voltar} aria-label="Voltar" className={botaoRedondo}>
-          <IconeVoltar />
-        </Link>
-      )}
-      <div className="flex min-w-0 grow flex-col gap-0.5">
-        <h1 className="font-display text-2xl font-semibold">{titulo}</h1>
-        <span className="text-xs text-creme-400">{subtitulo}</span>
-      </div>
-      {acao}
-    </header>
   );
 }
 

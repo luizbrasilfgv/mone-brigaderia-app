@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { ListaAcessos } from "@/components/painel/ListaAcessos";
+import { PessoaDoPainel } from "@/components/painel/Menu";
 import { enderecoDoSite, listarAcessos, type Acesso } from "@/lib/auth";
 import { bancoConfigurado } from "@/lib/banco";
 import { exigirAcesso } from "@/lib/painel";
@@ -36,5 +37,9 @@ async function Conteudo() {
         },
       ]
     : await listarAcessos();
-  return <ListaAcessos acessos={acessos} meuId={usuario.id} demo={demo} enderecoPainel={`${await enderecoDoSite()}/entrar`} />;
+  return (
+    <PessoaDoPainel nome={usuario.nome} papel={usuario.papel} demo={demo}>
+      <ListaAcessos acessos={acessos} meuId={usuario.id} demo={demo} enderecoPainel={`${await enderecoDoSite()}/entrar`} />
+    </PessoaDoPainel>
+  );
 }

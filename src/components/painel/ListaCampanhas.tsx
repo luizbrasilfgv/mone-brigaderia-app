@@ -9,7 +9,8 @@ import { formatarData, formatarDiaMes, situacaoCampanha, type SituacaoCampanha }
 import { IconeMais } from "../Icones";
 import { cx, rotulo } from "../ui";
 import { pausarCampanha } from "@/app/painel/acoes";
-import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
+import { Chave, FaixaDemo, tentar, useAviso, useConfirmacao } from "./comum";
+import { CabecalhoPainel } from "./Menu";
 
 const ETIQUETA: Partial<Record<SituacaoCampanha, { texto: string; classe: string }>> = {
   agendada: { texto: "Agendada", classe: "border-menta/40 text-menta" },

@@ -7,7 +7,8 @@ import { useAgora } from "@/lib/hooks";
 import { salvarLoja } from "@/app/painel/acoes";
 import { InfoDaLoja } from "../InfoDaLoja";
 import { barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
-import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso, useErroDeCampo } from "./comum";
+import { Chave, FaixaDemo, tentar, useAviso, useErroDeCampo } from "./comum";
+import { CabecalhoPainel } from "./Menu";
 
 const HORARIO_PADRAO: Horario = { abre: "09:00", fecha: "18:00" };
 

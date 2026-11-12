@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Suspense } from "react";
 import { EstoqueDoDia } from "@/components/painel/EstoqueDoDia";
+import { PessoaDoPainel } from "@/components/painel/Menu";
 import { nomesDaAdministracao, pode, type Usuario } from "@/lib/auth";
 import { bancoConfigurado } from "@/lib/banco";
 import { listarCampanhas, listarTodosDoces, obterLoja, ultimoSalvamentoDoEstoque } from "@/lib/dados";
@@ -38,7 +39,9 @@ async function explicarSemPermissao(usuario: Usuario, area: unknown): Promise<st
 async function Conteudo({ searchParams }: { searchParams: PageProps<"/painel">["searchParams"] }) {
   await connection();
   const usuario = await exigirAcesso("estoque");
-  const { aviso, area } = await searchParams;
+  // como-usar: Menu › Como usar, tocado em outra tela do painel.
+  const { aviso, area, "como-usar": comoUsar } = await searchParams;
+  const demo = !bancoConfigurado();
   const [doces, campanhas, loja, salvamento, semPermissao] = await Promise.all([
     listarTodosDoces(),
     listarCampanhas(),
@@ -47,15 +50,18 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/painel">["
     aviso === "sem-permissao" ? explicarSemPermissao(usuario, area) : null,
   ]);
   return (
-    <EstoqueDoDia
-      doces={doces}
-      campanhas={campanhas}
-      horarios={loja.horarios}
-      salvamento={salvamento}
-      hoje={hojeNaLoja()}
-      pessoa={paraTela(usuario)}
-      demo={!bancoConfigurado()}
-      semPermissao={semPermissao}
-    />
+    <PessoaDoPainel nome={usuario.nome} papel={usuario.papel} demo={demo}>
+      <EstoqueDoDia
+        doces={doces}
+        campanhas={campanhas}
+        horarios={loja.horarios}
+        salvamento={salvamento}
+        hoje={hojeNaLoja()}
+        pessoa={paraTela(usuario)}
+        demo={demo}
+        semPermissao={semPermissao}
+        abrirComoUsar={comoUsar !== undefined}
+      />
+    </PessoaDoPainel>
   );
 }

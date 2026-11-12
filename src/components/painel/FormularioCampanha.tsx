@@ -14,7 +14,6 @@ import { barraFixa, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "..
 import { salvarCampanha } from "@/app/painel/acoes";
 import {
   AvisoNaoSalvo,
-  CabecalhoPainel,
   FaixaAviso,
   FaixaDemo,
   avisarNaProximaTela,
@@ -25,6 +24,7 @@ import {
   useErroDeCampo,
   useReiniciarAoSair,
 } from "./comum";
+import { CabecalhoPainel } from "./Menu";
 
 // A frase cabe em duas linhas curtas no banner (o servidor confere o mesmo limite).
 const LIMITE_FRASE = 60;

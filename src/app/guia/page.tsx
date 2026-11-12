@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { IconeAlerta, IconeAjuda } from "@/components/Icones";
+import { IconeAlerta, IconeAjuda, IconeCasa, IconeSeta } from "@/components/Icones";
 import { BalaoDoPedido } from "@/components/sacola/comum";
 import { cartao, cx } from "@/components/ui";
 import { LOJA } from "@/lib/loja";
@@ -67,6 +67,8 @@ const PRINTS = {
   "acessos-recomendado": [390, 104],
   conta: [390, 612],
   esqueci: [390, 526],
+  "menu-botao": [390, 75],
+  menu: [390, 590],
 } as const;
 
 // O recibo no formato exato que a sacola manda (src/lib/sacola.ts, mensagemDoPedido).
@@ -112,6 +114,8 @@ const RESPOSTAS = [
   },
 ];
 
+const botaoTopo = "flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-dourado/30 px-3.5 text-[13px] font-bold text-dourado";
+
 const ETIQUETAS = ["Novo pedido", "Confirmado", "Pago", "Entregue", "Cancelado"];
 
 const PAPEIS = [
@@ -124,18 +128,23 @@ export default function PaginaGuia() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-9 px-5 pt-[calc(18px+env(safe-area-inset-top))] pb-[calc(40px+env(safe-area-inset-bottom))] break-words">
       <header className="flex flex-col gap-4">
+        {/* No app instalado não há barra de endereço: daqui se volta à vitrine e ao painel. */}
+        <nav aria-label="Vitrine e painel" className="flex items-center justify-between gap-3">
+          <Link href="/" className={botaoTopo}>
+            <IconeCasa tamanho={18} />
+            Vitrine
+          </Link>
+          <Link href="/painel" className={botaoTopo}>
+            Painel
+            <IconeSeta tamanho={16} />
+          </Link>
+        </nav>
         <div className="flex items-center gap-3">
           <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={44} height={44} className="rounded-full" />
           <div className="flex min-w-0 grow flex-col gap-0.5">
             <span className="text-xs text-creme-400">{LOJA.nome}</span>
             <h1 className="font-display text-[26px] leading-tight font-semibold">Guia da loja</h1>
           </div>
-          <Link
-            href="/painel"
-            className="flex h-11 shrink-0 items-center rounded-full border border-dourado/30 px-3.5 text-[13px] font-bold text-dourado"
-          >
-            Painel
-          </Link>
         </div>
         <p className="text-[15px] leading-relaxed text-creme-200">
           Como usar o app da loja no dia a dia: o painel, os doces, as campanhas e os pedidos que chegam pelo WhatsApp. As telas são
@@ -161,13 +170,13 @@ export default function PaginaGuia() {
       <Secao id="primeiro-acesso" quem="Para todos">
         <P>
           Quem cuida da administração cadastra você no painel e manda um <strong>convite pelo WhatsApp</strong>. Nele vêm o
-          endereço do painel, o seu e-mail e uma <strong>senha provisória</strong> (por exemplo, cacau-4821). Ela vale 7 dias.
+          link para entrar, o seu e-mail e uma <strong>senha provisória</strong> (por exemplo, cacau-4821). Ela vale 7 dias.
         </P>
         <Passos
           itens={[
             <>
-              Abra <Link href="/entrar" className="font-bold text-dourado underline underline-offset-4">monebrigaderia.com.br/entrar</Link>.
-              Ou abra a vitrine e toque no <strong>ícone de pessoa</strong>, no alto, à direita.
+              Toque no <strong>link do convite</strong>. Nas outras vezes, abra o app e toque no <strong>ícone de pessoa</strong>,
+              no alto da vitrine, à direita.
               <Print nome="vitrine-topo" alt="Alto da vitrine, com o ícone de pessoa em destaque, à direita." />
             </>,
             <>
@@ -181,7 +190,7 @@ export default function PaginaGuia() {
             </>,
             <>
               Pronto: abre o guia <strong>Como usar</strong>, em passos, só com o que você pode fazer. Para rever depois, toque em{" "}
-              <strong>Como usar</strong>, no alto do painel.
+              <strong>Menu › Como usar</strong>.
               <Print nome="como-usar" alt="Primeiro passo do guia Como usar: Boas-vindas ao painel." />
             </>,
           ]}
@@ -191,17 +200,45 @@ export default function PaginaGuia() {
           não precisa digitar a senha de novo.
         </Dica>
         <Dica>A senha provisória venceu ou não funciona? Peça uma nova para a administração.</Dica>
+        <Subtitulo>O Menu do painel</Subtitulo>
+        <P>
+          Em qualquer tela do painel, toque em <strong>Menu</strong>, no alto, à direita. Ali estão todas as partes, só com o que
+          você pode usar. Não precisa digitar endereço nenhum.
+        </P>
+        <Print nome="menu-botao" alt="Alto da tela inicial do painel, com o botão Menu em destaque, à direita." />
+        <Print nome="menu" alt="Menu do painel aberto, com os grupos Dia a dia, Loja, Ajuda e Conta." estreito />
+        <Lista
+          itens={[
+            <>
+              <strong>Dia a dia</strong>: O que tem hoje, Cadastrar novo doce e Campanhas.
+            </>,
+            <>
+              <strong>Loja</strong>: Dados da loja, Acessos e Tela do balcão (os doces em sequência, para a TV ou o tablet da loja; para
+              voltar, toque em <strong>Painel</strong>, no canto de cima).
+            </>,
+            <>
+              <strong>Ajuda</strong>: Como usar, Guia da loja (esta página) e Instalar no celular.
+            </>,
+            <>
+              <strong>Conta</strong>: Minha conta, Ver vitrine e Sair.
+            </>,
+          ]}
+        />
+        <P pequeno>Neste guia, “Menu › Acessos” quer dizer: toque em Menu e depois em Acessos.</P>
       </Secao>
 
       <Secao id="instalar" quem="Para todos">
-        <P>Instalado, o painel ganha um ícone na tela inicial e abre como um app, sem a barra do navegador.</P>
+        <P>
+          Instalado, o painel ganha um ícone na tela inicial e abre como um app, sem a barra do navegador. Para ir de uma parte a
+          outra, use o <strong>Menu</strong>.
+        </P>
         <Subtitulo>Android (Chrome)</Subtitulo>
         <Passos
           itens={[
             "Entre no painel pelo Chrome.",
             <>
-              No fim da tela do painel, toque em <strong>Instalar no celular</strong>. Se o Chrome abrir a janela dele, toque em{" "}
-              <strong>Instalar</strong>.
+              Toque em <strong>Menu › Instalar no celular</strong> (também fica no fim da tela inicial do painel). Se o Chrome abrir
+              a janela dele, toque em <strong>Instalar</strong>.
             </>,
             <>
               Se não abrir, toque nos <strong>três pontinhos ⋮</strong> do Chrome, depois em <strong>Instalar app</strong> (ou{" "}
@@ -214,7 +251,8 @@ export default function PaginaGuia() {
         <Passos
           itens={[
             <>
-              Abra o painel no <strong>Safari</strong>. Em outro navegador não dá.
+              Abra o painel no <strong>Safari</strong>. Em outro navegador não dá. <strong>Menu › Instalar no celular</strong> mostra
+              estes mesmos passos.
             </>,
             <>
               Toque em <strong>Compartilhar</strong> (o quadrado com uma seta para cima).
@@ -239,7 +277,8 @@ export default function PaginaGuia() {
         <Passos
           itens={[
             <>
-              Abra o painel. A primeira parte é <strong>O que tem hoje</strong>.
+              Abra o app do painel. A primeira tela é <strong>O que tem hoje</strong>. Se estiver em outra tela, toque em{" "}
+              <strong>Menu › O que tem hoje</strong>.
             </>,
             <>
               Confira cada doce. Para mudar, toque no número e digite a quantidade. Para ajustes pequenos, use <strong>−</strong> e{" "}
@@ -293,8 +332,8 @@ export default function PaginaGuia() {
 
       <Secao id="doces" quem="Equipe e Administração">
         <P>
-          Para um doce novo, toque em <strong>Cadastrar novo doce</strong>, embaixo da lista do painel. Para mudar um doce, toque
-          nele em O que tem hoje. A ficha tem estas partes:
+          Para um doce novo, toque em <strong>Menu › Cadastrar novo doce</strong> (ou no botão embaixo da lista do painel). Para
+          mudar um doce, toque nele em O que tem hoje. A ficha tem estas partes:
         </P>
         <Passos
           itens={[
@@ -348,7 +387,7 @@ export default function PaginaGuia() {
         </P>
         <Subtitulo>Sair sem salvar?</Subtitulo>
         <P>
-          Mudou alguma coisa e tocou em Voltar? O app pergunta antes. <strong>Salvar e sair</strong> guarda tudo.{" "}
+          Mudou alguma coisa e tocou em Voltar ou em outra parte do Menu? O app pergunta antes. <strong>Salvar e sair</strong> guarda tudo.{" "}
           <strong>Sair sem salvar</strong> joga fora o que mudou. O <strong>X</strong> volta para a ficha. Vale também para as
           campanhas e para O que tem hoje.
         </P>
@@ -363,7 +402,7 @@ export default function PaginaGuia() {
         <Passos
           itens={[
             <>
-              No painel, toque em <strong>Campanhas</strong>. Em Criar campanha, toque na data (Natal, Páscoa…) ou em{" "}
+              Toque em <strong>Menu › Campanhas</strong>. Em Criar campanha, toque na data (Natal, Páscoa…) ou em{" "}
               <strong>Outra data</strong>. Se a campanha já existe, o botão diz “Já criada · abrir”.
               <Print nome="campanhas-modelos" alt="Datas prontas: Natal, Páscoa, Dia das Mães, Dia dos Namorados, Dia do Chocolate, Dia dos Pais e Outra data." />
             </>,
@@ -529,7 +568,7 @@ export default function PaginaGuia() {
         <Passos
           itens={[
             <>
-              No painel, toque em <strong>Dados da loja</strong>.
+              Toque em <strong>Menu › Dados da loja</strong>.
             </>,
             <>
               <strong>WhatsApp da loja</strong>: o número que recebe os pedidos e as conversas do app. Escreva com DDD. Toque em{" "}
@@ -563,7 +602,7 @@ export default function PaginaGuia() {
         <Passos
           itens={[
             <>
-              No painel, toque em <strong>Acessos</strong>.
+              Toque em <strong>Menu › Acessos</strong>.
             </>,
             "Em Adicionar pessoa, escreva o nome e o e-mail. Qualquer e-mail serve: Gmail, Hotmail, iCloud…",
             <>
@@ -572,7 +611,7 @@ export default function PaginaGuia() {
             </>,
             <>
               O app mostra a <strong>senha provisória</strong>, que vale 7 dias. Ela só aparece agora: toque em{" "}
-              <strong>Mandar convite pelo WhatsApp</strong> e escolha a pessoa. O convite já vai com o endereço, o e-mail e a senha.
+              <strong>Mandar convite pelo WhatsApp</strong> e escolha a pessoa. O convite já vai com o link para entrar, o e-mail e a senha.
               <Print nome="acessos-convite" alt="Cartão Senha provisória de Duda, com os botões Mandar convite pelo WhatsApp e Copiar." />
             </>,
             <>
@@ -597,7 +636,7 @@ export default function PaginaGuia() {
           itens={[
             "A pessoa pede pelo WhatsApp (na tela de entrar tem o botão Esqueci a senha).",
             <>
-              Em Acessos, no cartão dela, toque em <strong>Gerar senha nova</strong> e confirme. Mande a senha provisória pelo WhatsApp.
+              Em <strong>Menu › Acessos</strong>, no cartão dela, toque em <strong>Gerar senha nova</strong> e confirme. Mande a senha provisória pelo WhatsApp.
               A senha antiga para de valer e a pessoa sai dos outros aparelhos.
               <Print nome="acessos-pessoa" alt="Cartão da Bia, da Equipe, com os botões Administração, Equipe, Estoque, Gerar senha nova e a lixeira." />
             </>,
@@ -617,7 +656,7 @@ export default function PaginaGuia() {
 
       <Secao id="conta" quem="Para todos">
         <P>
-          Toque no <strong>seu nome</strong>, no alto do painel.
+          Toque em <strong>Menu › Minha conta</strong> (ou no seu nome, no alto da tela inicial do painel).
         </P>
         <Lista
           itens={[
@@ -626,7 +665,7 @@ export default function PaginaGuia() {
               e pedem a senha nova.
             </>,
             <>
-              <strong>Sair deste celular</strong>: sai só daqui.
+              <strong>Sair deste celular</strong>: sai só daqui. Também fica em <strong>Menu › Sair</strong>.
             </>,
             <>
               <strong>Sair de todos os aparelhos</strong>: use se perdeu o celular ou entrou no aparelho de outra pessoa.
@@ -641,7 +680,7 @@ export default function PaginaGuia() {
         <Passos
           itens={[
             <>
-              Na tela de entrar, toque em <strong>Esqueci a senha</strong>.
+              Na tela de entrar (abra o app e toque no ícone de pessoa, no alto da vitrine), toque em <strong>Esqueci a senha</strong>.
             </>,
             <>
               Escreva o seu e-mail e toque em <strong>Pedir pelo WhatsApp</strong>. Abre a conversa com a loja, com a mensagem pronta.
@@ -658,12 +697,20 @@ export default function PaginaGuia() {
           que você tentou fazer e, se puder, mande um print da tela.
         </P>
         <P>Se for problema do site (fora do ar, erro estranho), a administração avisa quem cuida do site.</P>
-        <Link
-          href="/painel"
-          className="flex h-12 items-center justify-center rounded-full border border-dourado/40 text-[15px] font-bold text-dourado active:scale-[0.98]"
-        >
-          Abrir o painel
-        </Link>
+        <div className="flex flex-col gap-2.5">
+          <Link
+            href="/painel"
+            className="flex h-12 items-center justify-center rounded-full border border-dourado/40 text-[15px] font-bold text-dourado active:scale-[0.98]"
+          >
+            Abrir o painel
+          </Link>
+          <Link
+            href="/"
+            className="flex h-12 items-center justify-center rounded-full border border-dourado/25 text-[15px] font-bold text-creme-200 active:scale-[0.98]"
+          >
+            Ver a vitrine
+          </Link>
+        </div>
       </Secao>
     </main>
   );
