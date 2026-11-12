@@ -202,7 +202,7 @@ export function FichaDoce({
       <div className="relative">
         <div className="fundo-vitrine relative flex h-[400px] items-center justify-center overflow-hidden">
           {foto ? (
-            <Image src={foto} alt={doce.nome} fill priority sizes="(max-width: 448px) 100vw, 448px" className="object-cover" />
+            <Image src={foto} alt={doce.nome} fill preload sizes="(max-width: 448px) 100vw, 448px" className="object-cover" />
           ) : doce.ilustracao ? (
             <div className="w-[330px] animate-[flutua_6s_ease-in-out_infinite]">
               <IlustracaoDoce ilustracao={doce.ilustracao} />

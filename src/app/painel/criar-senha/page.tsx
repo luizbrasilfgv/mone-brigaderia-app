@@ -37,7 +37,7 @@ async function Conteudo({ searchParams }: { searchParams: PageProps<"/painel/cri
           <MenuPainel />
         </header>
         <main className="flex grow flex-col items-center justify-center gap-6 px-5 pt-2 pb-8">
-          <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={72} height={72} className="rounded-full" priority />
+          <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={72} height={72} className="rounded-full" loading="eager" />
           <FormularioCriarSenha email={usuario.email} nome={usuario.nomeProprio} volta={volta} />
         </main>
       </div>

@@ -155,7 +155,7 @@ export function Vitrine({
     <div className="mx-auto min-h-dvh max-w-md pb-[calc(7rem+env(safe-area-inset-bottom))]">
       <header className="flex flex-col gap-1.5 px-5 pt-[calc(18px+env(safe-area-inset-top))] pb-2.5">
         <div className="flex items-center gap-2.5">
-          <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={42} height={42} className="shrink-0 rounded-full" priority />
+          <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={42} height={42} className="shrink-0 rounded-full" loading="eager" />
           <div className="flex min-w-0 grow flex-col gap-0.5">
             <span className="text-xs text-creme-400">Vitrine de hoje</span>
             <h1 className="truncate font-display text-xl font-semibold">{LOJA.nome}</h1>

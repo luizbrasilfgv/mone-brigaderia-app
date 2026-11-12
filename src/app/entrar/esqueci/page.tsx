@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function PaginaEsqueci({ searchParams }: PageProps<"/entrar/esqueci">) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col items-center justify-center gap-6 px-5 py-8">
-      <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={72} height={72} className="rounded-full" priority />
+      <Image src={LOJA.logo} alt={`Logo da ${LOJA.nome}`} width={72} height={72} className="rounded-full" loading="eager" />
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="font-display text-3xl font-semibold">Esqueci a senha</h1>
         <p className="text-[15px] leading-relaxed text-creme-200">
