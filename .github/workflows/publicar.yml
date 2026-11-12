@@ -65,9 +65,7 @@ jobs:
           MYSQL_DATABASE: ${{ secrets.MYSQL_DATABASE }}
           SESSAO_SEGREDO: ${{ secrets.SESSAO_SEGREDO }}
           PAINEL_SENHA: ${{ secrets.PAINEL_SENHA }}
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          # Quem sempre entra como administrador (e libera os outros em Acessos).
+          # Administração fixa (libera os outros em Acessos); a PAINEL_SENHA é a chave de emergência dela.
           ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS || 'luizbrasil.rj@gmail.com' }}
           SITE_URL: ${{ vars.SITE_URL || 'https://monebrigaderia.com.br' }}
           UPLOAD_DIR: ${{ vars.UPLOAD_DIR }}
@@ -80,8 +78,6 @@ jobs:
             echo "MYSQL_DATABASE=$MYSQL_DATABASE"
             echo "SESSAO_SEGREDO=$SESSAO_SEGREDO"
             echo "PAINEL_SENHA=$PAINEL_SENHA"
-            echo "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
-            echo "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET"
             echo "ADMIN_EMAILS=$ADMIN_EMAILS"
             echo "SITE_URL=$SITE_URL"
             # Fora da pasta do app, para as fotos não sumirem a cada publicação.

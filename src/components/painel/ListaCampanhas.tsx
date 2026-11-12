@@ -9,7 +9,7 @@ import { formatarData, formatarDiaMes, situacaoCampanha, type SituacaoCampanha }
 import { IconeMais } from "../Icones";
 import { cx, rotulo } from "../ui";
 import { pausarCampanha } from "@/app/painel/acoes";
-import { CabecalhoPainel, Chave, FaixaDemo, useAviso } from "./comum";
+import { CabecalhoPainel, Chave, FaixaDemo, tentar, useAviso } from "./comum";
 
 const ETIQUETA: Partial<Record<SituacaoCampanha, { texto: string; classe: string }>> = {
   agendada: { texto: "Agendada", classe: "border-menta/40 text-menta" },
@@ -45,7 +45,7 @@ function LinhaCampanha({ campanha, situacao, apagada }: { campanha: Campanha; si
 
 export function ListaCampanhas({ campanhas, doces, demo }: { campanhas: Campanha[]; doces: Doce[]; demo: boolean }) {
   const hoje = useHoje();
-  const [aviso, mostrarAviso] = useAviso();
+  const [aviso, , mostrarResultado] = useAviso();
   const [pausadas, setPausadas] = useState<Record<string, boolean>>({});
 
   if (!hoje) return <CabecalhoPainel titulo="Campanhas" subtitulo="Datas especiais que aparecem na vitrine" voltar="/painel" />;
@@ -89,10 +89,10 @@ export function ListaCampanhas({ campanhas, doces, demo }: { campanhas: Campanha
                     <Chave
                       ligada={noAr}
                       rotulo={`Campanha ${c.nome} no ar`}
-                      aoMudar={async () => {
+                      aoMudar={async function mudar() {
                         setPausadas((p) => ({ ...p, [c.id]: noAr }));
-                        const resultado = await pausarCampanha(c.id, noAr);
-                        mostrarAviso(resultado.mensagem, resultado.ok);
+                        const resultado = await tentar(() => pausarCampanha(c.id, noAr));
+                        mostrarResultado(resultado, () => void mudar());
                         if (!resultado.ok) setPausadas((p) => ({ ...p, [c.id]: !noAr }));
                       }}
                     />

@@ -10,7 +10,7 @@ import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
 import { COR_ESTOQUE, COR_SELO, botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
 import { salvarDoce } from "@/app/painel/acoes";
-import { CabecalhoPainel, Chave, Contador, FaixaDemo, useAviso } from "./comum";
+import { CabecalhoPainel, Chave, Contador, FaixaDemo, tentar, useAviso } from "./comum";
 
 const SELOS: { valor: Selo; nome: string }[] = [
   { valor: "nenhum", nome: "Nenhum" },
@@ -90,7 +90,7 @@ export function FormularioDoce({
 }) {
   const hoje = useHoje();
   const router = useRouter();
-  const [aviso, mostrarAviso] = useAviso();
+  const [aviso, , mostrarResultado] = useAviso();
   const [salvando, iniciar] = useTransition();
   const [nome, setNome] = useState(doce?.nome ?? "");
   const [categoriaId, setCategoriaId] = useState(doce?.categoriaId ?? categorias[0]?.id ?? "");
@@ -180,11 +180,13 @@ export function FormularioDoce({
     dados.set("quantidade", String(quantidade));
     dados.set("ativo", ativo ? "1" : "0");
     if (fotoNova) dados.set("foto", fotoNova.blob, "foto.jpg");
-    iniciar(async () => {
-      const resultado = await salvarDoce(dados);
-      mostrarAviso(resultado.mensagem, resultado.ok);
-      if (resultado.ok && resultado.id && !doce) router.replace(`/painel/doces/${resultado.id}`);
-    });
+    const enviar = () =>
+      iniciar(async () => {
+        const resultado = await tentar(() => salvarDoce(dados));
+        mostrarResultado(resultado, enviar);
+        if (resultado.ok && resultado.id && !doce) router.replace(`/painel/doces/${resultado.id}`);
+      });
+    enviar();
   }
 
   return (
@@ -477,7 +479,7 @@ export function FormularioDoce({
           <div className="flex min-w-0 flex-col gap-0.5">
             <span className="text-[15px] font-semibold">Na vitrine</span>
             <span className={cx("text-xs", ativo ? "text-menta" : "text-creme-400")}>
-              {ativo ? "Aparece para as clientes" : "Escondido: só aparece aqui no painel"}
+              {ativo ? "Aparece na vitrine" : "Escondido: só aparece aqui no painel"}
             </span>
           </div>
           <Chave ligada={ativo} aoMudar={() => setAtivo(!ativo)} rotulo="Doce na vitrine" />

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { pode, type Papel } from "@/lib/papeis";
-import { IconeCaixa, IconeCalendario, IconeConversa, IconeEstrela, IconeLoja, IconePessoas, IconeRelogio } from "../Icones";
+import { IconeCaixa, IconeCalendario, IconeConversa, IconeEstrela, IconeLoja, IconePessoa, IconePessoas, IconeRelogio } from "../Icones";
 import { botaoPrimario, cx } from "../ui";
 
 interface Passo {
@@ -16,7 +16,7 @@ interface Passo {
 const PASSOS: Passo[] = [
   {
     titulo: "Boas-vindas ao painel",
-    texto: "Aqui você cuida da vitrine que as clientes veem em monebrigaderia.com.br. Leva um minuto para conhecer.",
+    texto: "Aqui você cuida da vitrine que quem compra vê em monebrigaderia.com.br. Leva um minuto para conhecer.",
     icone: <IconeLoja tamanho={40} />,
     minimo: "estoque",
   },
@@ -51,14 +51,20 @@ const PASSOS: Passo[] = [
   {
     titulo: "Acessos",
     texto:
-      "Libere o painel para quem trabalha com você pelo e-mail e escolha o que cada pessoa pode fazer. Dá para tirar o acesso a qualquer momento.",
+      "Escreva nome e e-mail e escolha o que a pessoa pode fazer. O app cria uma senha provisória: mande pelo WhatsApp. No primeiro acesso, a pessoa cria a própria senha.",
     icone: <IconePessoas tamanho={40} />,
     minimo: "admin",
   },
   {
+    titulo: "Sua conta",
+    texto: "Toque no seu nome, no alto, para trocar a senha ou sair.",
+    icone: <IconePessoa tamanho={40} />,
+    minimo: "estoque",
+  },
+  {
     titulo: "As encomendas chegam no WhatsApp",
     texto:
-      "As clientes escolhem na vitrine e mandam o pedido já escrito no WhatsApp da loja. Divulgue o endereço monebrigaderia.com.br. Para rever este guia, toque em Como usar.",
+      "Quem compra escolhe na vitrine e manda o pedido já escrito no WhatsApp da loja. Divulgue o endereço monebrigaderia.com.br. Para rever este guia, toque em Como usar.",
     icone: <IconeConversa tamanho={40} />,
     minimo: "estoque",
   },

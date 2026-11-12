@@ -9,7 +9,7 @@ export const rotulo = "text-xs font-bold uppercase tracking-[0.12em] text-creme-
 export const cartao = "rounded-[20px] border border-dourado/12 bg-cacau-900";
 
 export const campo =
-  "w-full rounded-[14px] border border-dourado/20 bg-creme/[0.04] px-3.5 text-[15px] text-creme placeholder:text-creme-600 focus:outline-2 focus:outline-dourado";
+  "w-full rounded-[14px] border border-dourado/20 bg-creme/[0.04] px-3.5 text-base text-creme placeholder:text-creme-600 focus:outline-2 focus:outline-dourado";
 
 export const botaoPrimario =
   "flex h-[54px] w-full items-center justify-center gap-2 rounded-full bg-dourado text-base font-bold text-cacau-900 transition-transform active:scale-[0.97]";

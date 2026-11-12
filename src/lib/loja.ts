@@ -13,3 +13,9 @@ export function linkWhatsApp(mensagem: string): string {
   const texto = encodeURIComponent(mensagem);
   return numero ? `https://wa.me/${numero}?text=${texto}` : `https://wa.me/?text=${texto}`;
 }
+
+// Abre o WhatsApp com a mensagem pronta para a pessoa escolher o contato
+// (convite de acesso e pedido de senha nova, que vão para alguém da equipe).
+export function linkWhatsAppSemContato(mensagem: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(mensagem)}`;
+}

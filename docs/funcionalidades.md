@@ -26,10 +26,17 @@ Preços, sabores, quantidades e textos que aparecem no mockup são exemplos. Só
 
 ### Painel da dona
 
-Entrada em `/entrar` com e-mail + senha da loja, ou com Google se estiver configurado. Só entra quem estiver em **Acessos**. Tudo o que é salvo vai para o banco e aparece na vitrine na hora.
+Entrada em `/entrar` com o e-mail e a senha de cada pessoa. Só entra quem estiver em **Acessos**. Tudo o que é salvo vai para o banco e aparece na vitrine na hora.
 
-- **Como usar:** guia em passos que abre sozinho no primeiro acesso e depois pelo botão "Como usar". Mostra só o que o papel da pessoa permite.
-- **Acessos** (só Administração): adicionar pessoas pelo e-mail do Google, escolher o papel e tirar o acesso. O painel nunca fica sem administrador.
+- **Senha de cada pessoa:** a administração cadastra a pessoa em Acessos e o app cria uma senha provisória (palavra + 4 números, vale 7 dias), mostrada uma vez só, com o botão "Mandar convite pelo WhatsApp". No primeiro acesso, a pessoa cria a própria senha (pelo menos 8 letras ou números) antes de ver o painel.
+- **Esqueci a senha:** a tela de entrar leva a `/entrar/esqueci`, que pede uma senha nova pelo WhatsApp. Quem administra toca em "Gerar senha nova" no cartão da pessoa e manda a nova provisória.
+- **Chave de emergência:** a `PAINEL_SENHA` vale só para os e-mails de `ADMIN_EMAILS` (Administração fixa). Entrar com ela leva sempre a "Crie sua senha" e derruba as outras sessões dessa pessoa.
+- **Limite de tentativas:** 10 senhas erradas em 15 minutos do mesmo e-mail no mesmo IP, ou 30 do mesmo IP, bloqueiam por 15 minutos. Nunca bloqueia só pelo e-mail.
+- **Sessão:** quem usa o painel pelo menos uma vez por mês continua conectado (a sessão de 30 dias se renova). Quando a sessão termina, a tela de entrar explica e, depois de entrar, volta para a página em que a pessoa estava.
+- **Minha conta** (`/painel/conta`, tocando no próprio nome no alto do painel): nome, trocar senha (os outros aparelhos saem), sair deste celular e sair de todos os aparelhos.
+- **Como usar:** guia em passos que abre sozinho no primeiro acesso, depois de criar a senha, e depois pelo botão "Como usar". Mostra só o que o papel da pessoa permite.
+- **Acessos** (só Administração): adicionar pessoas com nome, e-mail (qualquer um) e papel, gerar senha nova, mudar o papel e tirar o acesso (a pessoa fica guardada como inativa). Dar Administração e mudar o próprio papel pedem confirmação. Quem está em `ADMIN_EMAILS` aparece como "Administração fixa", sem remover nem mudar o papel. O painel nunca fica sem administração.
+- **Sem permissão:** quem abre uma parte que o papel não permite volta para o início do painel com uma faixa explicando e dizendo com quem falar.
 
 | Papel | Pode fazer |
 | --- | --- |

@@ -45,7 +45,8 @@ function situacaoAgora(): Situacao {
   return "outro";
 }
 
-export function InstalarApp({ variante, nome }: { variante: "cartao" | "link"; nome: string }) {
+// entrarDeNovo: no iPhone, o app instalado não leva o login feito no Safari.
+export function InstalarApp({ variante, nome, entrarDeNovo }: { variante: "cartao" | "link"; nome: string; entrarDeNovo?: boolean }) {
   const situacao = useSyncExternalStore(assinar, situacaoAgora, (): Situacao => "carregando");
   const [ajudaAberta, setAjudaAberta] = useState(false);
 
@@ -81,12 +82,24 @@ export function InstalarApp({ variante, nome }: { variante: "cartao" | "link"; n
           Instalar o app
         </button>
       )}
-      {ajudaAberta && <ComoInstalar iphone={situacao === "iphone"} nome={nome} aoFechar={() => setAjudaAberta(false)} />}
+      {ajudaAberta && (
+        <ComoInstalar iphone={situacao === "iphone"} nome={nome} entrarDeNovo={entrarDeNovo} aoFechar={() => setAjudaAberta(false)} />
+      )}
     </>
   );
 }
 
-function ComoInstalar({ iphone, nome, aoFechar }: { iphone: boolean; nome: string; aoFechar: () => void }) {
+function ComoInstalar({
+  iphone,
+  nome,
+  entrarDeNovo,
+  aoFechar,
+}: {
+  iphone: boolean;
+  nome: string;
+  entrarDeNovo?: boolean;
+  aoFechar: () => void;
+}) {
   useEffect(() => {
     const aoTeclar = (e: KeyboardEvent) => {
       if (e.key === "Escape") aoFechar();
@@ -110,6 +123,7 @@ function ComoInstalar({ iphone, nome, aoFechar }: { iphone: boolean; nome: strin
         <>
           Toque em <strong>Adicionar</strong>.
         </>,
+        ...(entrarDeNovo ? [<>Depois de instalar, abra o app e entre de novo.</>] : []),
       ]
     : [
         <>

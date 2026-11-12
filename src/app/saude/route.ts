@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import { connection } from "next/server";
+import { ipDaVisita } from "@/lib/auth";
 import { banco, bancoConfigurado, configuracaoDoBanco } from "@/lib/banco";
 import { listarDoces } from "@/lib/dados";
 
@@ -13,6 +14,7 @@ const CONFIGURACOES = [
   "MYSQL_DATABASE",
   "SESSAO_SEGREDO",
   "PAINEL_SENHA",
+  "ADMIN_EMAILS",
   "SITE_URL",
   "UPLOAD_DIR",
 ];
@@ -42,6 +44,11 @@ export async function GET() {
     "Configurações:",
     ...CONFIGURACOES.map((nome) => `  ${process.env[nome] ? "✓" : "✗ FALTANDO"} ${nome}`),
   ];
+  // O limite de tentativas de senha conta por IP. Se o servidor da hospedagem não
+  // repassar o IP de quem visita, todas as visitas contam juntas.
+  const ip = await ipDaVisita();
+  const ipConhecido = !["sem-ip", "127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(ip);
+  linhas.push(`${ipConhecido ? "✓" : "✗"} IP de quem visita: ${ipConhecido ? "identificado" : "não identificado (o limite de tentativas vale para todos juntos)"}`);
   if (!bancoConfigurado()) {
     linhas.push("✗ Banco: sem MYSQL_DATABASE (o arquivo .env foi enviado?)");
   } else {

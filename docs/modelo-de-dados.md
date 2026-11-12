@@ -100,17 +100,33 @@ Liga doces e campanhas (um doce pode estar em várias campanhas).
 
 ### usuarios
 
-Quem pode entrar no painel (login com Google).
+Quem pode entrar no painel. Cada pessoa entra com o próprio e-mail e a própria senha. As colunas de senha e sessão entram pela migração `banco/migracoes/003-senha-individual.sql`.
 
 | Coluna | Tipo | Observação |
 | --- | --- | --- |
 | id | inteiro (automático) | |
-| email | texto, único | o mesmo da conta Google |
-| nome, foto | texto | vêm do Google no primeiro login |
+| email | texto, único | qualquer e-mail; é o "usuário" para entrar |
+| nome | texto | aparece no painel e em Acessos |
+| foto | texto, opcional | sobra do login antigo, não é mais usada |
+| senha_hash | texto, opcional | resumo scrypt da senha, com salt por pessoa (nunca a senha). Vazio = ainda não tem senha |
+| trocar_senha | booleano | entrou com senha provisória ou com a chave de emergência e precisa criar a própria senha |
+| senha_provisoria_expira | data e hora (UTC), opcional | validade da senha provisória (7 dias) |
+| sessao_versao | inteiro | vai junto no cookie da sessão; aumentar derruba as sessões antigas da pessoa |
 | papel | enum | admin, equipe, estoque |
-| ativo | booleano | |
+| ativo | booleano | remover o acesso grava 0 (o histórico fica) |
 | tutorial_visto | booleano | o guia "Como usar" não abre mais sozinho |
-| ultimo_acesso | data e hora | |
+| ultimo_acesso | data e hora | atualizado no máximo uma vez por dia |
+
+### tentativas_login
+
+Senhas erradas, para o limite de tentativas. Linhas com mais de 1 dia são apagadas sozinhas.
+
+| Coluna | Tipo | Observação |
+| --- | --- | --- |
+| id | inteiro (automático) | |
+| email | texto | e-mail digitado |
+| ip | texto | IP de quem tentou |
+| momento | data e hora | |
 
 ## Consultas principais
 

@@ -155,3 +155,31 @@ export const IconeCompartilhar = (p: Props) => (
     <path d="M7 11H5.5v10h13V11H17" />
   </Base>
 );
+
+export const IconeFechar = (p: Props) => (
+  <Base strokeWidth={2} {...p}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </Base>
+);
+
+export const IconePessoa = (p: Props) => (
+  <Base {...p}>
+    <circle cx="12" cy="8" r="4" />
+    <path d="M4.5 20.5a7.5 7.5 0 0 1 15 0" />
+  </Base>
+);
+
+export const IconeChave = (p: Props) => (
+  <Base {...p}>
+    <circle cx="8" cy="15" r="4" />
+    <path d="m11 12 9-9" />
+    <path d="m16 7 3 3" />
+  </Base>
+);
+
+export const IconeCopiar = (p: Props) => (
+  <Base {...p}>
+    <rect x="8" y="8" width="12" height="12" rx="2" />
+    <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
+  </Base>
+);

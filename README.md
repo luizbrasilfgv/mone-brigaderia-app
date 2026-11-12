@@ -1,6 +1,6 @@
 # Mone Brigaderia: app vitrine
 
-App vitrine da Mone Brigaderia. A cliente vê os doces do dia, abre a ficha de cada um (descrição, glúten, lactose, composição) e faz a encomenda pelo WhatsApp. A dona controla tudo num painel com login (e-mail e senha da loja, ou Google): o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda, campanhas como Natal e Páscoa, e quem mais pode entrar no painel.
+App vitrine da Mone Brigaderia. A cliente vê os doces do dia, abre a ficha de cada um (descrição, glúten, lactose, composição) e faz a encomenda pelo WhatsApp. A dona controla tudo num painel com login (cada pessoa com o seu e-mail e a sua senha): o que tem hoje e em que quantidade, fichas e fotos dos doces, doces sob encomenda, campanhas como Natal e Páscoa, e quem mais pode entrar no painel.
 
 ## Onde estamos
 
@@ -23,18 +23,21 @@ npm run dev
 Abra http://localhost:3000.
 
 - **Sem MySQL** (deixe `MYSQL_DATABASE` vazio): o app usa os dados de exemplo e o painel abre sem login, em modo demonstração.
-- **Com MySQL**: crie um banco vazio, preencha `MYSQL_*`, `SESSAO_SEGREDO`, `PAINEL_SENHA` e `ADMIN_EMAILS` no `.env.local` (Google é opcional: `GOOGLE_CLIENT_*`). Na primeira visita, o app cria as tabelas e carrega os doces de exemplo.
+- **Com MySQL**: crie um banco vazio, preencha `MYSQL_*`, `SESSAO_SEGREDO`, `PAINEL_SENHA` e `ADMIN_EMAILS` no `.env.local`. Na primeira visita, o app cria as tabelas e carrega os doces de exemplo. Para entrar no painel pela primeira vez, use um e-mail de `ADMIN_EMAILS` com a `PAINEL_SENHA` (chave de emergência): o painel pede para criar a sua senha.
 
 | Endereço | Tela |
 | --- | --- |
 | `/` | Vitrine |
 | `/doce/palha-italiana` | Ficha do doce |
 | `/doce/caixa-presente-4` | Ficha de doce sob encomenda, com escolha de data |
-| `/entrar` | Entrada do painel (e-mail + senha da loja, ou Google) |
+| `/entrar` | Entrada do painel (e-mail e senha de cada pessoa) |
+| `/entrar/esqueci` | Esqueci a senha: pedir uma senha nova pelo WhatsApp |
 | `/painel` | O que tem hoje e quantidades |
 | `/painel/doces/novo` | Cadastro de doce |
 | `/painel/campanhas` | Campanhas |
-| `/painel/acessos` | Quem pode entrar no painel e o que cada pessoa pode fazer |
+| `/painel/acessos` | Quem pode entrar no painel, o que cada pessoa pode fazer e senha provisória |
+| `/painel/conta` | Minha conta: nome, trocar senha e sair |
+| `/painel/criar-senha` | Criar a própria senha no primeiro acesso |
 | `/balcao` | Tela para TV ou tablet na loja |
 
 Outros comandos: `npm run build` (versão de produção), `npm run lint` (verifica o código), `npm run banco:exemplo` (gera `banco/dados-exemplo.sql` a partir de `src/lib/dados-exemplo.ts`).
@@ -45,9 +48,9 @@ Outros comandos: `npm run build` (versão de produção), `npm run lint` (verifi
 | --- | --- |
 | `src/app/` | Páginas (uma pasta por endereço) |
 | `src/app/painel/acoes.ts` | Ações que gravam no banco (Server Actions). Cada uma confere a sessão |
-| `src/proxy.ts` | Manda quem não entrou para `/entrar` |
-| `src/app/auth/google/` | Login com Google (OAuth com PKCE) |
-| `src/lib/auth.ts` e `src/lib/papeis.ts` | Quem está logado e o que cada papel (Administração, Equipe, Estoque) pode fazer |
+| `src/proxy.ts` | Manda quem não entrou para `/entrar` e renova a sessão de quem usa |
+| `src/lib/auth.ts`, `src/lib/sessao.ts` e `src/lib/senhas.ts` | Entrada com senha, limite de tentativas, sessão assinada e senhas (scrypt) |
+| `src/lib/papeis.ts` | O que cada papel (Administração, Equipe, Estoque) pode fazer |
 | `src/components/` | Partes das telas: vitrine, ficha, painel, balcão |
 | `src/lib/dados.ts` | Leitura dos dados (MySQL ou exemplos), com cache |
 | `src/lib/banco.ts` | Conexão com o MySQL; cria as tabelas num banco vazio |

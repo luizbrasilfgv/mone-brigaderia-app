@@ -11,7 +11,7 @@ import { ImagemDoce } from "../ImagemDoce";
 import { IconeMais } from "../Icones";
 import { botaoPrimario, campo, cartao, cx, escolha, rotulo } from "../ui";
 import { salvarCampanha } from "@/app/painel/acoes";
-import { CabecalhoPainel, FaixaDemo, useAviso } from "./comum";
+import { CabecalhoPainel, FaixaDemo, tentar, useAviso } from "./comum";
 
 interface Props {
   campanha: Campanha | null;
@@ -31,7 +31,7 @@ export function FormularioCampanha(props: Props) {
 
 function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje: string }) {
   const router = useRouter();
-  const [aviso, mostrarAviso] = useAviso();
+  const [aviso, , mostrarResultado] = useAviso();
   const [salvando, iniciar] = useTransition();
   const sugestaoInicial = campanha ? null : sugestaoDeCampanha(tipoInicial, hoje);
   const [tipo, setTipo] = useState<TipoCampanha>(campanha?.tipo ?? tipoInicial);
@@ -58,21 +58,24 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
 
   function salvar(e: FormEvent) {
     e.preventDefault();
-    iniciar(async () => {
-      const resultado = await salvarCampanha({
-        id: campanha?.id ?? null,
-        tipo,
-        nome,
-        inicio,
-        fim,
-        limiteEncomenda: limite || null,
-        fraseBanner: frase,
-        cor,
-        docesIds,
+    const dados = {
+      id: campanha?.id ?? null,
+      tipo,
+      nome,
+      inicio,
+      fim,
+      limiteEncomenda: limite || null,
+      fraseBanner: frase,
+      cor,
+      docesIds,
+    };
+    const enviar = () =>
+      iniciar(async () => {
+        const resultado = await tentar(() => salvarCampanha(dados));
+        mostrarResultado(resultado, enviar);
+        if (resultado.ok && resultado.id && !campanha) router.replace(`/painel/campanhas/${resultado.id}`);
       });
-      mostrarAviso(resultado.mensagem, resultado.ok);
-      if (resultado.ok && resultado.id && !campanha) router.replace(`/painel/campanhas/${resultado.id}`);
-    });
+    enviar();
   }
 
   const nomeDoTipo = tipo === "outra" ? "Campanha" : `Campanha de ${NOMES_CAMPANHA[tipo]}`;
@@ -131,7 +134,7 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
               required
               value={inicio}
               onChange={(e) => setInicio(e.target.value)}
-              className={cx(campo, "h-12 min-w-0 px-3 text-sm [color-scheme:dark]")}
+              className={cx(campo, "h-12 min-w-0 px-3 [color-scheme:dark]")}
             />
           </div>
           <div className="flex min-w-0 flex-col gap-2">
@@ -145,7 +148,7 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
               min={inicio || undefined}
               value={fim}
               onChange={(e) => setFim(e.target.value)}
-              className={cx(campo, "h-12 min-w-0 px-3 text-sm [color-scheme:dark]")}
+              className={cx(campo, "h-12 min-w-0 px-3 [color-scheme:dark]")}
             />
           </div>
         </div>
@@ -160,7 +163,7 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
             value={limite}
             max={fim || undefined}
             onChange={(e) => setLimite(e.target.value)}
-            className={cx(campo, "h-12 px-3 text-sm [color-scheme:dark]")}
+            className={cx(campo, "h-12 px-3 [color-scheme:dark]")}
           />
         </div>
 
@@ -242,7 +245,7 @@ function Formulario({ campanha, tipoInicial, doces, demo, hoje }: Props & { hoje
             </Link>
           </div>
           <span className="text-xs text-creme-400">
-            {docesIds.length} {docesIds.length === 1 ? "doce aparece" : "doces aparecem"} quando a cliente filtra pela campanha
+            {docesIds.length} {docesIds.length === 1 ? "doce aparece" : "doces aparecem"} quando quem compra filtra pela campanha
           </span>
         </div>
 

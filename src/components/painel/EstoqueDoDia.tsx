@@ -10,11 +10,10 @@ import { useHoje } from "@/lib/hooks";
 import { nomeDoPapel, pode } from "@/lib/papeis";
 import { campanhasNoAr, estoqueDoDoce, formatarDiaMes, formatarPreco } from "@/lib/regras";
 import { marcarTutorialVisto, salvarEstoque } from "@/app/painel/acoes";
-import { sair } from "@/app/entrar/acoes";
 import { ImagemDoce } from "../ImagemDoce";
 import { IconeAjuda, IconeCalendario, IconeEstrela, IconeMais, IconePessoas, IconeRelogio, IconeSeta } from "../Icones";
 import { COR_ESTOQUE, botaoPrimario, cartao, cx } from "../ui";
-import { Contador, FaixaDemo, useAviso } from "./comum";
+import { Contador, FaixaAviso, FaixaDemo, tentar, useAviso } from "./comum";
 import { Tutorial } from "./Tutorial";
 import { InstalarApp } from "../InstalarApp";
 
@@ -48,14 +47,19 @@ export function EstoqueDoDia({
   campanhas,
   pessoa,
   demo,
+  semPermissao,
 }: {
   doces: Doce[];
   campanhas: Campanha[];
   pessoa: PessoaNoPainel;
   demo: boolean;
+  // Explicação de quem tentou abrir uma parte do painel que o papel não permite.
+  semPermissao: string | null;
 }) {
   const hoje = useHoje();
-  const [aviso, mostrarAviso] = useAviso();
+  const [avisoTopo, , mostrarResultado] = useAviso();
+  const [avisoFechado, setAvisoFechado] = useState(false);
+  const aviso = avisoFechado ? null : semPermissao;
   const [salvando, iniciar] = useTransition();
   const [quantidades, setQuantidades] = useState<Record<string, number>>(() =>
     Object.fromEntries(doces.map((d) => [d.id, d.quantidadeHoje])),
@@ -92,7 +96,7 @@ export function EstoqueDoDia({
 
   return (
     <div className="pb-8">
-      {aviso}
+      {avisoTopo}
       <FaixaDemo demo={demo} />
       <Tutorial papel={pessoa.papel} aberto={tutorialAberto} aoFechar={fecharTutorial} />
 
@@ -110,28 +114,39 @@ export function EstoqueDoDia({
             Ver vitrine
           </Link>
         </div>
-        <div className="flex items-center gap-2.5 rounded-2xl border border-dourado/10 bg-cacau-900 py-1.5 pr-1 pl-2.5">
-          <Iniciais nome={pessoa.nome} />
-          <div className="flex min-w-0 grow flex-col">
-            <span className="truncate text-[13px] font-semibold">{pessoa.nome}</span>
-            <span className="text-[11px] text-creme-400">{nomeDoPapel(pessoa.papel)}</span>
-          </div>
+        <div className="flex items-center gap-1 rounded-2xl border border-dourado/10 bg-cacau-900 py-1 pr-1 pl-1">
+          <Link
+            href="/painel/conta"
+            aria-label={`Minha conta: ${pessoa.nome}, ${nomeDoPapel(pessoa.papel)}`}
+            className="flex min-h-11 min-w-0 grow items-center gap-2.5 rounded-xl py-0.5 pr-1 pl-1.5 active:scale-[0.98]"
+          >
+            <Iniciais nome={pessoa.nome} />
+            <div className="flex min-w-0 grow flex-col">
+              <span className="truncate text-[13px] font-semibold">{pessoa.nome}</span>
+              <span className="text-[11px] text-creme-400">{nomeDoPapel(pessoa.papel)}</span>
+            </div>
+            <IconeSeta tamanho={16} className="shrink-0 text-creme-400" />
+          </Link>
           <button
             type="button"
             onClick={() => setTutorial("aberto")}
-            className="flex h-11 shrink-0 items-center gap-1 px-2 text-[13px] font-semibold text-dourado"
+            className="flex h-11 shrink-0 items-center gap-1 rounded-xl border-l border-dourado/10 px-3 text-[13px] font-semibold text-dourado"
           >
             <IconeAjuda tamanho={18} />
             Como usar
           </button>
-          {!demo && (
-            <form action={sair}>
-              <button type="submit" className="h-11 px-2 text-[13px] font-semibold text-creme-400">
-                Sair
-              </button>
-            </form>
-          )}
         </div>
+        {aviso && (
+          <FaixaAviso
+            aoFechar={() => {
+              setAvisoFechado(true);
+              // Tira o aviso do endereço, para não voltar ao recarregar a página.
+              window.history.replaceState(null, "", "/painel");
+            }}
+          >
+            {aviso}
+          </FaixaAviso>
+        )}
       </header>
 
       <div className="flex flex-col gap-4 px-5 pt-3.5">
@@ -191,7 +206,7 @@ export function EstoqueDoDia({
           </Link>
         )}
 
-        <InstalarApp variante="cartao" nome="o painel" />
+        <InstalarApp variante="cartao" nome="o painel" entrarDeNovo />
 
         {editaDoces && (
           <Link href="/painel/doces/novo" className={cx(botaoPrimario, "h-[52px] text-[15px]")}>
@@ -279,12 +294,12 @@ export function EstoqueDoDia({
         <button
           type="button"
           disabled={salvando}
-          onClick={() =>
+          onClick={function salvarDia() {
             iniciar(async () => {
-              const resultado = await salvarEstoque(quantidades, destaqueId ?? null);
-              mostrarAviso(resultado.mensagem, resultado.ok);
-            })
-          }
+              const resultado = await tentar(() => salvarEstoque(quantidades, destaqueId ?? null));
+              mostrarResultado(resultado, salvarDia);
+            });
+          }}
           className={cx(botaoPrimario, "disabled:opacity-60")}
         >
           {salvando ? "Salvando…" : "Salvar o dia"}
